@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { mapPostRow } from "@/lib/feed";
-import type { FeedCommunity, FeedPost } from "@/types/feed";
-import type { PostType } from "@/types/feed";
+import type { FeedPost, PostType, PostVisibility } from "@/types/feed";
 import { useAppProfile } from "@/components/app/AppShell";
-import { CommunityStrip } from "./CommunityStrip";
+import { appContentClass } from "@/lib/layout";
+import { createPostWithMedia, POST_SELECT } from "@/lib/posts";
 import { CreatePostBox } from "./CreatePostBox";
 import { FeedTopBar } from "./FeedTopBar";
 import { PostCard } from "./PostCard";
@@ -14,7 +15,9 @@ import { PostCard } from "./PostCard";
 export function FeedPage() {
   const supabase = createClient();
   const profile = useAppProfile();
-  const [communities, setCommunities] = useState<FeedCommunity[]>([]);
+  const searchParams = useSearchParams();
+  const highlightPostId = searchParams.get("post");
+  const highlightCommentId = searchParams.get("comment");
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
@@ -31,34 +34,16 @@ export function FeedPage() {
       return;
     }
 
-    const { data: comms } = await supabase
-      .from("communities")
-      .select("*")
-      .order("member_count", { ascending: false });
-
-    setCommunities((comms as FeedCommunity[]) ?? []);
-
     const { data: rawPosts, error: postsErr } = await supabase
       .from("posts")
-      .select(
-        `
-        id,
-        body,
-        title,
-        post_type,
-        created_at,
-        community_id,
-        author:profiles!posts_author_id_fkey(id, username, avatar_url),
-        images:post_images(url, sort_order),
-        communities(name, slug, accent_color)
-      `
-      )
+      .select(POST_SELECT)
+      .or("community_id.is.null,and(community_id.not.is.null,visibility.eq.public)")
       .order("created_at", { ascending: false })
       .limit(50);
 
     if (postsErr) {
       setError(
-        "Não foi possível carregar o feed. Execute a migration 002_feed_social.sql no Supabase."
+        "Não foi possível carregar o feed. Execute as migrations do Supabase."
       );
       setLoading(false);
       return;
@@ -111,6 +96,9 @@ export function FeedPage() {
     body: string;
     postType: PostType;
     title: string | null;
+    visibility: PostVisibility;
+    eventDate: string | null;
+    eventTime: string | null;
     files: File[];
   }) {
     if (!profile) return;
@@ -118,41 +106,21 @@ export function FeedPage() {
     setError(null);
 
     try {
-      const { data: newPost, error: insertErr } = await supabase
-        .from("posts")
-        .insert({
-          author_id: profile.id,
-          body: data.body,
-          post_type: data.postType,
-          title: data.title,
-        })
-        .select("id")
-        .single();
+      const { error: createErr } = await createPostWithMedia(supabase, {
+        authorId: profile.id,
+        body: data.body,
+        postType: data.postType,
+        title: data.title,
+        visibility: data.visibility,
+        communityId: null,
+        eventDate: data.eventDate,
+        eventTime: data.eventTime,
+        files: data.files,
+      });
 
-      if (insertErr || !newPost) {
-        setError("Não foi possível publicar. Tente novamente.");
+      if (createErr) {
+        setError(createErr);
         return;
-      }
-
-      const imageRows: { post_id: string; url: string; sort_order: number }[] = [];
-
-      for (let i = 0; i < data.files.length; i++) {
-        const file = data.files[i];
-        const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-        const path = `${profile.id}/${newPost.id}/${Date.now()}-${i}.${ext}`;
-
-        const { error: uploadErr } = await supabase.storage
-          .from("post-images")
-          .upload(path, file, { upsert: false, contentType: file.type });
-
-        if (uploadErr) continue;
-
-        const { data: urlData } = supabase.storage.from("post-images").getPublicUrl(path);
-        imageRows.push({ post_id: newPost.id, url: urlData.publicUrl, sort_order: i });
-      }
-
-      if (imageRows.length > 0) {
-        await supabase.from("post_images").insert(imageRows);
       }
 
       await loadFeed();
@@ -189,7 +157,7 @@ export function FeedPage() {
   return (
     <>
       <FeedTopBar />
-      <main className="mx-auto max-w-2xl px-4 py-6 md:max-w-3xl md:px-6">
+      <main className={appContentClass}>
         {error && (
           <p className="mb-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600" role="alert">
             {error}
@@ -200,18 +168,17 @@ export function FeedPage() {
           avatarUrl={profile.avatar_url}
           username={profile.username}
           loading={posting}
+          context="global"
           onSubmit={handleCreatePost}
         />
 
-        <CommunityStrip communities={communities} />
-
         <section>
-          <h2 className="mb-3 text-sm font-bold text-[var(--toq-navy)]">Feed</h2>
+          <h2 className="mb-3 text-sm font-bold text-[var(--toq-navy)]">Feed geral</h2>
           {posts.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
               <p className="text-sm font-semibold text-[var(--toq-navy)]">Nenhum post ainda</p>
               <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
-                Publique o primeiro — eventos, treinos ou novidades para a comunidade.
+                Publique o primeiro — eventos, treinos ou novidades. Posts de comunidades ficam no menu Comunidade.
               </p>
             </div>
           ) : (
@@ -221,6 +188,10 @@ export function FeedPage() {
                   <PostCard
                     post={post}
                     currentUserId={profile!.id}
+                    highlightPost={post.id === highlightPostId}
+                    highlightCommentId={
+                      post.id === highlightPostId ? highlightCommentId : null
+                    }
                     onLikeToggle={handleLikeToggle}
                     onCommentCountChange={() => {}}
                   />

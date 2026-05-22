@@ -1,7 +1,12 @@
 import { Suspense } from "react";
-import { FeedPage } from "@/components/feed/FeedPage";
+import { CommunityDetailPage } from "@/components/community/CommunityDetailPage";
 
-export default function InicioPage() {
+export default async function ComunidadeSlugPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
   return (
     <Suspense
       fallback={
@@ -10,7 +15,7 @@ export default function InicioPage() {
         </div>
       }
     >
-      <FeedPage />
+      <CommunityDetailPage slug={slug} />
     </Suspense>
   );
 }

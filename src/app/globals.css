@@ -30,9 +30,26 @@ body {
 }
 
 .feed-layout {
-  min-height: 100dvh;
-  overflow-y: auto;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.feed-layout-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
   overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  color: var(--toq-text);
+}
+
+.feed-layout-main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.feed-layout-main textarea,
+.feed-layout-main select {
+  color: var(--toq-navy);
+  background-color: #ffffff;
 }
 
 .app-sidebar {
@@ -40,10 +57,22 @@ body {
   left: 0;
   top: 0;
   z-index: 50;
+  width: 244px;
   height: 100dvh;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   background: var(--toq-sidebar);
   color: #ffffff;
+}
+
+@media (min-width: 1024px) {
+  .app-sidebar {
+    width: 260px;
+  }
+}
+
+.app-sidebar svg {
+  max-width: 24px;
+  max-height: 24px;
 }
 
 body {
@@ -109,4 +138,27 @@ input,
 select,
 button {
   font: inherit;
+}
+
+.online-friends-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.online-friends-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.online-friend-ring {
+  display: inline-flex;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(
+    45deg,
+    #f09433,
+    #e6683c,
+    #dc2743,
+    #cc2366,
+    #bc1888
+  );
 }

@@ -1,4 +1,5 @@
-import type { FeedComment, FeedCommunity, FeedPost } from "@/types/feed";
+import { mapMentionRows } from "@/lib/mentions";
+import type { FeedComment, FeedCommunity, FeedPost, FeedProfile } from "@/types/feed";
 
 type RawPostRow = {
   id: string;
@@ -7,9 +8,13 @@ type RawPostRow = {
   post_type: "player" | "event";
   created_at: string;
   community_id: string | null;
+  visibility?: "public" | "private";
+  event_date?: string | null;
+  event_time?: string | null;
   author: { id: string; username: string; avatar_url: string | null } | { id: string; username: string; avatar_url: string | null }[];
   images: { url: string; sort_order: number }[] | null;
   communities: { name: string; slug: string; accent_color: string } | { name: string; slug: string; accent_color: string }[] | null;
+  mentions?: { mentioned_user: FeedProfile | FeedProfile[] | null }[] | null;
 };
 
 function one<T>(value: T | T[] | null | undefined): T | null {
@@ -33,6 +38,10 @@ export function mapPostRow(
     post_type: row.post_type,
     created_at: row.created_at,
     community_id: row.community_id,
+    visibility: row.visibility ?? "public",
+    event_date: row.event_date ?? null,
+    event_time: row.event_time ?? null,
+    mentions: mapMentionRows(row.mentions),
     author: author ?? { id: "", username: "jogador", avatar_url: null },
     images: (row.images ?? []).sort((a, b) => a.sort_order - b.sort_order),
     community: community
@@ -58,7 +67,7 @@ export function formatTimeAgo(iso: string) {
 
 export function postTypeLabel(type: FeedPost["post_type"]) {
   if (type === "event") return "Evento";
-  return "Jogador";
+  return "Post";
 }
 
 export type { FeedCommunity, FeedComment };

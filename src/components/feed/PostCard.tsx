@@ -1,23 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { formatTimeAgo, postTypeLabel } from "@/lib/feed";
+import { profilePath } from "@/lib/publicProfile";
+import { formatEventSchedule } from "@/lib/posts";
+import { visibilityBadgeLabel } from "@/lib/postVisibility";
 import type { FeedPost } from "@/types/feed";
 import { CommentsPanel } from "./CommentsPanel";
+import { PostBody } from "./PostBody";
 
 type Props = {
   post: FeedPost;
   currentUserId: string;
   onLikeToggle: (postId: string, liked: boolean) => Promise<void>;
   onCommentCountChange: (postId: string, delta: number) => void;
+  highlightPost?: boolean;
+  highlightCommentId?: string | null;
 };
 
-export function PostCard({ post, currentUserId, onLikeToggle, onCommentCountChange }: Props) {
+export function PostCard({
+  post,
+  currentUserId,
+  onLikeToggle,
+  onCommentCountChange,
+  highlightPost = false,
+  highlightCommentId = null,
+}: Props) {
+  const articleRef = useRef<HTMLElement>(null);
   const [liked, setLiked] = useState(post.liked_by_me);
   const [likesCount, setLikesCount] = useState(post.likes_count);
   const [commentsCount, setCommentsCount] = useState(post.comments_count);
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(!!highlightCommentId);
   const [likeLoading, setLikeLoading] = useState(false);
+  const visBadge = visibilityBadgeLabel(post.visibility, !!post.community_id);
+
+  useEffect(() => {
+    if (highlightPost && articleRef.current) {
+      articleRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightPost]);
+
+  useEffect(() => {
+    if (highlightCommentId) setShowComments(true);
+  }, [highlightCommentId]);
 
   async function handleLike() {
     setLikeLoading(true);
@@ -34,12 +60,25 @@ export function PostCard({ post, currentUserId, onLikeToggle, onCommentCountChan
   }
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <article
+      ref={articleRef}
+      id={`post-${post.id}`}
+      className={`rounded-2xl border bg-white p-4 shadow-sm ${
+        highlightPost
+          ? "border-[var(--toq-lime-light)] ring-2 ring-[var(--toq-lime-light)]"
+          : "border-slate-200"
+      }`}
+    >
       <header className="mb-3 flex items-start gap-3">
         <PostAvatar src={post.author.avatar_url} name={post.author.username} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-bold text-[var(--toq-navy)]">{post.author.username}</span>
+            <Link
+              href={profilePath(post.author.username)}
+              className="font-bold text-[var(--toq-navy)] hover:text-[var(--toq-sky)]"
+            >
+              {post.author.username}
+            </Link>
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
                 post.post_type === "event"
@@ -49,6 +88,11 @@ export function PostCard({ post, currentUserId, onLikeToggle, onCommentCountChan
             >
               {postTypeLabel(post.post_type)}
             </span>
+            {visBadge && (
+              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                {visBadge}
+              </span>
+            )}
             <span className="text-xs text-[var(--toq-text-muted)]">
               {formatTimeAgo(post.created_at)}
             </span>
@@ -64,9 +108,28 @@ export function PostCard({ post, currentUserId, onLikeToggle, onCommentCountChan
       {post.title && (
         <h3 className="mb-2 text-base font-bold text-[var(--toq-navy)]">{post.title}</h3>
       )}
-      <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-[var(--toq-text)]">
-        {post.body}
-      </p>
+      {post.post_type === "event" && (post.event_date || post.event_time) && (
+        <p className="mb-2 text-xs font-semibold text-[var(--toq-sky)]">
+          📅 {formatEventSchedule(post.event_date, post.event_time)}
+        </p>
+      )}
+      <PostBody body={post.body} />
+      {post.mentions.length > 0 && (
+        <p className="mt-2 text-[10px] text-[var(--toq-text-muted)]">
+          Mencionados:{" "}
+          {post.mentions.map((m, i) => (
+            <span key={m.id}>
+              {i > 0 ? ", " : null}
+              <Link
+                href={profilePath(m.username)}
+                className="font-semibold text-[var(--toq-sky)] hover:underline"
+              >
+                @{m.username}
+              </Link>
+            </span>
+          ))}
+        </p>
+      )}
 
       {post.images.length > 0 && (
         <div
@@ -122,6 +185,8 @@ export function PostCard({ post, currentUserId, onLikeToggle, onCommentCountChan
         <CommentsPanel
           postId={post.id}
           currentUserId={currentUserId}
+          highlightCommentId={highlightCommentId}
+          defaultOpen={!!highlightCommentId}
           onCommentAdded={() => {
             setCommentsCount((c) => c + 1);
             onCommentCountChange(post.id, 1);

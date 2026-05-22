@@ -1,5 +1,7 @@
 export type PostType = "player" | "event";
 
+export type PostVisibility = "public" | "private";
+
 export type FeedProfile = {
   id: string;
   username: string;
@@ -27,6 +29,10 @@ export type FeedPost = {
   post_type: PostType;
   created_at: string;
   community_id: string | null;
+  visibility: PostVisibility;
+  event_date: string | null;
+  event_time: string | null;
+  mentions: FeedProfile[];
   author: FeedProfile;
   images: PostImage[];
   community: Pick<FeedCommunity, "name" | "slug" | "accent_color"> | null;
@@ -39,5 +45,10 @@ export type FeedComment = {
   id: string;
   body: string;
   created_at: string;
+  parent_id: string | null;
   author: FeedProfile;
+  mentions: FeedProfile[];
+  likes_count: number;
+  liked_by_me: boolean;
+  replies: FeedComment[];
 };
