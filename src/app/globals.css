@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+:root {
+  --toq-navy: #000040;
+  --toq-navy-deep: #000028;
+  --toq-navy-mid: #0a1a5c;
+  --toq-sky: #437df4;
+  --toq-sky-mid: #5e94f7;
+  --toq-sky-deep: #5a92f0;
+  --toq-court: #4a8ae8;
+  --toq-white: #ffffff;
+  --toq-muted: #b8c4e8;
+  --toq-error: #ff6b6b;
+  --toq-success: #4ade80;
+  --toq-page: #0c1847;
+  --toq-page-deep: #060e28;
+  --toq-lime: #7aad18;
+  --toq-lime-bright: #8fc424;
+  --toq-lime-light: #a5db32;
+  --toq-lime-dark: #5f9010;
+  --toq-text: #1a2744;
+  --toq-text-muted: #64748b;
+  --toq-sidebar: #0a0a0a;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+.feed-layout {
+  min-height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.app-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 50;
+  height: 100dvh;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--toq-sidebar);
+  color: #ffffff;
+}
+
+body {
+  background: var(--toq-navy-deep);
+  color: var(--toq-white);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Divisão clara: painel céu (banner) | painel navy (login) */
+.auth-panel-sky {
+  /* Mesmo tom do fundo do banner_principal.png (~#6299f8) */
+  background: var(--toq-sky);
+}
+
+.auth-panel-login {
+  background-color: #1a1a1a;
+  color: var(--toq-text);
+}
+
+.auth-form-card {
+  background: #ffffff;
+  border: 2px solid var(--toq-lime-light);
+  box-shadow: 0 10px 36px rgba(0, 0, 64, 0.14);
+}
+
+/* Recorte circular: remove a sombra embutida na parte inferior do PNG */
+.auth-ball-frame {
+  overflow: hidden;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.auth-ball-img {
+  transform: scale(1.22);
+  object-position: 50% 36% !important;
+}
+
+.auth-ball-spin {
+  animation: auth-ball-spin 5s linear infinite;
+}
+
+.auth-ball-spin--reverse {
+  animation: auth-ball-spin 5s linear infinite reverse;
+}
+
+@keyframes auth-ball-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-ball-spin,
+  .auth-ball-spin--reverse {
+    animation: none;
+  }
+}
+
+input,
+select,
+button {
+  font: inherit;
+}
