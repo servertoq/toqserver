@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { mapPostRow } from "@/lib/feed";
 import type { FeedPost, PostType, PostVisibility } from "@/types/feed";
 import { useAppProfile } from "@/components/app/AppShell";
-import { appContentClass } from "@/lib/layout";
+import { FeedPageGrid } from "./FeedPageGrid";
+import { FeedSidebar } from "./FeedSidebar";
 import { createPostWithMedia, POST_SELECT } from "@/lib/posts";
 import { CreatePostBox } from "./CreatePostBox";
 import { FeedTopBar } from "./FeedTopBar";
@@ -157,7 +158,7 @@ export function FeedPage() {
   return (
     <>
       <FeedTopBar />
-      <main className={appContentClass}>
+      <FeedPageGrid className="py-6" sidebar={<FeedSidebar />}>
         {error && (
           <p className="mb-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600" role="alert">
             {error}
@@ -200,7 +201,7 @@ export function FeedPage() {
             </ul>
           )}
         </section>
-      </main>
+      </FeedPageGrid>
     </>
   );
 }

@@ -118,6 +118,26 @@ function IconProfile({ active }: { active: boolean }) {
   );
 }
 
+function IconClub({ active }: { active: boolean }) {
+  return (
+    <NavIcon>
+      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
+      </svg>
+    </NavIcon>
+  );
+}
+
+function IconMessages({ active }: { active: boolean }) {
+  return (
+    <NavIcon>
+      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.8-4.2A7.8 7.8 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+    </NavIcon>
+  );
+}
+
 const NAV_ITEMS: NavItem[] = [
   {
     href: "/inicio",
@@ -130,6 +150,18 @@ const NAV_ITEMS: NavItem[] = [
     label: "Comunidade",
     icon: (active) => <IconCommunity active={active} />,
     match: (path) => path.startsWith("/inicio/comunidade"),
+  },
+  {
+    href: "/inicio/mensagens",
+    label: "Mensagens",
+    icon: (active) => <IconMessages active={active} />,
+    match: (path) => path.startsWith("/inicio/mensagens") || path.startsWith("/inicio/conversar"),
+  },
+  {
+    href: "/inicio/clubes",
+    label: "Clubes",
+    icon: (active) => <IconClub active={active} />,
+    match: (path) => path.startsWith("/inicio/clubes"),
   },
   {
     href: "/inicio/perfil",
@@ -270,7 +302,11 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
                   ? "Início"
                   : item.label === "Comunidade"
                     ? "Comunidade"
-                    : "Perfil"}
+                    : item.label === "Mensagens"
+                      ? "Msgs"
+                      : item.label === "Clubes"
+                        ? "Clubes"
+                        : "Perfil"}
               </span>
             </Link>
           );

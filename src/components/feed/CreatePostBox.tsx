@@ -2,6 +2,13 @@
 
 import { useRef, useState } from "react";
 import { MentionTextarea } from "@/components/feed/MentionTextarea";
+import {
+  MAX_POST_MEDIA,
+  mergePostMediaFiles,
+  POST_IMAGE_ACCEPT,
+  POST_VIDEO_ACCEPT,
+  mediaKindFromFile,
+} from "@/lib/postMedia";
 import { visibilityOptions, type PostContext } from "@/lib/postVisibility";
 import type { PostType, PostVisibility } from "@/types/feed";
 
@@ -36,25 +43,47 @@ export function CreatePostBox({
   );
   const [eventDate, setEventDate] = useState("");
   const [eventTime, setEventTime] = useState("");
-  const [previews, setPreviews] = useState<string[]>([]);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const [previews, setPreviews] = useState<{ url: string; kind: "image" | "video" }[]>([]);
   const [files, setFiles] = useState<File[]>([]);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLInputElement>(null);
 
   const visOptions = visibilityOptions(context);
 
-  function handleFiles(list: FileList | null) {
-    if (!list?.length) return;
-    const next = [...files, ...Array.from(list)].slice(0, 4);
-    setFiles(next);
-    previews.forEach((u) => URL.revokeObjectURL(u));
-    setPreviews(next.map((f) => URL.createObjectURL(f)));
+  function revokePreviews(items: { url: string }[]) {
+    items.forEach((p) => URL.revokeObjectURL(p.url));
   }
 
-  function removeImage(index: number) {
-    const next = files.filter((_, i) => i !== index);
-    URL.revokeObjectURL(previews[index]);
+  function applyMedia(next: File[]) {
+    revokePreviews(previews);
     setFiles(next);
-    setPreviews(previews.filter((_, i) => i !== index));
+    setPreviews(
+      next.map((f) => ({
+        url: URL.createObjectURL(f),
+        kind: mediaKindFromFile(f),
+      }))
+    );
+  }
+
+  function handleFiles(list: FileList | null) {
+    if (!list?.length) return;
+    const { files: next, error } = mergePostMediaFiles(files, Array.from(list));
+    if (error) {
+      setMediaError(error);
+      return;
+    }
+    setMediaError(null);
+    if (next) applyMedia(next);
+  }
+
+  function removeMedia(index: number) {
+    URL.revokeObjectURL(previews[index].url);
+    const nextFiles = files.filter((_, i) => i !== index);
+    const nextPreviews = previews.filter((_, i) => i !== index);
+    setFiles(nextFiles);
+    setPreviews(nextPreviews);
+    setMediaError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -78,10 +107,12 @@ export function CreatePostBox({
     setEventTime("");
     setPostType("player");
     setVisibility(context === "community" ? "private" : "public");
-    previews.forEach((u) => URL.revokeObjectURL(u));
+    revokePreviews(previews);
     setPreviews([]);
     setFiles([]);
-    if (fileRef.current) fileRef.current.value = "";
+    setMediaError(null);
+    if (imageRef.current) imageRef.current.value = "";
+    if (videoRef.current) videoRef.current.value = "";
   }
 
   return (
@@ -168,13 +199,22 @@ export function CreatePostBox({
 
       {previews.length > 0 && (
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {previews.map((src, i) => (
-            <div key={src} className="relative aspect-square overflow-hidden rounded-lg">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="h-full w-full object-cover" />
+          {previews.map((item, i) => (
+            <div
+              key={item.url}
+              className={`relative overflow-hidden rounded-lg ${
+                item.kind === "video" ? "aspect-video sm:col-span-2" : "aspect-square"
+              }`}
+            >
+              {item.kind === "video" ? (
+                <video src={item.url} controls playsInline className="h-full w-full bg-black object-cover" />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.url} alt="" className="h-full w-full object-cover" />
+              )}
               <button
                 type="button"
-                onClick={() => removeImage(i)}
+                onClick={() => removeMedia(i)}
                 className="absolute right-1 top-1 rounded-full bg-black/60 px-1.5 text-xs text-white"
               >
                 ×
@@ -184,24 +224,46 @@ export function CreatePostBox({
         </div>
       )}
 
+      {mediaError && (
+        <p className="mt-2 text-xs font-medium text-red-600" role="alert">
+          {mediaError}
+        </p>
+      )}
+
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <input
-            ref={fileRef}
+            ref={imageRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
+            accept={POST_IMAGE_ACCEPT}
             multiple
+            className="hidden"
+            onChange={(e) => handleFiles(e.target.files)}
+          />
+          <input
+            ref={videoRef}
+            type="file"
+            accept={POST_VIDEO_ACCEPT}
             className="hidden"
             onChange={(e) => handleFiles(e.target.files)}
           />
           <button
             type="button"
-            onClick={() => fileRef.current?.click()}
+            onClick={() => imageRef.current?.click()}
             className="text-xs font-semibold text-[var(--toq-sky)] hover:underline"
           >
-            + Adicionar fotos
+            + Fotos
           </button>
-          <span className="ml-2 text-[10px] text-[var(--toq-text-muted)]">até 4 imagens</span>
+          <button
+            type="button"
+            onClick={() => videoRef.current?.click()}
+            className="text-xs font-semibold text-[var(--toq-sky)] hover:underline"
+          >
+            + Vídeo
+          </button>
+          <span className="text-[10px] text-[var(--toq-text-muted)]">
+            até {MAX_POST_MEDIA} arquivos · 1 vídeo (50 MB)
+          </span>
         </div>
         <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <VisibilityToggle

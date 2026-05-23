@@ -10,4 +10,5 @@ export type PublicProfile = {
   created_at: string;
   post_count: number;
   friend_count: number;
+  last_seen_at: string | null;
 };

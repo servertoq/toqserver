@@ -21,18 +21,27 @@ export function isOwner(role: CommunityMemberRole | null | undefined) {
 export type CommunityWithMembership = Community & {
   my_role: CommunityMemberRole | null;
   pending_request: boolean;
+  pending_invite: boolean;
 };
 
 export function mapCommunityRow(
   row: Community,
   myRole: CommunityMemberRole | null,
-  pendingRequest: boolean
+  pendingRequest: boolean,
+  pendingInvite = false
 ): CommunityWithMembership {
   return {
     ...row,
+    kind: row.kind ?? "community",
     my_role: myRole,
     pending_request: pendingRequest,
+    pending_invite: pendingInvite,
   };
+}
+
+export function groupVisibilityLabel(kind: Community["kind"], isPrivate: boolean) {
+  if (kind === "club") return "Privado";
+  return communityVisibilityLabel(isPrivate);
 }
 
 export function sortMembers(members: CommunityMember[]) {

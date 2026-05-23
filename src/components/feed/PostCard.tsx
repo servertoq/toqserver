@@ -9,6 +9,7 @@ import { visibilityBadgeLabel } from "@/lib/postVisibility";
 import type { FeedPost } from "@/types/feed";
 import { CommentsPanel } from "./CommentsPanel";
 import { PostBody } from "./PostBody";
+import { PostMediaGrid } from "./PostMediaGrid";
 
 type Props = {
   post: FeedPost;
@@ -131,31 +132,7 @@ export function PostCard({
         </p>
       )}
 
-      {post.images.length > 0 && (
-        <div
-          className={`mt-3 grid gap-2 ${
-            post.images.length === 1 ? "grid-cols-1" : "grid-cols-2"
-          }`}
-        >
-          {post.images.map((img) => (
-            <div
-              key={img.url}
-              className={`overflow-hidden rounded-lg bg-slate-100 ${
-                post.images.length === 1 ? "max-h-80" : "aspect-square"
-              }`}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={img.url}
-                alt=""
-                className={`h-full w-full object-cover ${
-                  post.images.length === 1 ? "max-h-80 w-full" : ""
-                }`}
-              />
-            </div>
-          ))}
-        </div>
-      )}
+      <PostMediaGrid items={post.images} />
 
       <div className="mt-3 flex items-center gap-4 border-t border-slate-100 pt-3">
         <button

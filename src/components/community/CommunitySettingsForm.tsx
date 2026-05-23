@@ -15,10 +15,11 @@ export function CommunitySettingsForm({ community, onSaved, onClose }: Props) {
   const supabase = createClient();
   const profile = useAppProfile();
   const fileRef = useRef<HTMLInputElement>(null);
+  const isClub = (community.kind ?? "community") === "club";
 
   const [name, setName] = useState(community.name);
   const [description, setDescription] = useState(community.description);
-  const [isPrivate, setIsPrivate] = useState(community.is_private);
+  const [isPrivate, setIsPrivate] = useState(isClub ? true : community.is_private);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +50,7 @@ export function CommunitySettingsForm({ community, onSaved, onClose }: Props) {
         .update({
           name: name.trim(),
           description: description.trim(),
-          is_private: isPrivate,
+          is_private: isClub ? true : isPrivate,
           cover_image_url: coverUrl,
         })
         .eq("id", community.id);
@@ -126,6 +127,7 @@ export function CommunitySettingsForm({ community, onSaved, onClose }: Props) {
             />
           </div>
 
+          {!isClub && (
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -134,6 +136,7 @@ export function CommunitySettingsForm({ community, onSaved, onClose }: Props) {
             />
             <span className="text-sm text-[var(--toq-navy)]">Comunidade privada</span>
           </label>
+          )}
 
           <button
             type="submit"

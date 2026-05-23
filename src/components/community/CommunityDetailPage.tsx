@@ -7,11 +7,12 @@ import { createClient } from "@/lib/supabase/client";
 import { mapPostRow } from "@/lib/feed";
 import {
   canModerate,
-  communityVisibilityLabel,
+  groupVisibilityLabel,
   isOwner,
   memberRoleLabel,
 } from "@/lib/community";
-import type { Community, CommunityMemberRole } from "@/types/community";
+import { COMMUNITY_GROUP_CONFIG } from "@/lib/communityGroup";
+import type { Community, CommunityGroupKind, CommunityMemberRole } from "@/types/community";
 import type { FeedPost, PostType, PostVisibility } from "@/types/feed";
 import { useAppProfile } from "@/components/app/AppShell";
 import { appContentClass } from "@/lib/layout";
@@ -22,7 +23,14 @@ import { PostCard } from "@/components/feed/PostCard";
 import { CommunityModerationPanel } from "./CommunityModerationPanel";
 import { CommunitySettingsForm } from "./CommunitySettingsForm";
 
-export function CommunityDetailPage({ slug }: { slug: string }) {
+export function CommunityDetailPage({
+  slug,
+  groupKind = "community",
+}: {
+  slug: string;
+  groupKind?: CommunityGroupKind;
+}) {
+  const config = COMMUNITY_GROUP_CONFIG[groupKind];
   const supabase = createClient();
   const profile = useAppProfile();
   const router = useRouter();
@@ -33,6 +41,7 @@ export function CommunityDetailPage({ slug }: { slug: string }) {
   const [community, setCommunity] = useState<Community | null>(null);
   const [myRole, setMyRole] = useState<CommunityMemberRole | null>(null);
   const [pendingRequest, setPendingRequest] = useState(false);
+  const [pendingInviteId, setPendingInviteId] = useState<string | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
@@ -56,10 +65,11 @@ export function CommunityDetailPage({ slug }: { slug: string }) {
       .from("communities")
       .select("*")
       .eq("slug", slug)
+      .eq("kind", groupKind)
       .maybeSingle();
 
     if (commErr || !comm) {
-      setError("Comunidade não encontrada.");
+      setError(config.notFound);
       setLoading(false);
       return;
     }
@@ -85,6 +95,16 @@ export function CommunityDetailPage({ slug }: { slug: string }) {
       .maybeSingle();
 
     setPendingRequest(!!pending);
+
+    const { data: invite } = await supabase
+      .from("community_invites")
+      .select("id")
+      .eq("community_id", c.id)
+      .eq("invitee_id", user.id)
+      .eq("status", "pending")
+      .maybeSingle();
+
+    setPendingInviteId(invite?.id ?? null);
 
     if (membership) {
       const { data: rawPosts, error: postsErr } = await supabase
@@ -139,7 +159,7 @@ export function CommunityDetailPage({ slug }: { slug: string }) {
     }
 
     setLoading(false);
-  }, [supabase, slug]);
+  }, [config.notFound, groupKind, supabase, slug]);
 
   useEffect(() => {
     load();
@@ -150,7 +170,7 @@ export function CommunityDetailPage({ slug }: { slug: string }) {
     setJoining(true);
     setError(null);
     try {
-      if (community.is_private) {
+      if (groupKind === "club" || community.is_private) {
         const { error: reqErr } = await supabase.rpc("request_community_join", {
           p_community_id: community.id,
         });
@@ -173,13 +193,26 @@ export function CommunityDetailPage({ slug }: { slug: string }) {
     }
   }
 
+  async function handleRespondInvite(accept: boolean) {
+    if (!pendingInviteId) return;
+    setJoining(true);
+    setError(null);
+    const { error: invErr } = await supabase.rpc("respond_community_invite", {
+      p_invite_id: pendingInviteId,
+      p_accept: accept,
+    });
+    if (invErr) setError(invErr.message);
+    await load();
+    setJoining(false);
+  }
+
   async function handleLeave() {
-    if (!community || !confirm("Sair desta comunidade?")) return;
+    if (!community || !confirm(config.leaveConfirm)) return;
     await supabase.rpc("remove_community_member", {
       p_community_id: community.id,
       p_user_id: profile.id,
     });
-    router.push("/inicio/comunidade");
+    router.push(config.basePath);
   }
 
   async function handleCreatePost(data: {
@@ -242,8 +275,8 @@ export function CommunityDetailPage({ slug }: { slug: string }) {
   if (!community) {
     return (
       <main className="px-4 py-12 text-center">
-        <p className="text-sm text-red-600">{error ?? "Comunidade não encontrada."}</p>
-        <Link href="/inicio/comunidade" className="mt-4 inline-block text-sm font-semibold text-[var(--toq-sky)]">
+        <p className="text-sm text-red-600">{error ?? config.notFound}</p>
+        <Link href={config.basePath} className="mt-4 inline-block text-sm font-semibold text-[var(--toq-sky)]">
           Voltar
         </Link>
       </main>
@@ -257,10 +290,10 @@ export function CommunityDetailPage({ slug }: { slug: string }) {
       <FeedTopBar />
       <main className={appContentClass}>
         <Link
-          href="/inicio/comunidade"
+          href={config.basePath}
           className="mb-4 inline-block text-xs font-semibold text-[var(--toq-sky)]"
         >
-          ← Comunidades
+          ← {config.backLabel}
         </Link>
 
         <header className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -281,7 +314,7 @@ export function CommunityDetailPage({ slug }: { slug: string }) {
                 <p className="mt-1 text-sm text-[var(--toq-text-muted)]">{community.description}</p>
                 <p className="mt-2 text-xs font-semibold text-[var(--toq-lime-dark)]">
                   {community.member_count.toLocaleString("pt-BR")} / 1.000 membros ·{" "}
-                  {communityVisibilityLabel(community.is_private)}
+                  {groupVisibilityLabel(community.kind ?? groupKind, community.is_private)}
                   {myRole && ` · ${memberRoleLabel(myRole)}`}
                 </p>
               </div>
@@ -308,13 +341,37 @@ export function CommunityDetailPage({ slug }: { slug: string }) {
             </div>
 
             {!isMember && (
-              <div className="mt-4">
-                {pendingRequest ? (
+              <div className="mt-4 space-y-2">
+                {pendingInviteId ? (
+                  <>
+                    <p className="rounded-lg bg-[#0084ff]/10 px-3 py-2 text-sm font-semibold text-[#0084ff]">
+                      Você foi convidado para este {groupKind === "club" ? "clube" : "grupo"}.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={joining}
+                        onClick={() => handleRespondInvite(true)}
+                        className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-sm font-bold text-[var(--toq-navy)] disabled:opacity-50"
+                      >
+                        Aceitar convite
+                      </button>
+                      <button
+                        type="button"
+                        disabled={joining}
+                        onClick={() => handleRespondInvite(false)}
+                        className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-[var(--toq-text-muted)] disabled:opacity-50"
+                      >
+                        Recusar
+                      </button>
+                    </div>
+                  </>
+                ) : pendingRequest ? (
                   <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">
-                    Pedido de entrada enviado — aguarde aprovação.
+                    {config.pendingRequest}
                   </p>
                 ) : full ? (
-                  <p className="text-sm text-[var(--toq-text-muted)]">Comunidade cheia.</p>
+                  <p className="text-sm text-[var(--toq-text-muted)]">{config.fullLabel}</p>
                 ) : (
                   <button
                     type="button"
@@ -324,9 +381,9 @@ export function CommunityDetailPage({ slug }: { slug: string }) {
                   >
                     {joining
                       ? "Processando…"
-                      : community.is_private
-                        ? "Solicitar entrada"
-                        : "Entrar na comunidade"}
+                      : groupKind === "club" || community.is_private
+                        ? config.joinPrivate
+                        : config.joinPublic}
                   </button>
                 )}
               </div>
@@ -344,6 +401,7 @@ export function CommunityDetailPage({ slug }: { slug: string }) {
           <div className="mt-6">
             <CommunityModerationPanel
               communityId={community.id}
+              groupKind={groupKind}
               myRole={myRole!}
               onChanged={load}
             />
@@ -363,7 +421,7 @@ export function CommunityDetailPage({ slug }: { slug: string }) {
             </div>
 
             <section className="mt-6">
-              <h2 className="mb-3 text-sm font-bold text-[var(--toq-navy)]">Feed da comunidade</h2>
+              <h2 className="mb-3 text-sm font-bold text-[var(--toq-navy)]">{config.feedTitle}</h2>
               {posts.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
                   <p className="text-sm font-semibold text-[var(--toq-navy)]">Nenhum post ainda</p>
@@ -393,11 +451,15 @@ export function CommunityDetailPage({ slug }: { slug: string }) {
           </>
         ) : (
           <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
-            <p className="text-sm font-semibold text-[var(--toq-navy)]">Feed exclusivo para membros</p>
+            <p className="text-sm font-semibold text-[var(--toq-navy)]">{config.memberOnlyFeed}</p>
             <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
-              {community.is_private
-                ? "Solicite entrada para ver e publicar posts nesta comunidade."
-                : "Entre na comunidade para acessar o feed."}
+              {pendingInviteId
+                ? "Aceite o convite para acessar o conteúdo."
+                : groupKind === "club"
+                  ? "Solicite entrada ou aguarde um convite para ver posts e eventos."
+                  : community.is_private
+                    ? "Solicite entrada para ver e publicar posts nesta comunidade."
+                    : "Entre na comunidade para acessar o feed."}
             </p>
           </div>
         )}

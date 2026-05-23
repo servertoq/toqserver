@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { use } from "react";
-import { FeedTopBar } from "@/components/feed/FeedTopBar";
-import { appContentClass } from "@/lib/layout";
+import { useRouter } from "next/navigation";
+import { use, useEffect } from "react";
 
 export default function ConversarPage({
   params,
@@ -11,25 +9,16 @@ export default function ConversarPage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = use(params);
+  const router = useRouter();
   const decoded = decodeURIComponent(username);
 
+  useEffect(() => {
+    router.replace(`/inicio/mensagens?chat=${encodeURIComponent(decoded)}`);
+  }, [decoded, router]);
+
   return (
-    <>
-      <FeedTopBar />
-      <main className={appContentClass}>
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <h1 className="text-lg font-bold text-[var(--toq-navy)]">Conversar com @{decoded}</h1>
-          <p className="mt-2 text-sm text-[var(--toq-text-muted)]">
-            O chat direto entre jogadores estará disponível em breve.
-          </p>
-          <Link
-            href="/inicio"
-            className="mt-4 inline-block text-sm font-semibold text-[var(--toq-sky)] hover:underline"
-          >
-            Voltar ao início
-          </Link>
-        </div>
-      </main>
-    </>
+    <div className="flex flex-1 items-center justify-center py-20">
+      <p className="text-sm text-[var(--toq-text-muted)]">Abrindo conversa…</p>
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { insertPostMentions, resolveMentionUserIds } from "@/lib/mentions";
+import { extensionForMediaFile, mediaKindFromFile } from "@/lib/postMedia";
 import type { PostType, PostVisibility } from "@/types/feed";
 
 export type CreatePostInput = {
@@ -25,7 +26,7 @@ const POST_SELECT = `
   event_date,
   event_time,
   author:profiles!posts_author_id_fkey(id, username, avatar_url),
-  images:post_images(url, sort_order),
+  images:post_images(url, sort_order, media_type),
   communities(name, slug, accent_color),
   mentions:post_mentions(
     mentioned_user:profiles!post_mentions_mentioned_user_id_fkey(id, username, avatar_url)
@@ -68,7 +69,7 @@ export async function createPostWithMedia(
 
   for (let i = 0; i < input.files.length; i++) {
     const file = input.files[i];
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const ext = extensionForMediaFile(file);
     const path = `${input.authorId}/${newPost.id}/${Date.now()}-${i}.${ext}`;
 
     const { error: uploadErr } = await supabase.storage
@@ -82,6 +83,7 @@ export async function createPostWithMedia(
       post_id: newPost.id,
       url: urlData.publicUrl,
       sort_order: i,
+      media_type: mediaKindFromFile(file),
     });
   }
 

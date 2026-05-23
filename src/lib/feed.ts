@@ -12,7 +12,7 @@ type RawPostRow = {
   event_date?: string | null;
   event_time?: string | null;
   author: { id: string; username: string; avatar_url: string | null } | { id: string; username: string; avatar_url: string | null }[];
-  images: { url: string; sort_order: number }[] | null;
+  images: { url: string; sort_order: number; media_type?: "image" | "video" }[] | null;
   communities: { name: string; slug: string; accent_color: string } | { name: string; slug: string; accent_color: string }[] | null;
   mentions?: { mentioned_user: FeedProfile | FeedProfile[] | null }[] | null;
 };
@@ -43,7 +43,12 @@ export function mapPostRow(
     event_time: row.event_time ?? null,
     mentions: mapMentionRows(row.mentions),
     author: author ?? { id: "", username: "jogador", avatar_url: null },
-    images: (row.images ?? []).sort((a, b) => a.sort_order - b.sort_order),
+    images: (row.images ?? [])
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((img) => ({
+        ...img,
+        media_type: img.media_type ?? "image",
+      })),
     community: community
       ? { name: community.name, slug: community.slug, accent_color: community.accent_color }
       : null,

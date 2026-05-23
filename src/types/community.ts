@@ -1,3 +1,5 @@
+export type CommunityGroupKind = "community" | "club";
+
 export type CommunityMemberRole = "owner" | "moderator" | "member";
 
 export type Community = {
@@ -7,10 +9,21 @@ export type Community = {
   description: string;
   cover_image_url: string | null;
   is_private: boolean;
+  kind: CommunityGroupKind;
   member_count: number;
   accent_color: string;
   created_by: string | null;
   created_at: string;
+};
+
+export type CommunityInvite = {
+  id: string;
+  community_id: string;
+  inviter_id: string;
+  invitee_id: string;
+  status: "pending" | "accepted" | "rejected";
+  created_at: string;
+  invitee?: { id: string; username: string; avatar_url: string | null };
 };
 
 export type CommunityMembership = {

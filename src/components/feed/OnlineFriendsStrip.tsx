@@ -5,9 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { profilePath } from "@/lib/publicProfile";
-import { appTopBarClass } from "@/lib/layout";
-
-const ONLINE_MS = 3 * 60 * 1000;
+import { isUserOnline } from "@/lib/presence";
+import { FeedPageGrid } from "@/components/feed/FeedPageGrid";
 
 type FriendCard = {
   friend_id: string;
@@ -15,11 +14,6 @@ type FriendCard = {
   avatar_url: string | null;
   last_seen_at: string | null;
 };
-
-function isOnline(lastSeen: string | null) {
-  if (!lastSeen) return false;
-  return Date.now() - new Date(lastSeen).getTime() < ONLINE_MS;
-}
 
 export function OnlineFriendsStrip() {
   const supabase = createClient();
@@ -67,12 +61,13 @@ export function OnlineFriendsStrip() {
 
   return (
     <div className="border-t border-slate-100 bg-white">
-      <div
-        ref={scrollRef}
-        className={`${appTopBarClass} online-friends-scroll flex gap-4 overflow-x-auto py-3`}
-      >
-        {friends.map((friend) => {
-          const online = isOnline(friend.last_seen_at);
+      <FeedPageGrid>
+        <div
+          ref={scrollRef}
+          className="online-friends-scroll flex gap-4 overflow-x-auto py-3"
+        >
+          {friends.map((friend) => {
+          const online = isUserOnline(friend.last_seen_at);
           return (
             <Link
               key={friend.friend_id}
@@ -96,8 +91,9 @@ export function OnlineFriendsStrip() {
               </span>
             </Link>
           );
-        })}
-      </div>
+          })}
+        </div>
+      </FeedPageGrid>
     </div>
   );
 }

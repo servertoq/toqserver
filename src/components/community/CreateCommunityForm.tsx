@@ -4,9 +4,13 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
+import { COMMUNITY_GROUP_CONFIG, groupDetailHref } from "@/lib/communityGroup";
+import type { CommunityGroupKind } from "@/types/community";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 
-export function CreateCommunityForm() {
+export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: CommunityGroupKind }) {
+  const config = COMMUNITY_GROUP_CONFIG[groupKind];
+  const isClub = groupKind === "club";
   const supabase = createClient();
   const profile = useAppProfile();
   const router = useRouter();
@@ -14,7 +18,7 @@ export function CreateCommunityForm() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [isPrivate, setIsPrivate] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(isClub);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -60,7 +64,8 @@ export function CreateCommunityForm() {
           name: trimmedName,
           slug,
           description: trimmedDesc,
-          is_private: isPrivate,
+          is_private: isClub ? true : isPrivate,
+          kind: groupKind,
           created_by: profile.id,
           accent_color: "#437df4",
         })
@@ -88,7 +93,7 @@ export function CreateCommunityForm() {
         }
       }
 
-      router.push(`/inicio/comunidade/${community.slug}`);
+      router.push(groupDetailHref(groupKind, community.slug));
     } finally {
       setLoading(false);
     }
@@ -98,9 +103,11 @@ export function CreateCommunityForm() {
     <>
       <FeedTopBar />
       <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 lg:max-w-4xl lg:px-8">
-        <h1 className="text-xl font-bold text-[var(--toq-navy)]">Nova comunidade</h1>
+        <h1 className="text-xl font-bold text-[var(--toq-navy)]">{config.createTitle}</h1>
         <p className="mt-1 text-sm text-[var(--toq-text-muted)]">
-          Até 1.000 membros. Você será o administrador.
+          {isClub
+            ? "Clubes são sempre privados. Só membros veem posts e eventos."
+            : "Até 1.000 membros. Você será o administrador."}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -131,7 +138,7 @@ export function CreateCommunityForm() {
               required
               rows={3}
               className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
-              placeholder="Conte do que se trata a comunidade…"
+              placeholder={isClub ? "Conte sobre o clube…" : "Conte do que se trata a comunidade…"}
             />
           </label>
 
@@ -159,6 +166,7 @@ export function CreateCommunityForm() {
             </div>
           </div>
 
+          {!isClub && (
           <fieldset className="rounded-xl border border-slate-200 bg-white p-4">
             <legend className="px-1 text-xs font-semibold text-[var(--toq-navy)]">Visibilidade</legend>
             <label className="mt-2 flex cursor-pointer items-start gap-3">
@@ -187,18 +195,25 @@ export function CreateCommunityForm() {
               <span>
                 <span className="text-sm font-semibold text-[var(--toq-navy)]">Privada</span>
                 <span className="block text-xs text-[var(--toq-text-muted)]">
-                  Novos membros precisam de aprovação do administrador ou moderadores.
+                  Novos membros precisam de aprovação ou convite.
                 </span>
               </span>
             </label>
           </fieldset>
+          )}
+
+          {isClub && (
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-[var(--toq-text-muted)]">
+              Este clube será privado. Entrada apenas com aprovação ou convite de admin/moderador.
+            </p>
+          )}
 
           <button
             type="submit"
             disabled={loading}
             className="w-full rounded-lg bg-[var(--toq-lime-light)] py-2.5 text-sm font-bold text-[var(--toq-navy)] transition hover:bg-[var(--toq-lime-bright)] disabled:opacity-50"
           >
-            {loading ? "Criando…" : "Criar comunidade"}
+            {loading ? "Criando…" : config.createButton}
           </button>
         </form>
       </main>

@@ -22,8 +22,9 @@ const NOTIFICATION_SELECT = `
   community_id,
   friend_request_id,
   join_request_id,
+  community_invite_id,
   actor:profiles!notifications_actor_id_fkey(id, username, avatar_url),
-  community:communities(id, name, slug)
+  community:communities(id, name, slug, kind)
 `;
 
 export function NotificationsBell() {
@@ -159,6 +160,16 @@ export function NotificationsBell() {
       .from("notifications")
       .update({ read_at: new Date().toISOString() })
       .eq("join_request_id", requestId);
+    await load();
+    setActingId(null);
+  }
+
+  async function respondInvite(inviteId: string, accept: boolean) {
+    setActingId(inviteId);
+    await supabase.rpc("respond_community_invite", {
+      p_invite_id: inviteId,
+      p_accept: accept,
+    });
     await load();
     setActingId(null);
   }
@@ -302,13 +313,34 @@ export function NotificationsBell() {
                           </div>
                         )}
 
-                      {n.type === "community_join" && n.community?.slug && !notificationHref(n) && (
+                      {n.type === "community_invite" && n.community_invite_id && !n.read_at && (
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={actingId === n.community_invite_id}
+                            onClick={() => respondInvite(n.community_invite_id!, true)}
+                            className="rounded-lg bg-[var(--toq-lime-light)] px-2.5 py-1 text-[10px] font-bold text-[var(--toq-navy)] disabled:opacity-50"
+                          >
+                            Aceitar
+                          </button>
+                          <button
+                            type="button"
+                            disabled={actingId === n.community_invite_id}
+                            onClick={() => respondInvite(n.community_invite_id!, false)}
+                            className="rounded-lg border border-slate-200 px-2.5 py-1 text-[10px] font-semibold text-[var(--toq-text-muted)] disabled:opacity-50"
+                          >
+                            Recusar
+                          </button>
+                        </div>
+                      )}
+
+                      {n.type === "community_join" && n.community?.slug && notificationHref(n) && (
                         <Link
-                          href={`/inicio/comunidade/${n.community.slug}`}
+                          href={notificationHref(n)!}
                           onClick={() => markRead(n.id)}
                           className="inline-block text-[10px] font-semibold text-[var(--toq-sky)] hover:underline"
                         >
-                          Ver comunidade
+                          {n.community.kind === "club" ? "Ver clube" : "Ver comunidade"}
                         </Link>
                       )}
                   </div>

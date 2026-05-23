@@ -1,3 +1,4 @@
+import { groupDetailHref } from "@/lib/communityGroup";
 import { profilePath } from "@/lib/publicProfile";
 import type { AppNotification, NotificationType } from "@/types/notifications";
 import type { FeedProfile } from "@/types/feed";
@@ -21,12 +22,20 @@ export function notificationMessage(n: AppNotification): string {
       return `${name} entrou em ${n.community?.name ?? "uma comunidade"}`;
     case "community_join_request":
       return `${name} pediu para entrar em ${n.community?.name ?? "uma comunidade"}`;
+    case "community_invite": {
+      const label = n.community?.kind === "club" ? "um clube" : "uma comunidade";
+      return `${name} convidou você para ${n.community?.name ?? label}`;
+    }
     default:
       return "Nova notificação";
   }
 }
 
 export function notificationHref(n: AppNotification): string | null {
+  if (n.type === "community_invite") {
+    return null;
+  }
+
   if (n.type === "friend_request") {
     return n.actor.username ? profilePath(n.actor.username) : null;
   }
@@ -38,7 +47,8 @@ export function notificationHref(n: AppNotification): string | null {
     n.type === "comment_mention"
   ) {
     const slug = n.community?.slug;
-    const base = slug ? `/inicio/comunidade/${slug}` : "/inicio";
+    const kind = n.community?.kind ?? "community";
+    const base = slug ? groupDetailHref(kind, slug) : "/inicio";
     const params = new URLSearchParams();
     if (n.post_id) params.set("post", n.post_id);
     if (n.comment_id) params.set("comment", n.comment_id);
@@ -47,7 +57,8 @@ export function notificationHref(n: AppNotification): string | null {
   }
 
   const slug = n.community?.slug;
-  const base = slug ? `/inicio/comunidade/${slug}` : "/inicio";
+  const kind = n.community?.kind ?? "community";
+  const base = slug ? groupDetailHref(kind, slug) : kind === "club" ? "/inicio/clubes" : "/inicio";
   const params = new URLSearchParams();
 
   if (n.post_id) params.set("post", n.post_id);
@@ -55,6 +66,10 @@ export function notificationHref(n: AppNotification): string | null {
 
   const q = params.toString();
   return q ? `${base}?${q}` : base;
+}
+
+export function communityListHref(kind: "community" | "club" | undefined) {
+  return kind === "club" ? "/inicio/clubes" : "/inicio/comunidade";
 }
 
 export function mapNotificationRow(row: {
@@ -67,8 +82,12 @@ export function mapNotificationRow(row: {
   community_id: string | null;
   friend_request_id: string | null;
   join_request_id: string | null;
+  community_invite_id: string | null;
   actor: FeedProfile | FeedProfile[] | null;
-  community: { id: string; name: string; slug: string } | { id: string; name: string; slug: string }[] | null;
+  community:
+    | { id: string; name: string; slug: string; kind?: "community" | "club" }
+    | { id: string; name: string; slug: string; kind?: "community" | "club" }[]
+    | null;
 }): AppNotification {
   const actor = Array.isArray(row.actor) ? row.actor[0] : row.actor;
   const community = Array.isArray(row.community) ? row.community[0] : row.community;
@@ -83,6 +102,7 @@ export function mapNotificationRow(row: {
     community_id: row.community_id,
     friend_request_id: row.friend_request_id,
     join_request_id: row.join_request_id,
+    community_invite_id: row.community_invite_id,
     actor: actor ?? { id: "", username: "?", avatar_url: null },
     community: community ?? null,
   };

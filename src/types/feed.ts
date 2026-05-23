@@ -20,6 +20,7 @@ export type FeedCommunity = {
 export type PostImage = {
   url: string;
   sort_order: number;
+  media_type?: "image" | "video";
 };
 
 export type FeedPost = {

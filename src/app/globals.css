@@ -52,6 +52,18 @@ body {
   background-color: #ffffff;
 }
 
+.messages-popup input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
+  color: #ffffff;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.messages-popup input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus {
+  outline: none;
+  box-shadow: none;
+}
+
 .app-sidebar {
   position: fixed;
   left: 0;

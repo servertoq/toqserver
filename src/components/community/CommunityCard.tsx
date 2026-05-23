@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { communityVisibilityLabel } from "@/lib/community";
+import { groupVisibilityLabel } from "@/lib/community";
+import { groupDetailHref } from "@/lib/communityGroup";
 import type { CommunityWithMembership } from "@/lib/community";
 
 export function CommunityCard({ community }: { community: CommunityWithMembership }) {
   const isMember = community.my_role !== null;
+  const kind = community.kind ?? "community";
 
   return (
     <Link
-      href={`/inicio/comunidade/${community.slug}`}
+      href={groupDetailHref(kind, community.slug)}
       className="block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-[var(--toq-sky)]/40 hover:shadow-md"
     >
       <div className="relative h-28 bg-gradient-to-br from-[var(--toq-navy)] to-[var(--toq-sky)]">
@@ -22,7 +24,7 @@ export function CommunityCard({ community }: { community: CommunityWithMembershi
         <span
           className="absolute right-3 top-3 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold uppercase text-white"
         >
-          {communityVisibilityLabel(community.is_private)}
+          {groupVisibilityLabel(kind, community.is_private)}
         </span>
       </div>
       <div className="p-4" style={{ borderTopWidth: 3, borderTopColor: community.accent_color }}>
@@ -39,7 +41,12 @@ export function CommunityCard({ community }: { community: CommunityWithMembershi
               Membro
             </span>
           )}
-          {!isMember && community.pending_request && (
+          {!isMember && community.pending_invite && (
+            <span className="rounded-full bg-[#0084ff]/15 px-2 py-0.5 text-[10px] font-bold text-[#0084ff]">
+              Convite pendente
+            </span>
+          )}
+          {!isMember && !community.pending_invite && community.pending_request && (
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
               Aguardando aprovação
             </span>

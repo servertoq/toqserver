@@ -12,6 +12,7 @@ import type { PublicProfile } from "@/types/profile";
 import { useAppProfile } from "@/components/app/AppShell";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { PostCard } from "@/components/feed/PostCard";
+import { ProfilePresenceBadge } from "@/components/profile/ProfilePresenceBadge";
 import { PublicProfileFriendActions } from "@/components/profile/PublicProfileFriendActions";
 import { appContentClass } from "@/lib/layout";
 
@@ -59,6 +60,7 @@ export function PublicProfileView({ username }: Props) {
       created_at: row.created_at,
       post_count: Number(stat?.post_count ?? 0),
       friend_count: Number(stat?.friend_count ?? 0),
+      last_seen_at: row.last_seen_at ?? null,
     });
 
     const { data: rawPosts, error: postsErr } = await supabase
@@ -114,6 +116,8 @@ export function PublicProfileView({ username }: Props) {
 
   useEffect(() => {
     load();
+    const interval = setInterval(load, 30_000);
+    return () => clearInterval(interval);
   }, [load]);
 
   async function handleLikeToggle(postId: string, liked: boolean) {
@@ -145,18 +149,21 @@ export function PublicProfileView({ username }: Props) {
           <div className="space-y-6">
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-                {profile.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={profile.avatar_url}
-                    alt=""
-                    className="h-28 w-28 shrink-0 rounded-full object-cover ring-4 ring-[var(--toq-lime-light)]/40"
-                  />
-                ) : (
-                  <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full bg-[var(--toq-sky)] text-4xl font-bold text-white">
-                    {profile.username.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <div className="flex shrink-0 flex-col items-center sm:items-start">
+                  {profile.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={profile.avatar_url}
+                      alt=""
+                      className="h-28 w-28 rounded-full object-cover ring-4 ring-[var(--toq-lime-light)]/40"
+                    />
+                  ) : (
+                    <div className="flex h-28 w-28 items-center justify-center rounded-full bg-[var(--toq-sky)] text-4xl font-bold text-white">
+                      {profile.username.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <ProfilePresenceBadge lastSeenAt={profile.last_seen_at} />
+                </div>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-3">

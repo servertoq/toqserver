@@ -140,12 +140,19 @@ export function PublicProfileFriendActions({
   return (
     <div className="flex flex-col items-start gap-2">
       <div className="flex flex-wrap items-center gap-2">
+        <Link
+          href={`/inicio/mensagens?chat=${encodeURIComponent(profileUsername)}`}
+          className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-sm font-bold text-[var(--toq-navy)]"
+        >
+          Conversar
+        </Link>
+
         {relation.status === "none" && (
           <button
             type="button"
             disabled={acting}
             onClick={handleAddFriend}
-            className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-sm font-bold text-[var(--toq-navy)] disabled:opacity-50"
+            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-[var(--toq-navy)] disabled:opacity-50"
           >
             {acting ? "Enviando…" : "Adicionar amigo"}
           </button>
@@ -183,12 +190,6 @@ export function PublicProfileFriendActions({
             <span className="rounded-lg bg-[var(--toq-sky)]/10 px-3 py-1.5 text-xs font-bold text-[var(--toq-sky)]">
               Amigo
             </span>
-            <Link
-              href={`/inicio/conversar/${encodeURIComponent(profileUsername)}`}
-              className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-sm font-bold text-[var(--toq-navy)]"
-            >
-              Conversar
-            </Link>
             <button
               type="button"
               disabled={acting}
