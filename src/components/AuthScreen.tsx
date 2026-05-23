@@ -7,6 +7,7 @@ import { LoginPanelBackground } from "@/components/LoginPanelBackground";
 import { BannerTennisBalls } from "@/components/BannerTennisBalls";
 import { BannerOverlay } from "@/components/BannerOverlay";
 import { createClient } from "@/lib/supabase/client";
+import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
 type View = "login" | "register" | "forgot";
 type Gender = "masculino" | "feminino" | "outro";
@@ -29,7 +30,7 @@ function normalizeUsername(value: string) {
 export function AuthScreen() {
   const supabase = createClient();
   const [view, setView] = useState<View>("login");
-  const [loading, setLoading] = useState(false);
+  const { isSubmitting: loading, guard } = useSingleSubmit();
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
 
@@ -77,9 +78,9 @@ export function AuthScreen() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     resetMessages();
-    setLoading(true);
+    if (loading) return;
 
-    try {
+    await guard(async () => {
       const emailToUse = await resolveEmailForLogin(identifier);
       if (!emailToUse) {
         setMessage({ type: "error", text: "E-mail ou nome de usuário não encontrado." });
@@ -97,16 +98,14 @@ export function AuthScreen() {
       }
 
       window.location.href = "/inicio";
-    } finally {
-      setLoading(false);
-    }
+    });
   }
 
   async function handleGoogleLogin() {
     resetMessages();
-    setLoading(true);
+    if (loading) return;
 
-    try {
+    await guard(async () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -117,17 +116,15 @@ export function AuthScreen() {
       if (error) {
         setMessage({ type: "error", text: "Não foi possível conectar com o Google." });
       }
-    } finally {
-      setLoading(false);
-    }
+    });
   }
 
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault();
     resetMessages();
-    setLoading(true);
+    if (loading) return;
 
-    try {
+    await guard(async () => {
       const { error } = await supabase.auth.resetPasswordForEmail(
         forgotEmail.trim().toLowerCase(),
         { redirectTo: `${window.location.origin}/auth/callback?next=/?reset=1` }
@@ -142,9 +139,7 @@ export function AuthScreen() {
         type: "success",
         text: "Enviamos um link de recuperação para o seu e-mail.",
       });
-    } finally {
-      setLoading(false);
-    }
+    });
   }
 
   function validateRegister(normalizedUsername: string): string | null {
@@ -196,9 +191,9 @@ export function AuthScreen() {
       setUsername(normalizedUsername);
     }
 
-    setLoading(true);
+    if (loading) return;
 
-    try {
+    await guard(async () => {
       const { data: available, error: usernameError } = await supabase.rpc(
         "is_username_available",
         { p_username: normalizedUsername }
@@ -262,9 +257,7 @@ export function AuthScreen() {
         text: "Cadastro realizado! Confirme seu e-mail para entrar.",
       });
       switchView("login");
-    } finally {
-      setLoading(false);
-    }
+    });
   }
 
   const showBannerPanel = view === "login" || view === "register";

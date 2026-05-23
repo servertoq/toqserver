@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
 export type FriendRelation =
   | { status: "none" }
@@ -24,7 +25,7 @@ export function PublicProfileFriendActions({
   const supabase = createClient();
   const [relation, setRelation] = useState<FriendRelation>({ status: "none" });
   const [loading, setLoading] = useState(true);
-  const [acting, setActing] = useState(false);
+  const { isSubmitting: acting, guard } = useSingleSubmit();
   const [message, setMessage] = useState<string | null>(null);
 
   const loadRelation = useCallback(async () => {
@@ -82,53 +83,52 @@ export function PublicProfileFriendActions({
   }, [loadRelation]);
 
   async function handleAddFriend() {
-    setActing(true);
+    if (acting) return;
     setMessage(null);
-    const { error } = await supabase.rpc("send_friend_request", {
-      p_addressee_id: profileId,
+    await guard(async () => {
+      const { error } = await supabase.rpc("send_friend_request", {
+        p_addressee_id: profileId,
+      });
+      if (error) {
+        setMessage(error.message || "Não foi possível enviar o pedido.");
+        return;
+      }
+      setMessage("Pedido de amizade enviado.");
+      await loadRelation();
     });
-    if (error) {
-      setMessage(error.message || "Não foi possível enviar o pedido.");
-      setActing(false);
-      return;
-    }
-    setMessage("Pedido de amizade enviado.");
-    await loadRelation();
-    setActing(false);
   }
 
   async function handleRespond(accept: boolean) {
-    if (relation.status !== "pending_received") return;
-    setActing(true);
+    if (relation.status !== "pending_received" || acting) return;
     setMessage(null);
-    const { error } = await supabase.rpc("respond_friend_request", {
-      p_request_id: relation.requestId,
-      p_accept: accept,
+    await guard(async () => {
+      const { error } = await supabase.rpc("respond_friend_request", {
+        p_request_id: relation.requestId,
+        p_accept: accept,
+      });
+      if (error) {
+        setMessage(error.message || "Não foi possível responder ao pedido.");
+        return;
+      }
+      setMessage(accept ? "Amizade aceita." : "Pedido recusado.");
+      await loadRelation();
     });
-    if (error) {
-      setMessage(error.message || "Não foi possível responder ao pedido.");
-      setActing(false);
-      return;
-    }
-    setMessage(accept ? "Amizade aceita." : "Pedido recusado.");
-    await loadRelation();
-    setActing(false);
   }
 
   async function handleUnfriend() {
-    setActing(true);
+    if (acting) return;
     setMessage(null);
-    const { error } = await supabase.rpc("remove_friendship", {
-      p_other_user_id: profileId,
+    await guard(async () => {
+      const { error } = await supabase.rpc("remove_friendship", {
+        p_other_user_id: profileId,
+      });
+      if (error) {
+        setMessage(error.message || "Não foi possível desfazer a amizade.");
+        return;
+      }
+      setMessage("Amizade desfeita.");
+      await loadRelation();
     });
-    if (error) {
-      setMessage(error.message || "Não foi possível desfazer a amizade.");
-      setActing(false);
-      return;
-    }
-    setMessage("Amizade desfeita.");
-    await loadRelation();
-    setActing(false);
   }
 
   if (loading) {

@@ -14,6 +14,7 @@ import { profilePath } from "@/lib/publicProfile";
 import type { FeedComment } from "@/types/feed";
 import { MentionTextarea } from "./MentionTextarea";
 import { PostBody } from "./PostBody";
+import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
 type Props = {
   postId: string;
@@ -34,7 +35,7 @@ export function CommentsPanel({
   const [comments, setComments] = useState<FeedComment[]>([]);
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
+  const { isSubmitting: sending, guard } = useSingleSubmit();
   const [expanded, setExpanded] = useState(defaultOpen || !!highlightCommentId);
   const [replyTo, setReplyTo] = useState<FeedComment | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -65,29 +66,30 @@ export function CommentsPanel({
     const trimmed = body.trim();
     if (!trimmed) return;
 
-    setSending(true);
+    if (sending) return;
     setSubmitError(null);
-    const { error } = await createComment(supabase, {
-      postId,
-      authorId: currentUserId,
-      body: trimmed,
-      parentId: replyTo?.id ?? null,
+
+    await guard(async () => {
+      const { error } = await createComment(supabase, {
+        postId,
+        authorId: currentUserId,
+        body: trimmed,
+        parentId: replyTo?.id ?? null,
+      });
+
+      if (error) {
+        setSubmitError(
+          error.message ||
+            "Não foi possível enviar. Confirme se a migration 012_comment_replies_likes_mentions.sql foi aplicada no Supabase."
+        );
+        return;
+      }
+
+      setBody("");
+      setReplyTo(null);
+      await loadComments();
+      onCommentAdded();
     });
-
-    if (error) {
-      setSubmitError(
-        error.message ||
-          "Não foi possível enviar. Confirme se a migration 012_comment_replies_likes_mentions.sql foi aplicada no Supabase."
-      );
-      setSending(false);
-      return;
-    }
-
-    setBody("");
-    setReplyTo(null);
-    await loadComments();
-    onCommentAdded();
-    setSending(false);
   }
 
   function cancelReply() {

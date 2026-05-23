@@ -11,6 +11,7 @@ import {
 } from "@/lib/postMedia";
 import { visibilityOptions, type PostContext } from "@/lib/postVisibility";
 import type { PostType, PostVisibility } from "@/types/feed";
+import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
 type Props = {
   avatarUrl: string | null;
@@ -48,6 +49,7 @@ export function CreatePostBox({
   const [files, setFiles] = useState<File[]>([]);
   const imageRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
+  const { isSubmitting, guard } = useSingleSubmit();
 
   const visOptions = visibilityOptions(context);
 
@@ -89,30 +91,32 @@ export function CreatePostBox({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = body.trim();
-    if (!trimmed) return;
+    if (!trimmed || loading || isSubmitting) return;
 
-    await onSubmit({
-      body: trimmed,
-      postType,
-      title: postType === "event" ? title.trim() || null : null,
-      visibility,
-      eventDate: postType === "event" && eventDate ? eventDate : null,
-      eventTime: postType === "event" && eventTime ? eventTime : null,
-      files,
+    await guard(async () => {
+      await onSubmit({
+        body: trimmed,
+        postType,
+        title: postType === "event" ? title.trim() || null : null,
+        visibility,
+        eventDate: postType === "event" && eventDate ? eventDate : null,
+        eventTime: postType === "event" && eventTime ? eventTime : null,
+        files,
+      });
+
+      setBody("");
+      setTitle("");
+      setEventDate("");
+      setEventTime("");
+      setPostType("player");
+      setVisibility(context === "community" ? "private" : "public");
+      revokePreviews(previews);
+      setPreviews([]);
+      setFiles([]);
+      setMediaError(null);
+      if (imageRef.current) imageRef.current.value = "";
+      if (videoRef.current) videoRef.current.value = "";
     });
-
-    setBody("");
-    setTitle("");
-    setEventDate("");
-    setEventTime("");
-    setPostType("player");
-    setVisibility(context === "community" ? "private" : "public");
-    revokePreviews(previews);
-    setPreviews([]);
-    setFiles([]);
-    setMediaError(null);
-    if (imageRef.current) imageRef.current.value = "";
-    if (videoRef.current) videoRef.current.value = "";
   }
 
   return (
@@ -274,10 +278,10 @@ export function CreatePostBox({
           />
           <button
             type="submit"
-            disabled={loading || !body.trim()}
+            disabled={loading || isSubmitting || !body.trim()}
             className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-sm font-bold text-[var(--toq-navy)] transition hover:bg-[var(--toq-lime-bright)] disabled:opacity-50"
           >
-            {loading ? "Publicando…" : "Publicar"}
+            {loading || isSubmitting ? "Publicando…" : "Publicar"}
           </button>
         </div>
       </div>

@@ -22,6 +22,9 @@ import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { PostCard } from "@/components/feed/PostCard";
 import { CommunityModerationPanel } from "./CommunityModerationPanel";
 import { CommunitySettingsForm } from "./CommunitySettingsForm";
+import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { addressFromRow, formatAddressLines, hasAddress } from "@/lib/address";
+import { formatOperatingHoursSummary, parseOperatingHours } from "@/lib/operatingHours";
 
 export function CommunityDetailPage({
   slug,
@@ -44,7 +47,7 @@ export function CommunityDetailPage({
   const [pendingInviteId, setPendingInviteId] = useState<string | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [posting, setPosting] = useState(false);
+  const { isSubmitting: posting, guard: guardPost } = useSingleSubmit();
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -224,11 +227,10 @@ export function CommunityDetailPage({
     eventTime: string | null;
     files: File[];
   }) {
-    if (!community || !isMember) return;
-    setPosting(true);
-    setError(null);
+    if (!community || !isMember || posting) return;
 
-    try {
+    await guardPost(async () => {
+      setError(null);
       const { error: createErr } = await createPostWithMedia(supabase, {
         authorId: profile.id,
         body: data.body,
@@ -247,9 +249,7 @@ export function CommunityDetailPage({
       }
 
       await load();
-    } finally {
-      setPosting(false);
-    }
+    });
   }
 
   async function handleLikeToggle(postId: string, liked: boolean) {
@@ -284,6 +284,10 @@ export function CommunityDetailPage({
   }
 
   const full = community.member_count >= 1000;
+  const isClubPage = (community.kind ?? groupKind) === "club";
+  const clubAddress = addressFromRow(community);
+  const clubHours = parseOperatingHours(community.operating_hours);
+  const showClubInfo = isMember && isClubPage;
 
   return (
     <>
@@ -317,6 +321,34 @@ export function CommunityDetailPage({
                   {groupVisibilityLabel(community.kind ?? groupKind, community.is_private)}
                   {myRole && ` · ${memberRoleLabel(myRole)}`}
                 </p>
+                {showClubInfo && (
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    {hasAddress(clubAddress) && (
+                      <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--toq-text-muted)]">
+                          Endereço
+                        </p>
+                        <address className="mt-1 space-y-0.5 text-xs not-italic text-[var(--toq-navy)]">
+                          {formatAddressLines(clubAddress).map((line) => (
+                            <span key={line} className="block">
+                              {line}
+                            </span>
+                          ))}
+                        </address>
+                      </div>
+                    )}
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--toq-text-muted)]">
+                          Horários
+                        </p>
+                        <ul className="mt-1 space-y-0.5 text-xs text-[var(--toq-navy)]">
+                          {formatOperatingHoursSummary(clubHours).map((line) => (
+                            <li key={line}>{line}</li>
+                          ))}
+                        </ul>
+                      </div>
+                  </div>
+                )}
               </div>
               <div className="flex flex-wrap gap-2">
                 {isOwner(myRole) && (
@@ -468,6 +500,7 @@ export function CommunityDetailPage({
       {showSettings && (
         <CommunitySettingsForm
           community={community}
+          groupKind={groupKind}
           onSaved={load}
           onClose={() => setShowSettings(false)}
         />

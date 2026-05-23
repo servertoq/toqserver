@@ -19,6 +19,7 @@ import {
 } from "@/lib/messages";
 import { profilePath } from "@/lib/publicProfile";
 import type { DmConversation, DmMessage, MessagesTab } from "@/types/messages";
+import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
 export type MessagesInboxProps = {
   variant: "popup" | "page";
@@ -51,7 +52,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
   const [draft, setDraft] = useState("");
   const [loadingList, setLoadingList] = useState(true);
   const [loadingChat, setLoadingChat] = useState(false);
-  const [sending, setSending] = useState(false);
+  const { isSubmitting: sending, guard: guardSend } = useSingleSubmit();
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -247,19 +248,20 @@ export function MessagesInbox(props: MessagesInboxProps) {
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!activeId || !draft.trim() || sending) return;
-    setSending(true);
-    setError(null);
-    const { error: sendErr } = await sendMessage(supabase, activeId, profile.id, draft);
-    if (sendErr) {
-      setError(sendErr);
-      setSending(false);
-      return;
-    }
-    setDraft("");
-    setMessages(await fetchMessages(supabase, activeId));
-    await loadList({ silent: true });
-    setSending(false);
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+
+    const text = draft.trim();
+    await guardSend(async () => {
+      setError(null);
+      const { error: sendErr } = await sendMessage(supabase, activeId, profile.id, text);
+      if (sendErr) {
+        setError(sendErr);
+        return;
+      }
+      setDraft("");
+      setMessages(await fetchMessages(supabase, activeId));
+      await loadList({ silent: true });
+      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    });
   }
 
   async function handleDelete() {

@@ -12,6 +12,7 @@ import { createPostWithMedia, POST_SELECT } from "@/lib/posts";
 import { CreatePostBox } from "./CreatePostBox";
 import { FeedTopBar } from "./FeedTopBar";
 import { PostCard } from "./PostCard";
+import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
 export function FeedPage() {
   const supabase = createClient();
@@ -21,7 +22,7 @@ export function FeedPage() {
   const highlightCommentId = searchParams.get("comment");
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [posting, setPosting] = useState(false);
+  const { isSubmitting: posting, guard: guardPost } = useSingleSubmit();
   const [error, setError] = useState<string | null>(null);
 
   const loadFeed = useCallback(async () => {
@@ -102,11 +103,10 @@ export function FeedPage() {
     eventTime: string | null;
     files: File[];
   }) {
-    if (!profile) return;
-    setPosting(true);
-    setError(null);
+    if (!profile || posting) return;
 
-    try {
+    await guardPost(async () => {
+      setError(null);
       const { error: createErr } = await createPostWithMedia(supabase, {
         authorId: profile.id,
         body: data.body,
@@ -125,9 +125,7 @@ export function FeedPage() {
       }
 
       await loadFeed();
-    } finally {
-      setPosting(false);
-    }
+    });
   }
 
   async function handleLikeToggle(postId: string, liked: boolean) {

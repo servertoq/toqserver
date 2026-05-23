@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { mapPostRow } from "@/lib/feed";
 import { formatAge, formatMemberSince, genderLabel, profilePath } from "@/lib/publicProfile";
+import { addressFromRow, formatAddressLines, hasAddress } from "@/lib/address";
 import { POST_SELECT } from "@/lib/posts";
 import type { GenderType } from "@/lib/profile";
 import type { FeedPost } from "@/types/feed";
@@ -61,6 +62,7 @@ export function PublicProfileView({ username }: Props) {
       post_count: Number(stat?.post_count ?? 0),
       friend_count: Number(stat?.friend_count ?? 0),
       last_seen_at: row.last_seen_at ?? null,
+      address: addressFromRow(row),
     });
 
     const { data: rawPosts, error: postsErr } = await supabase
@@ -209,6 +211,19 @@ export function PublicProfileView({ username }: Props) {
                       </dd>
                     </div>
                   </dl>
+
+                  {hasAddress(profile.address) && (
+                    <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                      <p className="text-xs font-semibold text-[var(--toq-navy)]">Localização</p>
+                      <address className="mt-1 space-y-0.5 text-sm not-italic leading-relaxed text-[var(--toq-text)]">
+                        {formatAddressLines(profile.address).map((line) => (
+                          <span key={line} className="block">
+                            {line}
+                          </span>
+                        ))}
+                      </address>
+                    </div>
+                  )}
 
                   {profile.bio ? (
                     <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-[var(--toq-text)]">

@@ -1,3 +1,4 @@
+import type { AddressFields } from "@/lib/address";
 import type { GenderType } from "@/lib/profile";
 
 export type PublicProfile = {
@@ -11,4 +12,5 @@ export type PublicProfile = {
   post_count: number;
   friend_count: number;
   last_seen_at: string | null;
+  address: AddressFields;
 };

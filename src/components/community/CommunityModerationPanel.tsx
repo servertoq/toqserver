@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { memberRoleLabel, sortMembers } from "@/lib/community";
+import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { canExpelMember, memberRoleLabel, sortMembers } from "@/lib/community";
 import type { CommunityGroupKind, CommunityInvite, CommunityJoinRequest, CommunityMember, CommunityMemberRole } from "@/types/community";
 
 type Props = {
@@ -22,8 +23,10 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
   const [pendingInvites, setPendingInvites] = useState<CommunityInvite[]>([]);
   const [inviteUsername, setInviteUsername] = useState("");
   const [inviteMessage, setInviteMessage] = useState<string | null>(null);
+  const [kickMessage, setKickMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
+  const { isSubmitting: inviting, guard: guardInvite } = useSingleSubmit();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -135,32 +138,48 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
       return;
     }
 
-    setActionId("invite");
+    if (inviting) return;
     setInviteMessage(null);
-    const { error } = await supabase.rpc("invite_community_member_by_username", {
-      p_community_id: communityId,
-      p_username: trimmed,
-    });
 
-    if (error) {
-      setInviteMessage(error.message);
-    } else {
-      setInviteUsername("");
-      setInviteMessage(`Convite enviado para @${trimmed}. O jogador precisa aceitar para entrar.`);
-      await load();
-      onChanged();
-    }
-    setActionId(null);
+    await guardInvite(async () => {
+      setActionId("invite");
+      const { error } = await supabase.rpc("invite_community_member_by_username", {
+        p_community_id: communityId,
+        p_username: trimmed,
+      });
+
+      if (error) {
+        setInviteMessage(error.message);
+      } else {
+        setInviteUsername("");
+        setInviteMessage(`Convite enviado para @${trimmed}. O jogador precisa aceitar para entrar.`);
+        await load();
+        onChanged();
+      }
+      setActionId(null);
+    });
   }
 
-  async function kickMember(userId: string) {
-    if (!confirm(`Remover este membro do ${groupLabel}?`)) return;
+  async function kickMember(userId: string, username: string) {
+    if (
+      !confirm(
+        `Expulsar @${username} deste ${groupLabel}?\n\nAs publicações dele aqui serão excluídas permanentemente.`
+      )
+    ) {
+      return;
+    }
+    setKickMessage(null);
     setActionId(userId);
-    await supabase.rpc("remove_community_member", {
+    const { error } = await supabase.rpc("remove_community_member", {
       p_community_id: communityId,
       p_user_id: userId,
     });
     setActionId(null);
+    if (error) {
+      setKickMessage(error.message);
+      return;
+    }
+    setKickMessage(`@${username} foi expulso e as publicações dele neste ${groupLabel} foram removidas.`);
     await load();
     onChanged();
   }
@@ -232,10 +251,10 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
             </label>
             <button
               type="submit"
-              disabled={actionId === "invite"}
+              disabled={inviting || actionId === "invite"}
               className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-xs font-bold text-[var(--toq-navy)] disabled:opacity-50"
             >
-              {actionId === "invite" ? "Enviando…" : "Enviar convite"}
+              {inviting || actionId === "invite" ? "Enviando…" : "Enviar convite"}
             </button>
           </form>
           <p className="text-[11px] text-[var(--toq-text-muted)]">
@@ -293,7 +312,11 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
           )}
         </ul>
       ) : (
-        <ul className="mt-4 space-y-2">
+        <div className="mt-4 space-y-2">
+          {kickMessage && (
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-[var(--toq-navy)]">{kickMessage}</p>
+          )}
+          <ul className="space-y-2">
           {members.map((m) => (
             <li
               key={m.user_id}
@@ -328,20 +351,21 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
                     Remover mod.
                   </button>
                 )}
-                {m.role !== "owner" && (
+                {canExpelMember(myRole, m.role) && (
                   <button
                     type="button"
                     disabled={actionId === m.user_id}
-                    onClick={() => kickMember(m.user_id)}
+                    onClick={() => kickMember(m.user_id, m.profile.username)}
                     className="text-xs font-semibold text-red-600"
                   >
-                    Expulsar
+                    {actionId === m.user_id ? "Expulsando…" : "Expulsar"}
                   </button>
                 )}
               </div>
             </li>
           ))}
-        </ul>
+          </ul>
+        </div>
       )}
     </section>
   );

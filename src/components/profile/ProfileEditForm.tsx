@@ -8,6 +8,9 @@ import {
   validateUsername,
   type GenderType,
 } from "@/lib/profile";
+import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { type AddressFields, EMPTY_ADDRESS, addressToDbPayload } from "@/lib/address";
+import { AddressForm } from "@/components/shared/AddressForm";
 
 export type EditableProfile = {
   id: string;
@@ -18,6 +21,7 @@ export type EditableProfile = {
   gender: GenderType;
   bio: string;
   created_at: string;
+  address: AddressFields;
 };
 
 type Props = {
@@ -33,9 +37,10 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
   const [birthDate, setBirthDate] = useState(initial.birth_date);
   const [gender, setGender] = useState<GenderType>(initial.gender);
   const [bio, setBio] = useState(initial.bio ?? "");
+  const [address, setAddress] = useState<AddressFields>(initial.address ?? EMPTY_ADDRESS);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(initial.avatar_url);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [saving, setSaving] = useState(false);
+  const { isSubmitting: saving, guard } = useSingleSubmit();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -92,9 +97,9 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
 
     const trimmedBio = bio.slice(0, 1000);
 
-    setSaving(true);
+    if (saving) return;
 
-    try {
+    await guard(async () => {
       const usernameChanged =
         normalized.toLowerCase() !== initial.username.toLowerCase();
 
@@ -125,6 +130,7 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
           gender,
           bio: trimmedBio,
           avatar_url: avatarUrl,
+          ...addressToDbPayload(address),
         })
         .eq("id", initial.id);
 
@@ -140,9 +146,7 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
       setSuccess("Perfil atualizado com sucesso.");
       setAvatarFile(null);
       onSaved?.();
-    } finally {
-      setSaving(false);
-    }
+    });
   }
 
   return (
@@ -235,6 +239,8 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
           ))}
         </div>
       </fieldset>
+
+      <AddressForm value={address} onChange={setAddress} />
 
       <label className="block">
         <span className="text-xs font-semibold text-[var(--toq-navy)]">Bio</span>

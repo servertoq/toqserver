@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
 type FriendRow = {
   friend_id: string;
@@ -13,7 +14,7 @@ export function FriendsPanel({ userId }: { userId: string }) {
   const [friends, setFriends] = useState<FriendRow[]>([]);
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState(false);
+  const { isSubmitting: adding, guard } = useSingleSubmit();
   const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -51,43 +52,41 @@ export function FriendsPanel({ userId }: { userId: string }) {
       return;
     }
 
-    setAdding(true);
+    if (adding) return;
     setMessage(null);
 
-    const { data: profiles, error: findErr } = await supabase
-      .from("profiles")
-      .select("id, username")
-      .ilike("username", trimmed)
-      .limit(2);
+    await guard(async () => {
+      const { data: profiles, error: findErr } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .ilike("username", trimmed)
+        .limit(2);
 
-    const profile = profiles?.length === 1 ? profiles[0] : null;
+      const profile = profiles?.length === 1 ? profiles[0] : null;
 
-    if (findErr || !profile) {
-      setMessage("Usuário não encontrado.");
-      setAdding(false);
-      return;
-    }
+      if (findErr || !profile) {
+        setMessage("Usuário não encontrado.");
+        return;
+      }
 
-    if (profile.id === userId) {
-      setMessage("Você não pode adicionar a si mesmo.");
-      setAdding(false);
-      return;
-    }
+      if (profile.id === userId) {
+        setMessage("Você não pode adicionar a si mesmo.");
+        return;
+      }
 
-    const { error: requestErr } = await supabase.rpc("send_friend_request", {
-      p_addressee_id: profile.id,
+      const { error: requestErr } = await supabase.rpc("send_friend_request", {
+        p_addressee_id: profile.id,
+      });
+
+      if (requestErr) {
+        setMessage(requestErr.message || "Não foi possível enviar o pedido.");
+        return;
+      }
+
+      setUsername("");
+      setMessage(`Pedido de amizade enviado para @${profile.username}.`);
+      await load();
     });
-
-    if (requestErr) {
-      setMessage(requestErr.message || "Não foi possível enviar o pedido.");
-      setAdding(false);
-      return;
-    }
-
-    setUsername("");
-    setMessage(`Pedido de amizade enviado para @${profile.username}.`);
-    await load();
-    setAdding(false);
   }
 
   async function handleRemove(friendId: string) {

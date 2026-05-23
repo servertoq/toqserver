@@ -7,6 +7,15 @@ import { useAppProfile } from "@/components/app/AppShell";
 import { COMMUNITY_GROUP_CONFIG, groupDetailHref } from "@/lib/communityGroup";
 import type { CommunityGroupKind } from "@/types/community";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
+import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { type AddressFields, EMPTY_ADDRESS, addressToDbPayload } from "@/lib/address";
+import {
+  type DayHours,
+  defaultOperatingHours,
+  operatingHoursToJson,
+} from "@/lib/operatingHours";
+import { AddressForm } from "@/components/shared/AddressForm";
+import { OperatingHoursForm } from "@/components/shared/OperatingHoursForm";
 
 export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: CommunityGroupKind }) {
   const config = COMMUNITY_GROUP_CONFIG[groupKind];
@@ -21,7 +30,9 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
   const [isPrivate, setIsPrivate] = useState(isClub);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [address, setAddress] = useState<AddressFields>(EMPTY_ADDRESS);
+  const [hours, setHours] = useState<DayHours[]>(defaultOperatingHours);
+  const { isSubmitting: loading, guard } = useSingleSubmit();
   const [error, setError] = useState<string | null>(null);
 
   function handleCover(list: FileList | null) {
@@ -45,10 +56,10 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
       return;
     }
 
-    setLoading(true);
+    if (loading) return;
     setError(null);
 
-    try {
+    await guard(async () => {
       const { data: slug, error: slugErr } = await supabase.rpc("generate_community_slug", {
         p_name: trimmedName,
       });
@@ -58,22 +69,35 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
         return;
       }
 
-      const { data: community, error: insertErr } = await supabase
-        .from("communities")
-        .insert({
-          name: trimmedName,
-          slug,
-          description: trimmedDesc,
-          is_private: isClub ? true : isPrivate,
-          kind: groupKind,
-          created_by: profile.id,
-          accent_color: "#437df4",
-        })
-        .select("id, slug")
-        .single();
+      const addrDb = isClub ? addressToDbPayload(address) : null;
+      const { data: created, error: insertErr } = await supabase.rpc("create_community", {
+        p_name: trimmedName,
+        p_slug: slug,
+        p_description: trimmedDesc,
+        p_is_private: isClub ? true : isPrivate,
+        p_kind: groupKind,
+        p_accent_color: "#437df4",
+        ...(isClub && addrDb
+          ? {
+              p_address_zip: addrDb.address_zip,
+              p_address_street: addrDb.address_street,
+              p_address_number: addrDb.address_number,
+              p_address_neighborhood: addrDb.address_neighborhood,
+              p_address_complement: addrDb.address_complement,
+              p_address_city: addrDb.address_city,
+              p_address_state: addrDb.address_state,
+              p_operating_hours: operatingHoursToJson(hours),
+            }
+          : {}),
+      });
 
-      if (insertErr || !community) {
-        setError(insertErr?.message ?? "Não foi possível criar a comunidade.");
+      const community = Array.isArray(created) ? created[0] : created;
+
+      if (insertErr || !community?.id) {
+        setError(
+          insertErr?.message ??
+            "Não foi possível criar. Execute as migrations 020 e 021 no Supabase."
+        );
         return;
       }
 
@@ -94,9 +118,7 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
       }
 
       router.push(groupDetailHref(groupKind, community.slug));
-    } finally {
-      setLoading(false);
-    }
+    });
   }
 
   return (
@@ -203,9 +225,13 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
           )}
 
           {isClub && (
-            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-[var(--toq-text-muted)]">
-              Este clube será privado. Entrada apenas com aprovação ou convite de admin/moderador.
-            </p>
+            <>
+              <AddressForm value={address} onChange={setAddress} />
+              <OperatingHoursForm value={hours} onChange={setHours} />
+              <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-[var(--toq-text-muted)]">
+                Este clube será privado. Entrada apenas com aprovação ou convite de admin/moderador.
+              </p>
+            </>
           )}
 
           <button

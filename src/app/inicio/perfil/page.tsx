@@ -10,6 +10,7 @@ import Link from "next/link";
 import { FriendsPanel } from "@/components/profile/FriendsPanel";
 import { ProfileEditForm, type EditableProfile } from "@/components/profile/ProfileEditForm";
 import { profilePath } from "@/lib/publicProfile";
+import { addressFromRow } from "@/lib/address";
 
 export default function PerfilPage() {
   const appProfile = useAppProfile();
@@ -20,7 +21,9 @@ export default function PerfilPage() {
   const load = useCallback(async () => {
     const { data } = await supabase
       .from("profiles")
-      .select("id, username, email, avatar_url, birth_date, gender, bio, created_at")
+      .select(
+        "id, username, email, avatar_url, birth_date, gender, bio, created_at, address_zip, address_street, address_number, address_neighborhood, address_complement, address_city, address_state"
+      )
       .eq("id", appProfile.id)
       .single();
 
@@ -30,6 +33,7 @@ export default function PerfilPage() {
         id: data.id ?? appProfile.id,
         gender: data.gender as GenderType,
         bio: data.bio ?? "",
+        address: addressFromRow(data),
       });
     } else {
       setProfile(null);

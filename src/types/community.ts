@@ -1,6 +1,18 @@
+import type { DayHours } from "@/lib/operatingHours";
+
 export type CommunityGroupKind = "community" | "club";
 
 export type CommunityMemberRole = "owner" | "moderator" | "member";
+
+export type CommunityAddress = {
+  address_zip: string | null;
+  address_street: string | null;
+  address_number: string | null;
+  address_neighborhood: string | null;
+  address_complement: string | null;
+  address_city: string | null;
+  address_state: string | null;
+};
 
 export type Community = {
   id: string;
@@ -14,7 +26,8 @@ export type Community = {
   accent_color: string;
   created_by: string | null;
   created_at: string;
-};
+  operating_hours?: DayHours[] | unknown;
+} & CommunityAddress;
 
 export type CommunityInvite = {
   id: string;

@@ -18,6 +18,17 @@ export function isOwner(role: CommunityMemberRole | null | undefined) {
   return role === "owner";
 }
 
+/** Admin pode expulsar moderadores e membros; moderador só membros comuns. */
+export function canExpelMember(
+  actorRole: CommunityMemberRole | null | undefined,
+  targetRole: CommunityMemberRole
+): boolean {
+  if (!actorRole || targetRole === "owner") return false;
+  if (actorRole === "owner") return true;
+  if (actorRole === "moderator") return targetRole === "member";
+  return false;
+}
+
 export type CommunityWithMembership = Community & {
   my_role: CommunityMemberRole | null;
   pending_request: boolean;
