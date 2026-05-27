@@ -22,6 +22,8 @@ export type Community = {
   cover_image_url: string | null;
   is_private: boolean;
   kind: CommunityGroupKind;
+  shop_enabled: boolean;
+  shop_whatsapp: string | null;
   member_count: number;
   accent_color: string;
   created_by: string | null;

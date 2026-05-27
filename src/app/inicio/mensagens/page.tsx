@@ -9,6 +9,7 @@ function MensagensPageInner() {
   const searchParams = useSearchParams();
   const chat = searchParams.get("chat");
   const conversationId = searchParams.get("c");
+  const communityId = searchParams.get("g");
 
   return (
     <main className={`${appContentClass} !py-4 md:!py-6`}>
@@ -16,6 +17,7 @@ function MensagensPageInner() {
         variant="page"
         initialUsername={chat}
         initialConversationId={conversationId}
+        initialCommunityId={communityId}
       />
     </main>
   );

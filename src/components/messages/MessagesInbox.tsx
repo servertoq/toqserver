@@ -6,11 +6,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAppProfile } from "@/components/app/AppShell";
 import { createClient } from "@/lib/supabase/client";
 import {
+  conversationAvatar,
+  conversationHref,
+  conversationTitle,
   deleteConversation,
   fetchConversations,
   fetchMessages,
   findProfileByUsername,
   formatMessageTime,
+  getOrCreateCommunityConversation,
   getOrCreateConversation,
   markConversationRead,
   searchProfilesForMessages,
@@ -18,16 +22,24 @@ import {
   type MessageSearchProfile,
 } from "@/lib/messages";
 import { profilePath } from "@/lib/publicProfile";
-import type { DmConversation, DmMessage, MessagesTab } from "@/types/messages";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import {
+  isCommunityConversation,
+  isDirectConversation,
+  type DmConversation,
+  type DmMessage,
+  type MessagesTab,
+} from "@/types/messages";
 
 export type MessagesInboxProps = {
   variant: "popup" | "page";
   onClose?: () => void;
   initialUsername?: string | null;
   initialConversationId?: string | null;
+  initialCommunityId?: string | null;
   onConversationsChange?: (list: DmConversation[]) => void;
   onInitialUsernameHandled?: () => void;
+  onInitialCommunityHandled?: () => void;
 };
 
 export function MessagesInbox(props: MessagesInboxProps) {
@@ -36,8 +48,10 @@ export function MessagesInbox(props: MessagesInboxProps) {
     onClose,
     initialUsername,
     initialConversationId,
+    initialCommunityId,
     onConversationsChange,
     onInitialUsernameHandled,
+    onInitialCommunityHandled,
   } = props;
   const isPage = variant === "page";
   const supabase = createClient();
@@ -68,21 +82,33 @@ export function MessagesInbox(props: MessagesInboxProps) {
     [conversations, activeId]
   );
 
-  const filtered = useMemo(
-    () => conversations.filter((c) => (tab === "friends" ? c.is_friend : !c.is_friend)),
-    [conversations, tab]
-  );
+  const filtered = useMemo(() => {
+    if (tab === "groups") {
+      return conversations.filter((c) => c.kind === "community");
+    }
+    return conversations.filter(
+      (c) =>
+        c.kind === "direct" && (tab === "friends" ? c.is_friend : !c.is_friend)
+    );
+  }, [conversations, tab]);
 
   const normalizedSearch = searchQuery.trim().replace(/^@/, "").toLowerCase();
   const isSearching = normalizedSearch.length > 0;
 
   const searchConversations = useMemo(() => {
     if (!isSearching) return filtered;
-    return conversations.filter((c) => c.other_user.username.toLowerCase().includes(normalizedSearch));
+    return conversations.filter((c) =>
+      conversationTitle(c).toLowerCase().includes(normalizedSearch)
+    );
   }, [conversations, filtered, isSearching, normalizedSearch]);
 
   const matchingConversationUserIds = useMemo(
-    () => new Set(searchConversations.map((c) => c.other_user.id)),
+    () =>
+      new Set(
+        searchConversations
+          .filter(isDirectConversation)
+          .map((c) => c.other_user.id)
+      ),
     [searchConversations]
   );
 
@@ -91,8 +117,13 @@ export function MessagesInbox(props: MessagesInboxProps) {
     [matchingConversationUserIds, searchResults]
   );
 
-  const friendsCount = conversations.filter((c) => c.is_friend).length;
-  const pendingCount = conversations.filter((c) => !c.is_friend).length;
+  const friendsCount = conversations.filter(
+    (c) => c.kind === "direct" && c.is_friend
+  ).length;
+  const pendingCount = conversations.filter(
+    (c) => c.kind === "direct" && !c.is_friend
+  ).length;
+  const groupsCount = conversations.filter((c) => c.kind === "community").length;
   const listUnread = conversations.filter((c) => c.is_unread).length;
 
   const patchConversationRead = useCallback(
@@ -120,13 +151,16 @@ export function MessagesInbox(props: MessagesInboxProps) {
 
   const refreshMessages = useCallback(
     async (conversationId: string) => {
-      const msgs = await fetchMessages(supabase, conversationId);
+      const conv = conversations.find((c) => c.id === conversationId);
+      const msgs = await fetchMessages(supabase, conversationId, {
+        includeSenders: conv?.kind === "community",
+      });
       setMessages(msgs);
       await markConversationRead(supabase, conversationId);
       patchConversationRead(conversationId);
       await loadList({ silent: true });
     },
-    [loadList, patchConversationRead, supabase]
+    [conversations, loadList, patchConversationRead, supabase]
   );
 
   const openConversation = useCallback(
@@ -145,9 +179,17 @@ export function MessagesInbox(props: MessagesInboxProps) {
 
       const list = conversations.length ? conversations : await loadList();
       const conv = list.find((c) => c.id === conversationId);
-      if (conv) setTab(preferredTab ?? (conv.is_friend ? "friends" : "pending"));
+      if (conv) {
+        if (conv.kind === "community") {
+          setTab("groups");
+        } else {
+          setTab(preferredTab ?? (conv.is_friend ? "friends" : "pending"));
+        }
+      }
 
-      const msgs = await fetchMessages(supabase, conversationId);
+      const msgs = await fetchMessages(supabase, conversationId, {
+        includeSenders: conv?.kind === "community",
+      });
       setMessages(msgs);
       patchConversationRead(conversationId);
       await markConversationRead(supabase, conversationId);
@@ -155,6 +197,24 @@ export function MessagesInbox(props: MessagesInboxProps) {
       setLoadingChat(false);
     },
     [activeId, conversations, isPage, loadList, messages.length, patchConversationRead, router, supabase]
+  );
+
+  const openWithCommunity = useCallback(
+    async (communityId: string) => {
+      setError(null);
+      const { id, error: createErr } = await getOrCreateCommunityConversation(
+        supabase,
+        communityId
+      );
+      if (createErr || !id) {
+        setError(createErr ?? "Não foi possível abrir o chat do grupo.");
+        return;
+      }
+
+      await loadList();
+      await openConversation(id, "groups");
+    },
+    [loadList, openConversation, supabase]
   );
 
   const openWithUsername = useCallback(
@@ -176,7 +236,10 @@ export function MessagesInbox(props: MessagesInboxProps) {
 
       const list = await loadList();
       const conv = list.find((c) => c.id === id);
-      await openConversation(id, conv?.is_friend ? "friends" : "pending");
+      await openConversation(
+        id,
+        conv && isDirectConversation(conv) ? (conv.is_friend ? "friends" : "pending") : undefined
+      );
     },
     [loadList, openConversation, profile.id, supabase]
   );
@@ -211,11 +274,25 @@ export function MessagesInbox(props: MessagesInboxProps) {
       void openConversation(initialConversationId);
       return;
     }
+    if (initialCommunityId) {
+      handledInitial.current = true;
+      void openWithCommunity(initialCommunityId).then(() => onInitialCommunityHandled?.());
+      return;
+    }
     if (initialUsername) {
       handledInitial.current = true;
       void openWithUsername(initialUsername).then(() => onInitialUsernameHandled?.());
     }
-  }, [initialConversationId, initialUsername, onInitialUsernameHandled, openConversation, openWithUsername]);
+  }, [
+    initialCommunityId,
+    initialConversationId,
+    initialUsername,
+    onInitialCommunityHandled,
+    onInitialUsernameHandled,
+    openConversation,
+    openWithCommunity,
+    openWithUsername,
+  ]);
 
   useEffect(() => {
     if (!activeId) return;
@@ -258,7 +335,11 @@ export function MessagesInbox(props: MessagesInboxProps) {
         return;
       }
       setDraft("");
-      setMessages(await fetchMessages(supabase, activeId));
+      setMessages(
+        await fetchMessages(supabase, activeId, {
+          includeSenders: activeConversation?.kind === "community",
+        })
+      );
       await loadList({ silent: true });
       scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
     });
@@ -266,7 +347,9 @@ export function MessagesInbox(props: MessagesInboxProps) {
 
   async function handleDelete() {
     if (!activeId || deleting) return;
-    const name = activeConversation?.other_user.username ?? "esta conversa";
+    if (!activeConversation || !isDirectConversation(activeConversation)) return;
+
+    const name = activeConversation.other_user.username;
     if (!window.confirm(`Excluir a conversa com @${name}? Todas as mensagens serão removidas.`)) return;
 
     setDeleting(true);
@@ -332,7 +415,14 @@ export function MessagesInbox(props: MessagesInboxProps) {
             isPage={isPage}
           />
           {!isSearching && (
-            <InboxTabs tab={tab} setTab={setTab} friendsCount={friendsCount} pendingCount={pendingCount} isPage={isPage} />
+            <InboxTabs
+              tab={tab}
+              setTab={setTab}
+              friendsCount={friendsCount}
+              pendingCount={pendingCount}
+              groupsCount={groupsCount}
+              isPage={isPage}
+            />
           )}
           {isSearching ? (
             <InboxSearchResults
@@ -363,7 +453,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
 
       {(isPage || popupChat) && (
         <section
-          className={`min-w-0 flex-1 flex-col bg-slate-50 ${isPage && !activeId ? "hidden md:flex" : popupChat || (isPage && activeId) ? "flex" : "hidden md:flex"}`}
+          className={`min-w-0 flex-1 flex-col ${isPage ? "bg-slate-50" : "bg-zinc-900"} ${isPage && !activeId ? "hidden md:flex" : popupChat || (isPage && activeId) ? "flex" : "hidden md:flex"}`}
         >
           {isPage && !activeId ? (
             <EmptyChatState />
@@ -375,23 +465,55 @@ export function MessagesInbox(props: MessagesInboxProps) {
                 onBack={handleBackToList}
                 onDelete={handleDelete}
                 deleting={deleting}
-                showDelete={isPage}
+                showDelete={
+                  isPage &&
+                  !!activeConversation &&
+                  isDirectConversation(activeConversation)
+                }
                 onClose={onClose}
                 onExpand={!isPage ? handleExpand : undefined}
               />
               {activeConversation && (
                 <div className={`shrink-0 border-b px-4 py-2 ${isPage ? "border-slate-200 bg-white" : "border-zinc-800 bg-zinc-900"}`}>
-                  <Link href={profilePath(activeConversation.other_user.username)} className={`text-xs font-semibold hover:underline ${isPage ? "text-[var(--toq-sky)]" : "text-[#0084ff]"}`}>
-                    Ver perfil
-                  </Link>
-                  {!activeConversation.is_friend && (
-                    <p className={`text-[11px] ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-500"}`}>
-                      Pendente — ao virarem amigos, a conversa vai para Amigos.
-                    </p>
+                  {isCommunityConversation(activeConversation) ? (
+                    <>
+                      {conversationHref(activeConversation) && (
+                        <Link
+                          href={conversationHref(activeConversation)!}
+                          className={`text-xs font-semibold hover:underline ${isPage ? "text-[var(--toq-sky)]" : "text-[#0084ff]"}`}
+                        >
+                          Ver {activeConversation.community.group_kind === "club" ? "clube" : "comunidade"}
+                        </Link>
+                      )}
+                      <p className={`text-[11px] ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-500"}`}>
+                        Chat do grupo — só membros podem enviar mensagens.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href={profilePath(activeConversation.other_user.username)}
+                        className={`text-xs font-semibold hover:underline ${isPage ? "text-[var(--toq-sky)]" : "text-[#0084ff]"}`}
+                      >
+                        Ver perfil
+                      </Link>
+                      {!activeConversation.is_friend && (
+                        <p className={`text-[11px] ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-500"}`}>
+                          Pendente — ao virarem amigos, a conversa vai para Amigos.
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
               )}
-              <MessageThread scrollRef={scrollRef} loading={loadingChat} messages={messages} profileId={profile.id} isPage={isPage} />
+              <MessageThread
+                scrollRef={scrollRef}
+                loading={loadingChat}
+                messages={messages}
+                profileId={profile.id}
+                isPage={isPage}
+                showSenderNames={activeConversation?.kind === "community"}
+              />
               <MessageComposer draft={draft} setDraft={setDraft} onSubmit={handleSend} sending={sending} isPage={isPage} />
             </>
           ) : null}
@@ -471,10 +593,24 @@ function ChatHeaderBar({
         <span className={`text-xl leading-none md:hidden ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>‹</span>
         {conversation && (
           <>
-            <ChatAvatar src={conversation.other_user.avatar_url} name={conversation.other_user.username} size="md" />
+            <ChatAvatar
+              src={conversationAvatar(conversation)}
+              name={conversationTitle(conversation)}
+              size="md"
+            />
             <span className="min-w-0">
-              <span className={`block truncate text-sm font-semibold ${isPage ? "text-[var(--toq-navy)]" : ""}`}>{conversation.other_user.username}</span>
-              <span className={`block text-[11px] ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>{conversation.is_friend ? "Amigo" : "Pendente"}</span>
+              <span className={`block truncate text-sm font-semibold ${isPage ? "text-[var(--toq-navy)]" : ""}`}>
+                {conversationTitle(conversation)}
+              </span>
+              <span className={`block text-[11px] ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>
+                {isCommunityConversation(conversation)
+                  ? conversation.community.group_kind === "club"
+                    ? "Chat do clube"
+                    : "Chat da comunidade"
+                  : conversation.is_friend
+                    ? "Amigo"
+                    : "Pendente"}
+              </span>
             </span>
           </>
         )}
@@ -505,18 +641,21 @@ function InboxTabs({
   setTab,
   friendsCount,
   pendingCount,
+  groupsCount,
   isPage,
 }: {
   tab: MessagesTab;
   setTab: (t: MessagesTab) => void;
   friendsCount: number;
   pendingCount: number;
+  groupsCount: number;
   isPage: boolean;
 }) {
   return (
-    <div className={`flex shrink-0 border-b px-2 ${isPage ? "border-slate-200 bg-white" : "border-zinc-700/80"}`}>
+    <div className={`flex shrink-0 border-b px-1 ${isPage ? "border-slate-200 bg-white" : "border-zinc-700/80"}`}>
       <TabButton active={tab === "friends"} onClick={() => setTab("friends")} label="Amigos" count={friendsCount} isPage={isPage} />
       <TabButton active={tab === "pending"} onClick={() => setTab("pending")} label="Pendentes" count={pendingCount} isPage={isPage} />
+      <TabButton active={tab === "groups"} onClick={() => setTab("groups")} label="Grupos" count={groupsCount} isPage={isPage} />
     </div>
   );
 }
@@ -669,11 +808,22 @@ function ConversationListItem({
   onSelect: () => void;
 }) {
   const unread = conv.is_unread;
-  const preview = conv.last_message
-    ? conv.last_message.sender_id === profileId
+  const title = conversationTitle(conv);
+  const preview = (() => {
+    if (!conv.last_message) {
+      return isCommunityConversation(conv) ? "Chat do grupo" : "Inicie a conversa";
+    }
+    if (isCommunityConversation(conv)) {
+      const who =
+        conv.last_message.sender_id === profileId
+          ? "Você"
+          : conv.last_message.sender_username ?? "Membro";
+      return `${who}: ${conv.last_message.body}`;
+    }
+    return conv.last_message.sender_id === profileId
       ? `Você: ${conv.last_message.body}`
-      : conv.last_message.body
-    : "Inicie a conversa";
+      : conv.last_message.body;
+  })();
 
   return (
     <li>
@@ -682,10 +832,10 @@ function ConversationListItem({
         onClick={onSelect}
         className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${selected ? "bg-[var(--toq-lime-light)]/20" : isPage ? "hover:bg-slate-50" : "hover:bg-zinc-800/80"}`}
       >
-        <ChatAvatar src={conv.other_user.avatar_url} name={conv.other_user.username} size="lg" />
+        <ChatAvatar src={conversationAvatar(conv)} name={title} size="lg" />
         <span className="min-w-0 flex-1">
           <span className={`block truncate text-[15px] ${unread ? "font-bold" : isPage ? "font-normal text-[var(--toq-navy)]" : "font-normal text-zinc-200"}`}>
-            {conv.other_user.username}
+            {title}
           </span>
           <span className={`mt-0.5 block truncate text-[13px] ${unread ? (isPage ? "font-semibold text-[var(--toq-navy)]" : "font-semibold text-zinc-300") : isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-500"}`}>
             {preview}
@@ -721,7 +871,11 @@ function ConversationList({
         <p className={`px-4 py-8 text-center text-sm ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>Carregando…</p>
       ) : items.length === 0 ? (
         <p className={`px-4 py-8 text-center text-sm ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>
-          {tab === "friends" ? "Nenhuma conversa com amigos." : "Nenhuma conversa pendente."}
+          {tab === "friends"
+            ? "Nenhuma conversa com amigos."
+            : tab === "pending"
+              ? "Nenhuma conversa pendente."
+              : "Nenhum chat de grupo. Entre em uma comunidade ou clube para conversar."}
         </p>
       ) : (
         <ul>
@@ -757,15 +911,17 @@ function MessageThread({
   messages,
   profileId,
   isPage,
+  showSenderNames,
 }: {
   scrollRef: React.RefObject<HTMLDivElement | null>;
   loading: boolean;
   messages: DmMessage[];
   profileId: string;
   isPage: boolean;
+  showSenderNames: boolean;
 }) {
   return (
-    <div ref={scrollRef} className={`min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3 ${isPage ? "bg-slate-50" : ""}`}>
+    <div ref={scrollRef} className={`min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3 ${isPage ? "bg-slate-50" : "bg-zinc-900"}`}>
       {loading && messages.length === 0 ? (
         <p className={`text-center text-sm ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>Carregando…</p>
       ) : messages.length === 0 ? (
@@ -774,7 +930,12 @@ function MessageThread({
         messages.map((msg) => {
           const mine = msg.sender_id === profileId;
           return (
-            <div key={msg.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+            <div key={msg.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
+              {showSenderNames && !mine && msg.sender?.username && (
+                <span className={`mb-0.5 px-1 text-[11px] font-semibold ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-500"}`}>
+                  {msg.sender.username}
+                </span>
+              )}
               <p className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm leading-relaxed md:max-w-[65%] ${mine ? (isPage ? "rounded-br-sm bg-[var(--toq-lime-light)] text-[var(--toq-navy)]" : "rounded-br-sm bg-[#0084ff] text-white") : isPage ? "rounded-bl-sm bg-white text-[var(--toq-navy)] shadow-sm" : "rounded-bl-sm bg-zinc-700 text-zinc-100"}`}>
                 {msg.body}
               </p>
@@ -800,7 +961,7 @@ function MessageComposer({
   isPage: boolean;
 }) {
   return (
-    <form onSubmit={onSubmit} className={`shrink-0 border-t px-3 py-3 ${isPage ? "border-slate-200 bg-white" : "border-zinc-800"}`}>
+    <form onSubmit={onSubmit} className={`shrink-0 border-t px-3 py-3 ${isPage ? "border-slate-200 bg-white" : "border-zinc-800 bg-zinc-900"}`}>
       <div className={`flex items-center gap-2 rounded-full border px-3 py-2 transition ${isPage ? "border-slate-200 bg-slate-50 focus-within:border-[var(--toq-lime-light)] focus-within:bg-white" : "border-zinc-700/80 bg-zinc-800 focus-within:border-zinc-600"}`}>
         <input
           type="text"

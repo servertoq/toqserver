@@ -20,6 +20,8 @@ import { createPostWithMedia, POST_SELECT } from "@/lib/posts";
 import { CreatePostBox } from "@/components/feed/CreatePostBox";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { PostCard } from "@/components/feed/PostCard";
+import { Suspense } from "react";
+import { ClubMemberArea } from "@/components/club/ClubMemberArea";
 import { CommunityModerationPanel } from "./CommunityModerationPanel";
 import { CommunitySettingsForm } from "./CommunitySettingsForm";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
@@ -351,6 +353,14 @@ export function CommunityDetailPage({
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
+                {isMember && (
+                  <Link
+                    href={`/inicio/mensagens?g=${encodeURIComponent(community.id)}`}
+                    className="rounded-lg bg-[var(--toq-lime-light)] px-3 py-1.5 text-xs font-bold text-[var(--toq-navy)]"
+                  >
+                    Chat do grupo
+                  </Link>
+                )}
                 {isOwner(myRole) && (
                   <button
                     type="button"
@@ -441,46 +451,64 @@ export function CommunityDetailPage({
         )}
 
         {isMember ? (
-          <>
-            <div className="mt-6">
-              <CreatePostBox
+          groupKind === "club" ? (
+            <Suspense fallback={<p className="mt-6 text-sm text-[var(--toq-text-muted)]">Carregando…</p>}>
+              <ClubMemberArea
+                community={community}
+                myRole={myRole}
+                posts={posts}
+                profileId={profile.id}
                 avatarUrl={profile.avatar_url}
                 username={profile.username}
-                loading={posting}
-                context="community"
-                onSubmit={handleCreatePost}
+                posting={posting}
+                highlightPostId={highlightPostId}
+                highlightCommentId={highlightCommentId}
+                onSubmitPost={handleCreatePost}
+                onLikeToggle={handleLikeToggle}
               />
-            </div>
+            </Suspense>
+          ) : (
+            <>
+              <div className="mt-6">
+                <CreatePostBox
+                  avatarUrl={profile.avatar_url}
+                  username={profile.username}
+                  loading={posting}
+                  context="community"
+                  onSubmit={handleCreatePost}
+                />
+              </div>
 
-            <section className="mt-6">
-              <h2 className="mb-3 text-sm font-bold text-[var(--toq-navy)]">{config.feedTitle}</h2>
-              {posts.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
-                  <p className="text-sm font-semibold text-[var(--toq-navy)]">Nenhum post ainda</p>
-                  <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
-                    Publique o primeiro conteúdo visível apenas para membros.
-                  </p>
-                </div>
-              ) : (
-                <ul className="space-y-4">
-                  {posts.map((post) => (
-                    <li key={post.id}>
-                      <PostCard
-                        post={post}
-                        currentUserId={profile.id}
-                        highlightPost={post.id === highlightPostId}
-                        highlightCommentId={
-                          post.id === highlightPostId ? highlightCommentId : null
-                        }
-                        onLikeToggle={handleLikeToggle}
-                        onCommentCountChange={() => {}}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </>
+              <section className="mt-6">
+                <h2 className="mb-3 text-sm font-bold text-[var(--toq-navy)]">{config.feedTitle}</h2>
+                {posts.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+                    <p className="text-sm font-semibold text-[var(--toq-navy)]">Nenhum post ainda</p>
+                    <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
+                      Publique o primeiro conteúdo visível apenas para membros.
+                    </p>
+                  </div>
+                ) : (
+                  <ul className="space-y-4">
+                    {posts.map((post) => (
+                      <li key={post.id}>
+                        <PostCard
+                          post={post}
+                          currentUserId={profile.id}
+                          highlightPost={post.id === highlightPostId}
+                          highlightCommentId={
+                            post.id === highlightPostId ? highlightCommentId : null
+                          }
+                          onLikeToggle={handleLikeToggle}
+                          onCommentCountChange={() => {}}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </>
+          )
         ) : (
           <div className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
             <p className="text-sm font-semibold text-[var(--toq-navy)]">{config.memberOnlyFeed}</p>
@@ -501,6 +529,7 @@ export function CommunityDetailPage({
         <CommunitySettingsForm
           community={community}
           groupKind={groupKind}
+          myRole={myRole}
           onSaved={load}
           onClose={() => setShowSettings(false)}
         />

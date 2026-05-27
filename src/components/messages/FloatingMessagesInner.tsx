@@ -4,7 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAppProfile } from "@/components/app/AppShell";
 import { createClient } from "@/lib/supabase/client";
-import { fetchConversations } from "@/lib/messages";
+import { conversationAvatar, conversationTitle, fetchConversations } from "@/lib/messages";
 import type { DmConversation } from "@/types/messages";
 import {
   floatingMessagesDockClass,
@@ -53,7 +53,11 @@ export function FloatingMessagesInner() {
     return conversations
       .filter((c) => c.is_unread)
       .slice(0, 2)
-      .map((c) => c.other_user);
+      .map((c) => ({
+        id: c.id,
+        avatar_url: conversationAvatar(c),
+        title: conversationTitle(c),
+      }));
   }, [conversations]);
 
   if (pathname.startsWith("/inicio/mensagens")) {
@@ -102,17 +106,17 @@ export function FloatingMessagesInner() {
         <span className="text-[15px] font-semibold">Mensagens</span>
         {previewAvatars.length > 0 && (
           <span className="ml-1 flex -space-x-2">
-            {previewAvatars.map((user) => (
+            {previewAvatars.map((item) => (
               <span
-                key={user.id}
+                key={item.id}
                 className="inline-flex h-7 w-7 overflow-hidden rounded-full ring-2 ring-zinc-800"
               >
-                {user.avatar_url ? (
+                {item.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
+                  <img src={item.avatar_url} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <span className="flex h-full w-full items-center justify-center bg-[var(--toq-sky)] text-[10px] font-bold">
-                    {user.username.charAt(0).toUpperCase()}
+                    {item.title.charAt(0).toUpperCase()}
                   </span>
                 )}
               </span>

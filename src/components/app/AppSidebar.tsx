@@ -118,6 +118,31 @@ function IconProfile({ active }: { active: boolean }) {
   );
 }
 
+function IconCourts({ active }: { active: boolean }) {
+  return (
+    <NavIcon>
+      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} aria-hidden>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path strokeLinecap="round" d="M12 3v18M3 12h18" />
+      </svg>
+    </NavIcon>
+  );
+}
+
+function IconTournaments({ active }: { active: boolean }) {
+  return (
+    <NavIcon>
+      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} aria-hidden>
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8 21h8M12 17v4M7 4h10l1 4H6l1-4zM6 8h12v5a4 4 0 01-4 4h-4a4 4 0 01-4-4V8z"
+        />
+      </svg>
+    </NavIcon>
+  );
+}
+
 function IconClub({ active }: { active: boolean }) {
   return (
     <NavIcon>
@@ -162,6 +187,18 @@ const NAV_ITEMS: NavItem[] = [
     label: "Clubes",
     icon: (active) => <IconClub active={active} />,
     match: (path) => path.startsWith("/inicio/clubes"),
+  },
+  {
+    href: "/inicio/quadras",
+    label: "Quadras",
+    icon: (active) => <IconCourts active={active} />,
+    match: (path) => path.startsWith("/inicio/quadras"),
+  },
+  {
+    href: "/inicio/torneios",
+    label: "Torneios",
+    icon: (active) => <IconTournaments active={active} />,
+    match: (path) => path.startsWith("/inicio/torneios"),
   },
   {
     href: "/inicio/perfil",
@@ -306,7 +343,11 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
                       ? "Msgs"
                       : item.label === "Clubes"
                         ? "Clubes"
-                        : "Perfil"}
+                        : item.label === "Quadras"
+                          ? "Quadras"
+                          : item.label === "Torneios"
+                            ? "Torneios"
+                            : "Perfil"}
               </span>
             </Link>
           );
