@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -104,7 +104,7 @@ export function CourtForm({ initial }: Props) {
               maxLength={80}
               required
               placeholder="Ex.: Quadra 1 — Clube Central"
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm"
             />
           </label>
 
@@ -113,7 +113,7 @@ export function CourtForm({ initial }: Props) {
             <select
               value={form.size_label}
               onChange={(e) => patch({ size_label: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm"
             >
               {COURT_SIZE_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -132,7 +132,7 @@ export function CourtForm({ initial }: Props) {
               maxLength={2000}
               required
               placeholder="Piso, iluminação, estacionamento, horários…"
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm"
             />
           </label>
 
@@ -144,7 +144,7 @@ export function CourtForm({ initial }: Props) {
               onChange={(e) => patch({ contact_phone: e.target.value })}
               placeholder="(11) 99999-9999"
               required
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm"
             />
             <p className="mt-1 text-[11px] text-[var(--toq-text-muted)]">
               Será usado no botão &quot;Entrar em contato&quot;.
@@ -157,7 +157,7 @@ export function CourtForm({ initial }: Props) {
             <button
               type="submit"
               disabled={loading}
-              className="rounded-lg bg-[var(--toq-lime-light)] px-5 py-2.5 text-sm font-bold text-[var(--toq-navy)] disabled:opacity-50"
+              className="rounded-lg toq-btn-primary px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
             >
               {loading ? "Salvando…" : isEdit ? "Salvar alterações" : "Cadastrar quadra"}
             </button>

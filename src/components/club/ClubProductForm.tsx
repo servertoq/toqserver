@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -367,7 +367,7 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-[var(--toq-lime-light)] py-2.5 text-sm font-bold text-[var(--toq-navy)] disabled:opacity-50"
+            className="w-full rounded-lg toq-btn-primary py-2.5 text-sm font-bold text-white disabled:opacity-50"
           >
             {loading ? "Salvando…" : "Salvar produto"}
           </button>

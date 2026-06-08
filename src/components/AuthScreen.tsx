@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { useCallback, useState } from "react";
@@ -266,9 +266,9 @@ export function AuthScreen() {
     <main className="flex h-dvh max-h-dvh w-full flex-col overflow-hidden md:flex-row">
       {/* Painel esquerdo — azul céu (banner) */}
       <aside
-        className={`auth-panel-sky relative shrink-0 overflow-hidden md:w-1/2 md:border-r-2 md:border-[#000040] md:h-dvh lg:w-[48%] ${
+        className={`auth-panel-sky relative shrink-0 overflow-hidden md:w-1/2 md:border-r-2 md:border-[var(--toq-navy)] md:h-dvh lg:w-[48%] ${
           showBannerPanel
-            ? "h-[50dvh] border-b-2 border-[#000040] md:border-b-0"
+            ? "h-[50dvh] border-b-2 border-[var(--toq-navy)] md:border-b-0"
             : "hidden"
         }`}
       >
@@ -333,7 +333,7 @@ export function AuthScreen() {
                   />
                 </div>
                 <div
-                  className="h-[5.625rem] w-[11.25rem] shrink-0 bg-[var(--toq-lime-light)] md:h-[6.25rem] md:w-[13.75rem]"
+                  className="h-[5.625rem] w-[11.25rem] shrink-0 toq-btn-primary bg-[var(--toq-accent)] md:h-[6.25rem] md:w-[13.75rem]"
                   style={{
                     maskImage: "url(/imagens_publicas/logo_transp.png)",
                     WebkitMaskImage: "url(/imagens_publicas/logo_transp.png)",
@@ -366,7 +366,7 @@ export function AuthScreen() {
               <button
                 type="button"
                 onClick={() => switchView("login")}
-                className="text-xs text-[var(--toq-text-muted)] hover:text-[var(--toq-lime)]"
+                className="text-xs text-[var(--toq-text-muted)] hover:text-[var(--toq-accent)]"
               >
                 ← Voltar ao login
               </button>
@@ -411,7 +411,7 @@ export function AuthScreen() {
               <button
                 type="button"
                 onClick={() => switchView("forgot")}
-                className="text-xs text-[var(--toq-text-muted)] underline-offset-2 hover:text-[var(--toq-lime)] hover:underline"
+                className="text-xs text-[var(--toq-text-muted)] underline-offset-2 hover:text-[var(--toq-accent)] hover:underline"
               >
                 Esqueci minha senha
               </button>
@@ -494,8 +494,8 @@ export function AuthScreen() {
                         key={o.value}
                         className={`flex cursor-pointer items-center justify-center rounded-lg border text-center text-[11px] font-medium leading-tight transition sm:text-xs ${
                           gender === o.value
-                            ? "border-[var(--toq-lime-light)] bg-[var(--toq-lime-light)] text-[var(--toq-navy)]"
-                            : "border-slate-200 bg-white text-[var(--toq-text-muted)] hover:border-[var(--toq-lime-light)]"
+                            ? "border-[var(--toq-accent)] toq-btn-primary text-white"
+                            : "border-slate-200 bg-white text-[var(--toq-text-muted)] hover:border-[var(--toq-accent)]"
                         }`}
                       >
                         <input
@@ -534,7 +534,7 @@ export function AuthScreen() {
                     type="file"
                     accept="image/jpeg,image/png,image/webp,image/gif"
                     onChange={(e) => handleAvatarChange(e.target.files?.[0] ?? null)}
-                    className="min-w-0 flex-1 text-xs file:mr-2 file:rounded file:border-0 file:bg-[var(--toq-lime-light)] file:px-2 file:py-1 file:text-xs file:font-semibold file:text-[var(--toq-navy)] file:hover:bg-[var(--toq-lime-bright)]"
+                    className="min-w-0 flex-1 text-xs file:mr-2 file:rounded file:border-0 file:toq-btn-primary file:px-2 file:py-1 file:text-xs file:font-semibold file:text-white file:hover:bg-[var(--toq-accent-hover)]"
                   />
                 </div>
               </div>
@@ -560,7 +560,7 @@ export function AuthScreen() {
               <button
                 type="button"
                 onClick={() => switchView("login")}
-                className="w-full text-center text-xs text-[var(--toq-text-muted)] hover:text-[var(--toq-lime)]"
+                className="w-full text-center text-xs text-[var(--toq-text-muted)] hover:text-[var(--toq-accent)]"
               >
                 Voltar ao login
               </button>
@@ -606,7 +606,7 @@ function Field({
         autoComplete={autoComplete}
         required={required}
         minLength={minLength}
-        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-text)] outline-none focus:border-[var(--toq-lime)] focus:ring-2 focus:ring-[var(--toq-lime)]/25"
+        className="toq-input w-full px-3 py-2 text-sm text-[var(--toq-text)] outline-none focus:ring-2 focus:ring-[var(--toq-accent)]/20"
       />
       {hint && (
         <p className="mt-1 text-[10px] leading-snug text-[var(--toq-text-muted)]">{hint}</p>
@@ -628,8 +628,8 @@ function SubmitButton({
 }) {
   const toneClass =
     tone === "light"
-      ? "bg-[var(--toq-lime-light)] hover:bg-[var(--toq-lime-bright)]"
-      : "bg-[var(--toq-lime)] hover:brightness-105";
+      ? "toq-btn-primary bg-[var(--toq-accent)] hover:bg-[var(--toq-accent-hover)]"
+      : "toq-btn-primary hover:opacity-90";
 
   return (
     <button
@@ -664,7 +664,7 @@ function GoogleButton({
       type="button"
       disabled={loading}
       onClick={onClick}
-      className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-semibold text-[var(--toq-text)] transition hover:border-[var(--toq-lime)] hover:bg-[var(--toq-lime)]/10 disabled:opacity-60"
+      className="toq-btn-outline flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm disabled:opacity-60"
     >
       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
         <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.654 32.657 29.223 36 24 36c-5.514 0-10-4.486-10-10s4.486-10 10-10c2.837 0 5.386 1.194 7.207 3.093l5.657-5.657C34.047 10.846 29.268 9 24 9 12.955 9 4 17.955 4 29s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
@@ -682,7 +682,7 @@ function RegisterButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="w-full rounded-lg border-2 border-[var(--toq-lime)] bg-transparent py-2.5 text-sm font-semibold text-[var(--toq-navy)] transition hover:bg-[var(--toq-lime)]/15"
+      className="toq-btn-outline w-full rounded-xl border-[var(--toq-accent)] py-2.5 text-sm font-semibold text-[var(--toq-accent)] transition hover:bg-[var(--toq-accent-soft)]"
     >
       Criar uma conta
     </button>

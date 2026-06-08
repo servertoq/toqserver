@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 
@@ -20,7 +20,7 @@ const ADS: AdSlide[] = [
     description: "Primeira aula experimental grátis na sua região.",
     cta: "Agendar agora",
     gradient: "from-[#0a1a5c] via-[#1e3a8a] to-[#437df4]",
-    accent: "bg-[var(--toq-lime-light)] text-[var(--toq-navy)]",
+    accent: "toq-btn-primary text-white",
   },
   {
     id: "wilson",
@@ -38,7 +38,7 @@ const ADS: AdSlide[] = [
     description: "Inscrições abertas para o torneio amador da comunidade.",
     cta: "Inscrever-se",
     gradient: "from-[#312e81] via-[#4338ca] to-[#6366f1]",
-    accent: "bg-[var(--toq-lime-light)] text-[var(--toq-navy)]",
+    accent: "toq-btn-primary text-white",
   },
   {
     id: "quadra",
@@ -74,7 +74,7 @@ export function FeedAdCarousel() {
   return (
     <div onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
       <div
-        className="relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+        className="relative aspect-square overflow-hidden toq-card-lg"
         role="region"
         aria-label="Propagandas"
         aria-live="polite"

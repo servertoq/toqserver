@@ -8,6 +8,7 @@ import type { ClubTournament } from "@/types/clubFeatures";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { appContentClass } from "@/lib/layout";
 import { TournamentCard } from "./TournamentCard";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 export function TournamentsPage() {
   const supabase = createClient();
@@ -53,19 +54,17 @@ export function TournamentsPage() {
     <>
       <FeedTopBar />
       <main className={appContentClass}>
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-[var(--toq-navy)]">Torneios</h1>
-          <p className="mt-1 text-sm text-[var(--toq-text-muted)]">
-            Torneios cadastrados pelos clubes. Inscreva-se pelo WhatsApp do organizador.
-          </p>
-        </div>
+        <PageHeader
+          title="Torneios"
+          subtitle="Torneios cadastrados pelos clubes. Inscreva-se pelo WhatsApp do organizador."
+        />
 
         <input
           type="search"
           placeholder="Buscar por torneio, clube ou premiação…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="mb-6 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none ring-[var(--toq-sky)] focus:ring-2"
+          className="toq-input mb-6 w-full px-4 py-2.5 text-sm"
         />
 
         {error && (

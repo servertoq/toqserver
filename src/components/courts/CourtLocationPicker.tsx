@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchAddressByCep, formatCep } from "@/lib/courts";
@@ -220,7 +220,7 @@ export function CourtLocationPicker({ value, onChange }: Props) {
           ref={searchRef}
           type="text"
           placeholder="Digite um endereço ou lugar…"
-          className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+          className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
           disabled={!mapsReady}
         />
         <p className="mt-1 text-[11px] text-[var(--toq-text-muted)]">
@@ -242,7 +242,7 @@ export function CourtLocationPicker({ value, onChange }: Props) {
       </div>
 
       {value.latitude != null && value.longitude != null && (
-        <p className="text-[11px] text-[var(--toq-lime-dark)]">
+        <p className="text-[11px] text-[var(--toq-accent)]">
           Localização marcada ({value.latitude.toFixed(5)}, {value.longitude.toFixed(5)})
         </p>
       )}

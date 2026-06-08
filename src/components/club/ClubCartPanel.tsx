@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { formatClubPrice, hasShopWhatsApp } from "@/lib/clubFeatures";
 import {
@@ -69,7 +69,7 @@ export function ClubCartPanel({
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold text-[var(--toq-navy)]">{item.productName}</p>
               <p className="text-[11px] text-[var(--toq-text-muted)]">{variantLabel(item)}</p>
-              <p className="mt-1 text-xs font-semibold text-[var(--toq-lime-dark)]">
+              <p className="mt-1 text-xs font-semibold text-[var(--toq-accent)]">
                 {formatClubPrice(item.price * item.quantity)}
               </p>
               <div className="mt-2 flex items-center gap-2">

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -185,7 +185,7 @@ export function NotificationsBell() {
             load().finally(() => setLoading(false));
           }
         }}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-[var(--toq-navy)] transition hover:bg-slate-50"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[var(--toq-border)] bg-white text-[var(--toq-navy)] transition hover:bg-[var(--toq-accent-soft)]"
         aria-label="Notificações"
         aria-expanded={open}
       >
@@ -198,7 +198,7 @@ export function NotificationsBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+        <div className="toq-card-lg absolute right-0 top-full z-50 mt-2 w-[min(360px,calc(100vw-2rem))] overflow-hidden shadow-xl">
           <div className="border-b border-slate-100 px-4 py-3">
             <h2 className="text-sm font-bold text-[var(--toq-navy)]">Notificações</h2>
           </div>
@@ -216,7 +216,7 @@ export function NotificationsBell() {
                 <li
                   key={n.id}
                   className={`border-b border-slate-50 ${
-                    !n.read_at ? "bg-[var(--toq-lime-light)]/10" : ""
+                    !n.read_at ? "toq-btn-primary bg-[var(--toq-accent)]/10" : ""
                   }`}
                 >
                   {notificationHref(n) ? (
@@ -272,7 +272,7 @@ export function NotificationsBell() {
                               e.stopPropagation();
                               respondFriend(n.friend_request_id!, true);
                             }}
-                            className="rounded-lg bg-[var(--toq-lime-light)] px-2.5 py-1 text-[10px] font-bold text-[var(--toq-navy)] disabled:opacity-50"
+                            className="rounded-lg toq-btn-primary px-2.5 py-1 text-[10px] font-bold text-white disabled:opacity-50"
                           >
                             Aceitar
                           </button>
@@ -298,7 +298,7 @@ export function NotificationsBell() {
                               type="button"
                               disabled={actingId === n.join_request_id}
                               onClick={() => respondJoin(n.join_request_id!, true)}
-                              className="rounded-lg bg-[var(--toq-lime-light)] px-2.5 py-1 text-[10px] font-bold text-[var(--toq-navy)] disabled:opacity-50"
+                              className="rounded-lg toq-btn-primary px-2.5 py-1 text-[10px] font-bold text-white disabled:opacity-50"
                             >
                               Aceitar
                             </button>
@@ -319,7 +319,7 @@ export function NotificationsBell() {
                             type="button"
                             disabled={actingId === n.community_invite_id}
                             onClick={() => respondInvite(n.community_invite_id!, true)}
-                            className="rounded-lg bg-[var(--toq-lime-light)] px-2.5 py-1 text-[10px] font-bold text-[var(--toq-navy)] disabled:opacity-50"
+                            className="rounded-lg toq-btn-primary px-2.5 py-1 text-[10px] font-bold text-white disabled:opacity-50"
                           >
                             Aceitar
                           </button>

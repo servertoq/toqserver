@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -143,7 +143,7 @@ export function ClubShopPanel({
             <button
               type="button"
               onClick={() => setEditing(null)}
-              className="rounded-lg bg-[var(--toq-lime-light)] px-3 py-1.5 text-xs font-bold text-[var(--toq-navy)]"
+              className="rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white"
             >
               + Novo produto
             </button>
@@ -176,7 +176,7 @@ export function ClubShopPanel({
                 <button
                   type="button"
                   onClick={() => setViewing(product)}
-                  className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition hover:border-[var(--toq-lime-light)]"
+                  className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition hover:border-[var(--toq-accent)]"
                 >
                   {product.images && product.images[0] && (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -185,7 +185,7 @@ export function ClubShopPanel({
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="font-bold text-[var(--toq-navy)]">{product.name}</h3>
-                      <span className="shrink-0 text-sm font-bold text-[var(--toq-lime-dark)]">
+                      <span className="shrink-0 text-sm font-bold text-[var(--toq-accent)]">
                         {formatClubPrice(productDisplayPrice(product))}
                       </span>
                     </div>

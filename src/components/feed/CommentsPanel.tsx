@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -159,7 +159,7 @@ export function CommentsPanel({
             replyTo ? `Responder @${replyTo.author.username}…` : "Escreva um comentário… Use @ para mencionar"
           }
           rows={replyTo ? 2 : 2}
-          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[var(--toq-lime-light)]"
+          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[var(--toq-accent)]"
         />
         {submitError && (
           <p className="text-xs text-red-600" role="alert">
@@ -179,7 +179,7 @@ export function CommentsPanel({
           <button
             type="submit"
             disabled={sending || !body.trim()}
-            className="rounded-full bg-[var(--toq-lime-light)] px-4 py-2 text-xs font-bold text-[var(--toq-navy)] disabled:opacity-50"
+            className="rounded-full toq-btn-primary px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
           >
             {sending ? "Enviando…" : replyTo ? "Responder" : "Comentar"}
           </button>
@@ -229,7 +229,7 @@ function CommentThread({
     >
       <div
         className={`flex gap-2 text-sm rounded-lg transition ${
-          highlighted ? "bg-[var(--toq-lime-light)]/25 ring-2 ring-[var(--toq-lime-light)]" : ""
+          highlighted ? "toq-btn-primary bg-[var(--toq-accent)]/25 ring-2 ring-[var(--toq-accent-soft)]" : ""
         }`}
       >
         <CommentAvatar src={comment.author.avatar_url} name={comment.author.username} />

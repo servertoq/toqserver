@@ -91,11 +91,11 @@ export function FloatingMessagesInner() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`${floatingMessagesDockClass} flex items-center gap-2 rounded-full bg-zinc-800 py-2 pl-2 pr-3 text-white shadow-[0_4px_24px_rgba(0,0,0,0.35)] transition hover:bg-zinc-700`}
+        className={`${floatingMessagesDockClass} flex items-center gap-2 rounded-full bg-[var(--toq-navy)] py-2 pl-2 pr-3 text-white shadow-[0_8px_32px_rgba(5,16,36,0.28)] transition hover:bg-[var(--toq-navy-mid)]`}
         aria-expanded={open}
         aria-label="Mensagens"
       >
-        <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-700">
+        <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--toq-accent)]">
           <MessengerIcon />
           {unreadCount > 0 && (
             <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
@@ -109,7 +109,7 @@ export function FloatingMessagesInner() {
             {previewAvatars.map((item) => (
               <span
                 key={item.id}
-                className="inline-flex h-7 w-7 overflow-hidden rounded-full ring-2 ring-zinc-800"
+                className="inline-flex h-7 w-7 overflow-hidden rounded-full ring-2 ring-[var(--toq-navy)]"
               >
                 {item.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element

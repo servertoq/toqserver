@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -169,7 +169,7 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
             <img
               src={avatarPreview}
               alt=""
-              className="h-24 w-24 rounded-full object-cover ring-4 ring-[var(--toq-lime-light)]/40"
+              className="h-24 w-24 rounded-full object-cover ring-4 ring-[var(--toq-accent-soft)]/40"
             />
           ) : (
             <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[var(--toq-sky)] text-3xl font-bold text-white">
@@ -188,7 +188,7 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[var(--toq-navy)] hover:bg-slate-50"
+            className="rounded-lg toq-input px-3 py-2 text-xs font-semibold text-[var(--toq-navy)] hover:bg-slate-50"
           >
             Alterar foto de perfil
           </button>
@@ -203,7 +203,7 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
           onChange={(e) => setUsername(normalizeUsername(e.target.value))}
           maxLength={30}
           required
-          className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+          className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
         />
       </label>
 
@@ -219,7 +219,7 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
           value={birthDate}
           onChange={(e) => setBirthDate(e.target.value)}
           required
-          className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+          className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
         />
       </label>
 
@@ -250,7 +250,7 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
           rows={4}
           maxLength={1000}
           placeholder="Conte um pouco sobre você, seu nível de jogo, clubes que frequenta…"
-          className="mt-1 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+          className="mt-1 w-full resize-y rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
         />
         <span className="mt-1 block text-right text-[10px] text-[var(--toq-text-muted)]">
           {bio.length}/1000
@@ -260,7 +260,7 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-lg bg-[var(--toq-lime-light)] py-2.5 text-sm font-bold text-[var(--toq-navy)] transition hover:bg-[var(--toq-lime-bright)] disabled:opacity-50 sm:w-auto sm:px-8"
+        className="w-full rounded-xl bg-[var(--toq-profile-accent,#2563eb)] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 sm:w-auto sm:px-8"
       >
         {saving ? "Salvando…" : "Salvar alterações"}
       </button>

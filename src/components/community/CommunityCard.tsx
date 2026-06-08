@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { groupVisibilityLabel } from "@/lib/community";
 import { groupDetailHref } from "@/lib/communityGroup";
 import type { CommunityWithMembership } from "@/lib/community";
@@ -10,9 +10,9 @@ export function CommunityCard({ community }: { community: CommunityWithMembershi
   return (
     <Link
       href={groupDetailHref(kind, community.slug)}
-      className="block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-[var(--toq-sky)]/40 hover:shadow-md"
+      className="block overflow-hidden toq-card-lg transition hover:border-[var(--toq-sky)]/40 hover:shadow-md"
     >
-      <div className="relative h-28 bg-gradient-to-br from-[var(--toq-navy)] to-[var(--toq-sky)]">
+      <div className="relative h-28 bg-gradient-to-br from-[var(--toq-navy)] to-[var(--toq-accent)]">
         {community.cover_image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -33,16 +33,16 @@ export function CommunityCard({ community }: { community: CommunityWithMembershi
           {community.description}
         </p>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-semibold text-[var(--toq-lime-dark)]">
+          <p className="text-xs font-semibold text-[var(--toq-accent)]">
             {community.member_count.toLocaleString("pt-BR")} / 1.000 membros
           </p>
           {isMember && (
-            <span className="rounded-full bg-[var(--toq-lime-light)]/30 px-2 py-0.5 text-[10px] font-bold text-[var(--toq-navy)]">
+            <span className="rounded-full toq-btn-primary/30 px-2 py-0.5 text-[10px] font-bold text-white">
               Membro
             </span>
           )}
           {!isMember && community.pending_invite && (
-            <span className="rounded-full bg-[#0084ff]/15 px-2 py-0.5 text-[10px] font-bold text-[#0084ff]">
+            <span className="rounded-full bg-[var(--toq-accent)]/15 px-2 py-0.5 text-[10px] font-bold text-[var(--toq-accent)]">
               Convite pendente
             </span>
           )}

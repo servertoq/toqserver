@@ -1,5 +1,6 @@
-"use client";
+﻿"use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -211,21 +212,14 @@ const NAV_ITEMS: NavItem[] = [
 
 function ToqLogo() {
   return (
-    <Link href="/inicio" className="mb-8 block px-3 py-2">
-      <div
-        className="h-9 w-28 bg-[var(--toq-lime-light)]"
-        style={{
-          maskImage: "url(/imagens_publicas/logo_transp.png)",
-          WebkitMaskImage: "url(/imagens_publicas/logo_transp.png)",
-          maskSize: "contain",
-          WebkitMaskSize: "contain",
-          maskRepeat: "no-repeat",
-          WebkitMaskRepeat: "no-repeat",
-          maskPosition: "left center",
-          WebkitMaskPosition: "left center",
-        }}
-        role="img"
-        aria-label="Toq Tennis"
+    <Link href="/inicio" className="sidebar-logo mb-8" aria-label="Toq Tennis — início">
+      <Image
+        src="/imagens_publicas/logo_sidebar.png"
+        alt="Toq Tennis"
+        width={359}
+        height={122}
+        priority
+        className="sidebar-logo-img"
       />
     </Link>
   );
@@ -245,8 +239,10 @@ function NavLink({
   return (
     <Link
       href={item.href}
-      className={`flex items-center gap-4 rounded-lg px-3 py-3 transition hover:bg-white/10 ${
-        active ? "font-bold" : "font-normal"
+      className={`flex items-center gap-4 rounded-xl px-3 py-3 transition ${
+        active
+          ? "sidebar-nav-active font-bold"
+          : "font-normal text-white/85 hover:bg-white/12 hover:text-white"
       }`}
     >
       {isProfile && profile.avatar_url ? (
@@ -320,7 +316,7 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
 
       {/* Mobile — barra inferior */}
       <nav
-        className="app-sidebar-mobile fixed bottom-0 left-0 right-0 z-40 flex border-t border-white/10 bg-[var(--toq-sidebar)] px-6 py-2 md:hidden"
+        className="app-sidebar-mobile fixed bottom-0 left-0 right-0 z-40 flex px-6 py-2 md:hidden"
         aria-label="Menu principal"
       >
         {NAV_ITEMS.map((item) => {

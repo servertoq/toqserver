@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -66,7 +66,7 @@ export function PostCard({
       id={`post-${post.id}`}
       className={`rounded-2xl border bg-white p-4 shadow-sm ${
         highlightPost
-          ? "border-[var(--toq-lime-light)] ring-2 ring-[var(--toq-lime-light)]"
+          ? "border-[var(--toq-accent)] ring-2 ring-[var(--toq-accent-soft)]"
           : "border-slate-200"
       }`}
     >
@@ -140,7 +140,7 @@ export function PostCard({
           disabled={likeLoading}
           onClick={handleLike}
           className={`flex items-center gap-1.5 text-sm font-semibold transition ${
-            liked ? "text-[var(--toq-lime-dark)]" : "text-[var(--toq-text-muted)] hover:text-[var(--toq-navy)]"
+            liked ? "text-[var(--toq-accent)]" : "text-[var(--toq-text-muted)] hover:text-[var(--toq-navy)]"
           }`}
         >
           <span aria-hidden>{liked ? "♥" : "♡"}</span>

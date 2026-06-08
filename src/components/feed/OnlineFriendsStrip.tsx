@@ -60,7 +60,7 @@ export function OnlineFriendsStrip() {
   if (friends.length === 0) return null;
 
   return (
-    <div className="border-t border-slate-100 bg-white">
+    <div className="border-t border-[var(--toq-border)] bg-white/90">
       <FeedPageGrid>
         <div
           ref={scrollRef}

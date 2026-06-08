@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import {
@@ -35,8 +35,8 @@ export function TournamentCard({
     : null;
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="relative aspect-[16/9] bg-gradient-to-br from-[var(--toq-navy)] to-[var(--toq-sky)]">
+    <article className="overflow-hidden toq-card-lg">
+      <div className="relative aspect-[16/9] bg-gradient-to-br from-[var(--toq-navy)] to-[var(--toq-accent)]">
         {tournament.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={tournament.image_url} alt="" className="h-full w-full object-cover" />
@@ -70,7 +70,7 @@ export function TournamentCard({
         <h2 className="mt-1 text-lg font-bold text-[var(--toq-navy)]">{tournament.name}</h2>
 
         {dateRange && (
-          <p className="mt-1 text-xs font-medium text-[var(--toq-lime-dark)]">{dateRange}</p>
+          <p className="mt-1 text-xs font-medium text-[var(--toq-accent)]">{dateRange}</p>
         )}
 
         <p className="mt-2 line-clamp-3 text-sm text-[var(--toq-text-muted)]">

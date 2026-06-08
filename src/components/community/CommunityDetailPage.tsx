@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -302,8 +302,8 @@ export function CommunityDetailPage({
           ← {config.backLabel}
         </Link>
 
-        <header className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="relative h-40 bg-gradient-to-br from-[var(--toq-navy)] to-[var(--toq-sky)] sm:h-48 lg:h-56">
+        <header className="overflow-hidden toq-card-lg">
+          <div className="relative h-40 bg-gradient-to-br from-[var(--toq-navy)] to-[var(--toq-accent)] sm:h-48 lg:h-56">
             {community.cover_image_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -318,7 +318,7 @@ export function CommunityDetailPage({
               <div>
                 <h1 className="text-xl font-bold text-[var(--toq-navy)]">{community.name}</h1>
                 <p className="mt-1 text-sm text-[var(--toq-text-muted)]">{community.description}</p>
-                <p className="mt-2 text-xs font-semibold text-[var(--toq-lime-dark)]">
+                <p className="mt-2 text-xs font-semibold text-[var(--toq-accent)]">
                   {community.member_count.toLocaleString("pt-BR")} / 1.000 membros ·{" "}
                   {groupVisibilityLabel(community.kind ?? groupKind, community.is_private)}
                   {myRole && ` · ${memberRoleLabel(myRole)}`}
@@ -356,7 +356,7 @@ export function CommunityDetailPage({
                 {isMember && (
                   <Link
                     href={`/inicio/mensagens?g=${encodeURIComponent(community.id)}`}
-                    className="rounded-lg bg-[var(--toq-lime-light)] px-3 py-1.5 text-xs font-bold text-[var(--toq-navy)]"
+                    className="rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white"
                   >
                     Chat do grupo
                   </Link>
@@ -386,7 +386,7 @@ export function CommunityDetailPage({
               <div className="mt-4 space-y-2">
                 {pendingInviteId ? (
                   <>
-                    <p className="rounded-lg bg-[#0084ff]/10 px-3 py-2 text-sm font-semibold text-[#0084ff]">
+                    <p className="rounded-lg bg-[var(--toq-accent)]/10 px-3 py-2 text-sm font-semibold text-[var(--toq-accent)]">
                       Você foi convidado para este {groupKind === "club" ? "clube" : "grupo"}.
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -394,7 +394,7 @@ export function CommunityDetailPage({
                         type="button"
                         disabled={joining}
                         onClick={() => handleRespondInvite(true)}
-                        className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-sm font-bold text-[var(--toq-navy)] disabled:opacity-50"
+                        className="rounded-lg toq-btn-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
                       >
                         Aceitar convite
                       </button>
@@ -419,7 +419,7 @@ export function CommunityDetailPage({
                     type="button"
                     disabled={joining}
                     onClick={handleJoin}
-                    className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-sm font-bold text-[var(--toq-navy)] disabled:opacity-50"
+                    className="rounded-lg toq-btn-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
                   >
                     {joining
                       ? "Processando…"

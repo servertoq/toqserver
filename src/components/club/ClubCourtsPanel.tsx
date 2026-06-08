@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -578,7 +578,7 @@ function ClubCourtForm({
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-[var(--toq-lime-light)] py-2.5 text-sm font-bold text-[var(--toq-navy)] disabled:opacity-50"
+            className="w-full rounded-lg toq-btn-primary py-2.5 text-sm font-bold text-white disabled:opacity-50"
           >
             {loading ? "Salvando…" : "Salvar quadra"}
           </button>
@@ -759,7 +759,7 @@ function BookingModal({
           </label>
 
           {selectedPlan && (
-            <p className="text-sm font-bold text-[var(--toq-lime-dark)]">
+            <p className="text-sm font-bold text-[var(--toq-accent)]">
               Total: {formatClubPrice(price)}
             </p>
           )}
@@ -920,7 +920,7 @@ export function ClubCourtsPanel({ communityId, clubName, myRole, buyerUsername }
             <button
               type="button"
               onClick={() => setEditing(null)}
-              className="rounded-lg bg-[var(--toq-lime-light)] px-3 py-1.5 text-xs font-bold text-[var(--toq-navy)]"
+              className="rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white"
             >
               + Nova quadra
             </button>
@@ -945,7 +945,7 @@ export function ClubCourtsPanel({ communityId, clubName, myRole, buyerUsername }
               <button
                 type="button"
                 onClick={() => setEditing(null)}
-                className="mt-4 rounded-lg bg-[var(--toq-lime-light)] px-4 py-2.5 text-sm font-bold text-[var(--toq-navy)]"
+                className="mt-4 rounded-lg toq-btn-primary px-4 py-2.5 text-sm font-bold text-white"
               >
                 Cadastrar primeira quadra
               </button>
@@ -959,7 +959,7 @@ export function ClubCourtsPanel({ communityId, clubName, myRole, buyerUsername }
       ) : (
         <ul className="mt-4 grid gap-4 sm:grid-cols-2">
           {courts.map((court) => (
-            <li key={court.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <li key={court.id} className="overflow-hidden toq-card-lg">
               {court.images?.[0] && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={court.images[0].url} alt="" className="aspect-[4/3] w-full object-cover" />

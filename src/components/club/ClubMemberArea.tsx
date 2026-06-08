@@ -80,7 +80,7 @@ export function ClubMemberArea({
   }
 
   return (
-    <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="mt-6 overflow-hidden toq-card-lg">
       <ClubTabs active={tab} onChange={changeTab} shopEnabled={shopEnabled} />
       <div className="px-4 pb-6 sm:px-5">
         {tab === "feed" && (

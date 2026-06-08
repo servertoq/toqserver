@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -146,7 +146,7 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
               onChange={(e) => setName(e.target.value)}
               maxLength={80}
               required
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
               placeholder="Ex.: Beach Tennis Zona Sul"
             />
           </label>
@@ -159,7 +159,7 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
               maxLength={500}
               required
               rows={3}
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
               placeholder={isClub ? "Conte sobre o clube…" : "Conte do que se trata a comunidade…"}
             />
           </label>
@@ -170,7 +170,7 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[var(--toq-navy)]"
+                className="rounded-lg toq-input px-3 py-2 text-xs font-semibold text-[var(--toq-navy)]"
               >
                 Escolher imagem
               </button>
@@ -237,7 +237,7 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-[var(--toq-lime-light)] py-2.5 text-sm font-bold text-[var(--toq-navy)] transition hover:bg-[var(--toq-lime-bright)] disabled:opacity-50"
+            className="w-full rounded-lg toq-btn-primary py-2.5 text-sm font-bold text-white transition hover:bg-[var(--toq-accent-hover)] disabled:opacity-50"
           >
             {loading ? "Criando…" : config.createButton}
           </button>

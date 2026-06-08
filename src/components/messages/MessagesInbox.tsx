@@ -391,15 +391,15 @@ export function MessagesInbox(props: MessagesInboxProps) {
     <div
       className={
         isPage
-          ? "flex h-[calc(100dvh-4.5rem)] min-h-0 w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:h-[calc(100dvh-2rem)] md:flex-row"
-          : "messages-popup flex h-[min(520px,75dvh)] flex-col overflow-hidden rounded-2xl bg-zinc-900 text-white shadow-[0_8px_40px_rgba(0,0,0,0.45)]"
+          ? "messages-inbox flex h-[calc(100dvh-4.5rem)] min-h-0 w-full flex-col overflow-hidden md:h-[calc(100dvh-2rem)] md:flex-row"
+          : "messages-popup toq-card-lg flex h-[min(520px,75dvh)] flex-col overflow-hidden text-[var(--toq-navy)] shadow-[0_16px_48px_rgba(5,16,36,0.14)]"
       }
     >
       {(isPage || popupList) && (
         <aside
           className={
             isPage
-              ? `flex w-full shrink-0 flex-col border-r border-slate-200 md:w-[340px] ${activeId ? "hidden md:flex" : "flex flex-1 md:flex-none"}`
+              ? `messages-inbox-list flex w-full shrink-0 flex-col md:w-[340px] ${activeId ? "hidden md:flex" : "flex flex-1 md:flex-none"}`
               : "flex min-h-0 flex-1 flex-col"
           }
         >
@@ -453,7 +453,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
 
       {(isPage || popupChat) && (
         <section
-          className={`min-w-0 flex-1 flex-col ${isPage ? "bg-slate-50" : "bg-zinc-900"} ${isPage && !activeId ? "hidden md:flex" : popupChat || (isPage && activeId) ? "flex" : "hidden md:flex"}`}
+          className={`min-w-0 flex-1 flex-col ${isPage ? "messages-inbox-chat" : "bg-white"} ${isPage && !activeId ? "hidden md:flex" : popupChat || (isPage && activeId) ? "flex" : "hidden md:flex"}`}
         >
           {isPage && !activeId ? (
             <EmptyChatState />
@@ -474,7 +474,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
                 onExpand={!isPage ? handleExpand : undefined}
               />
               {activeConversation && (
-                <div className={`shrink-0 border-b px-4 py-2 ${isPage ? "border-slate-200 bg-white" : "border-zinc-800 bg-zinc-900"}`}>
+                <div className={`shrink-0 border-b px-4 py-2 ${isPage ? "border-[var(--toq-border)] bg-white" : "border-zinc-800 bg-zinc-900"}`}>
                   {isCommunityConversation(activeConversation) ? (
                     <>
                       {conversationHref(activeConversation) && (
@@ -541,7 +541,7 @@ function InboxHeader({
   onExpand?: () => void;
 }) {
   return (
-    <div className={`flex shrink-0 items-center justify-between border-b px-4 py-3 ${isPage ? "border-slate-200 bg-white" : "border-zinc-700/80"}`}>
+    <div className={`flex shrink-0 items-center justify-between border-b px-4 py-3 ${isPage ? "border-[var(--toq-border)] bg-white" : "border-zinc-700/80"}`}>
       <div className="flex items-center gap-2">
         <h2 className={`text-xl font-bold ${isPage ? "text-[var(--toq-navy)]" : ""}`}>Mensagens</h2>
         {listUnread > 0 && (
@@ -588,7 +588,7 @@ function ChatHeaderBar({
   onExpand?: () => void;
 }) {
   return (
-    <div className={`flex shrink-0 items-center justify-between border-b px-4 py-3 ${isPage ? "border-slate-200 bg-white" : "border-zinc-700/80 bg-zinc-900"}`}>
+    <div className={`flex shrink-0 items-center justify-between border-b px-4 py-3 ${isPage ? "border-[var(--toq-border)] bg-white" : "border-zinc-700/80 bg-zinc-900"}`}>
       <button type="button" onClick={onBack} className="flex min-w-0 items-center gap-2 text-left">
         <span className={`text-xl leading-none md:hidden ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>‹</span>
         {conversation && (
@@ -652,7 +652,7 @@ function InboxTabs({
   isPage: boolean;
 }) {
   return (
-    <div className={`flex shrink-0 border-b px-1 ${isPage ? "border-slate-200 bg-white" : "border-zinc-700/80"}`}>
+    <div className={`flex shrink-0 border-b px-1 ${isPage ? "border-[var(--toq-border)] bg-white" : "border-zinc-700/80"}`}>
       <TabButton active={tab === "friends"} onClick={() => setTab("friends")} label="Amigos" count={friendsCount} isPage={isPage} />
       <TabButton active={tab === "pending"} onClick={() => setTab("pending")} label="Pendentes" count={pendingCount} isPage={isPage} />
       <TabButton active={tab === "groups"} onClick={() => setTab("groups")} label="Grupos" count={groupsCount} isPage={isPage} />
@@ -670,9 +670,9 @@ function InboxSearchBar({
   isPage: boolean;
 }) {
   return (
-    <div className={`shrink-0 border-b px-3 py-2.5 ${isPage ? "border-slate-200 bg-white" : "border-zinc-700/80"}`}>
+    <div className={`shrink-0 border-b px-3 py-2.5 ${isPage ? "border-[var(--toq-border)] bg-white" : "border-zinc-700/80"}`}>
       <div
-        className={`flex items-center gap-2 rounded-full border px-3 py-1.5 transition ${isPage ? "border-slate-200 bg-slate-50 focus-within:border-[var(--toq-lime-light)] focus-within:bg-white" : "border-zinc-700/80 bg-zinc-800 focus-within:border-zinc-600"}`}
+        className={`flex items-center gap-2 rounded-full border px-3 py-1.5 transition ${isPage ? "border-[var(--toq-border)] bg-[var(--toq-surface)] focus-within:border-[var(--toq-accent)] focus-within:bg-white" : "border-zinc-700/80 bg-zinc-800 focus-within:border-zinc-600"}`}
       >
         <SearchIcon className={isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-500"} />
         <input
@@ -770,7 +770,7 @@ function InboxSearchResults({
                       <button
                         type="button"
                         onClick={() => onSelectUser(person.username)}
-                        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${isPage ? "hover:bg-slate-50" : "hover:bg-zinc-800/80"}`}
+                        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${isPage ? "hover:bg-[var(--toq-accent-soft)]" : "hover:bg-[var(--toq-accent-soft)]"}`}
                       >
                         <ChatAvatar src={person.avatar_url} name={person.username} size="lg" />
                         <span className="min-w-0 flex-1">
@@ -826,11 +826,11 @@ function ConversationListItem({
   })();
 
   return (
-    <li>
+    <li className={isPage ? "border-b border-[var(--toq-border)] last:border-b-0" : undefined}>
       <button
         type="button"
         onClick={onSelect}
-        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${selected ? "bg-[var(--toq-lime-light)]/20" : isPage ? "hover:bg-slate-50" : "hover:bg-zinc-800/80"}`}
+        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${selected ? "bg-[var(--toq-accent-soft)]" : isPage ? "hover:bg-[var(--toq-accent-soft)]" : "hover:bg-[var(--toq-accent-soft)]"}`}
       >
         <ChatAvatar src={conversationAvatar(conv)} name={title} size="lg" />
         <span className="min-w-0 flex-1">
@@ -842,7 +842,7 @@ function ConversationListItem({
             {conv.last_message ? ` · ${formatMessageTime(conv.last_message.created_at)}` : ""}
           </span>
         </span>
-        {unread && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#0084ff]" />}
+        {unread && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--toq-accent)]" />}
       </button>
     </li>
   );
@@ -897,10 +897,14 @@ function ConversationList({
 
 function EmptyChatState() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
-      <span className="text-4xl">💬</span>
-      <p className="text-sm font-semibold text-[var(--toq-navy)]">Suas mensagens</p>
-      <p className="text-xs text-[var(--toq-text-muted)]">Selecione uma conversa ao lado ou inicie pelo perfil de um jogador.</p>
+    <div className="flex flex-1 flex-col items-center justify-center p-6">
+      <div className="messages-inbox-empty flex max-w-sm flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--toq-border)] bg-white p-8 text-center shadow-sm">
+        <span className="text-4xl">💬</span>
+        <p className="text-sm font-semibold text-[var(--toq-navy)]">Suas mensagens</p>
+        <p className="text-xs text-[var(--toq-text-muted)]">
+          Selecione uma conversa ao lado ou inicie pelo perfil de um jogador.
+        </p>
+      </div>
     </div>
   );
 }
@@ -921,7 +925,7 @@ function MessageThread({
   showSenderNames: boolean;
 }) {
   return (
-    <div ref={scrollRef} className={`min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3 ${isPage ? "bg-slate-50" : "bg-zinc-900"}`}>
+    <div ref={scrollRef} className={`min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3 ${isPage ? "bg-[var(--toq-surface)]" : "bg-white"}`}>
       {loading && messages.length === 0 ? (
         <p className={`text-center text-sm ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>Carregando…</p>
       ) : messages.length === 0 ? (
@@ -936,7 +940,7 @@ function MessageThread({
                   {msg.sender.username}
                 </span>
               )}
-              <p className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm leading-relaxed md:max-w-[65%] ${mine ? (isPage ? "rounded-br-sm bg-[var(--toq-lime-light)] text-[var(--toq-navy)]" : "rounded-br-sm bg-[#0084ff] text-white") : isPage ? "rounded-bl-sm bg-white text-[var(--toq-navy)] shadow-sm" : "rounded-bl-sm bg-zinc-700 text-zinc-100"}`}>
+              <p className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm leading-relaxed md:max-w-[65%] ${mine ? (isPage ? "rounded-br-sm toq-btn-primary text-white" : "rounded-br-sm bg-[#0084ff] text-white") : isPage ? "rounded-bl-sm bg-white text-[var(--toq-navy)] shadow-sm" : "rounded-bl-sm bg-zinc-700 text-zinc-100"}`}>
                 {msg.body}
               </p>
             </div>
@@ -961,8 +965,8 @@ function MessageComposer({
   isPage: boolean;
 }) {
   return (
-    <form onSubmit={onSubmit} className={`shrink-0 border-t px-3 py-3 ${isPage ? "border-slate-200 bg-white" : "border-zinc-800 bg-zinc-900"}`}>
-      <div className={`flex items-center gap-2 rounded-full border px-3 py-2 transition ${isPage ? "border-slate-200 bg-slate-50 focus-within:border-[var(--toq-lime-light)] focus-within:bg-white" : "border-zinc-700/80 bg-zinc-800 focus-within:border-zinc-600"}`}>
+    <form onSubmit={onSubmit} className={`shrink-0 border-t px-3 py-3 ${isPage ? "border-[var(--toq-border)] bg-white" : "border-zinc-800 bg-zinc-900"}`}>
+      <div className={`flex items-center gap-2 rounded-full border px-3 py-2 transition ${isPage ? "border-[var(--toq-border)] bg-[var(--toq-surface)] focus-within:border-[var(--toq-accent)] focus-within:bg-white" : "border-zinc-700/80 bg-zinc-800 focus-within:border-zinc-600"}`}>
         <input
           type="text"
           value={draft}
@@ -971,7 +975,7 @@ function MessageComposer({
           maxLength={4000}
           className={`min-w-0 flex-1 border-0 bg-transparent p-0 text-[15px] leading-normal shadow-none outline-none ring-0 focus:ring-0 ${isPage ? "text-[var(--toq-navy)] placeholder:text-[var(--toq-text-muted)]" : "text-white placeholder:text-zinc-500"}`}
         />
-        <button type="submit" disabled={sending || !draft.trim()} className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full disabled:opacity-40 ${isPage ? "text-[var(--toq-lime-dark)]" : "text-[#0084ff] hover:bg-zinc-700/60"}`} aria-label="Enviar">
+        <button type="submit" disabled={sending || !draft.trim()} className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full disabled:opacity-40 ${isPage ? "text-[var(--toq-accent)]" : "text-[#0084ff] hover:bg-zinc-700/60"}`} aria-label="Enviar">
           <SendIcon />
         </button>
       </div>
@@ -984,7 +988,7 @@ function TabButton({ active, onClick, label, count, isPage }: { active: boolean;
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 py-2.5 text-sm font-semibold transition ${active ? (isPage ? "border-b-2 border-[var(--toq-lime-light)] text-[var(--toq-navy)]" : "border-b-2 border-white text-white") : isPage ? "text-[var(--toq-text-muted)] hover:text-[var(--toq-navy)]" : "text-zinc-500 hover:text-zinc-300"}`}
+      className={`flex-1 py-2.5 text-sm font-semibold transition ${active ? (isPage ? "border-b-2 border-[var(--toq-accent)] text-[var(--toq-navy)]" : "border-b-2 border-white text-white") : isPage ? "text-[var(--toq-text-muted)] hover:text-[var(--toq-navy)]" : "text-zinc-500 hover:text-zinc-300"}`}
     >
       {label}
       {count > 0 ? ` (${count})` : ""}

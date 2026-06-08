@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -197,7 +197,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
   }
 
   return (
-    <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-4">
+    <section className="mb-6 toq-card p-4">
       <h2 className="text-sm font-bold text-[var(--toq-navy)]">Moderação</h2>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
@@ -205,7 +205,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
           onClick={() => setTab("requests")}
           className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
             tab === "requests"
-              ? "bg-[var(--toq-lime-light)] text-[var(--toq-navy)]"
+              ? "toq-btn-primary text-white"
               : "bg-slate-100 text-[var(--toq-text-muted)]"
           }`}
         >
@@ -216,7 +216,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
           onClick={() => setTab("invite")}
           className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
             tab === "invite"
-              ? "bg-[var(--toq-lime-light)] text-[var(--toq-navy)]"
+              ? "toq-btn-primary text-white"
               : "bg-slate-100 text-[var(--toq-text-muted)]"
           }`}
         >
@@ -227,7 +227,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
           onClick={() => setTab("members")}
           className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
             tab === "members"
-              ? "bg-[var(--toq-lime-light)] text-[var(--toq-navy)]"
+              ? "toq-btn-primary text-white"
               : "bg-slate-100 text-[var(--toq-text-muted)]"
           }`}
         >
@@ -246,13 +246,13 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
                 value={inviteUsername}
                 onChange={(e) => setInviteUsername(e.target.value)}
                 placeholder="@usuario"
-                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+                className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
               />
             </label>
             <button
               type="submit"
               disabled={inviting || actionId === "invite"}
-              className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-xs font-bold text-[var(--toq-navy)] disabled:opacity-50"
+              className="rounded-lg toq-btn-primary px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
             >
               {inviting || actionId === "invite" ? "Enviando…" : "Enviar convite"}
             </button>
@@ -294,7 +294,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
                     type="button"
                     disabled={actionId === req.id}
                     onClick={() => respondRequest(req.id, true)}
-                    className="rounded-lg bg-[var(--toq-lime-light)] px-3 py-1 text-xs font-bold text-[var(--toq-navy)] disabled:opacity-50"
+                    className="rounded-lg toq-btn-primary px-3 py-1 text-xs font-bold text-white disabled:opacity-50"
                   >
                     Aceitar
                   </button>

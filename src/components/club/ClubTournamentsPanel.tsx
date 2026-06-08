@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -75,7 +75,7 @@ export function ClubTournamentsPanel({
           <button
             type="button"
             onClick={() => setEditing(null)}
-            className="rounded-lg bg-[var(--toq-lime-light)] px-3 py-1.5 text-xs font-bold text-[var(--toq-navy)]"
+            className="rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white"
           >
             + Novo torneio
           </button>

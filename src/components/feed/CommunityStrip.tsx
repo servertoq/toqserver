@@ -1,4 +1,4 @@
-import type { FeedCommunity } from "@/types/feed";
+﻿import type { FeedCommunity } from "@/types/feed";
 
 export function CommunityStrip({ communities }: { communities: FeedCommunity[] }) {
   if (communities.length === 0) return null;
@@ -17,7 +17,7 @@ export function CommunityStrip({ communities }: { communities: FeedCommunity[] }
             <p className="mt-1 line-clamp-2 text-xs leading-snug text-[var(--toq-text-muted)]">
               {c.description}
             </p>
-            <p className="mt-3 text-xs font-semibold text-[var(--toq-lime-dark)]">
+            <p className="mt-3 text-xs font-semibold text-[var(--toq-accent)]">
               {c.member_count.toLocaleString("pt-BR")} membros
             </p>
           </article>

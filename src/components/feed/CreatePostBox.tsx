@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import { MentionTextarea } from "@/components/feed/MentionTextarea";
@@ -122,7 +122,7 @@ export function CreatePostBox({
   return (
     <form
       onSubmit={handleSubmit}
-      className="mb-6 rounded-2xl border-2 border-[var(--toq-lime-light)] bg-white p-4 shadow-sm"
+      className="toq-card-lg mb-6 p-4"
     >
       <div className="mb-3 flex items-start gap-3">
         <Avatar src={avatarUrl} name={username} size="md" />
@@ -147,7 +147,7 @@ export function CreatePostBox({
                 onClick={() => setPostType(t)}
                 className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                   postType === t
-                    ? "bg-[var(--toq-lime-light)] text-[var(--toq-navy)]"
+                    ? "toq-btn-primary text-white"
                     : "bg-slate-100 text-[var(--toq-text-muted)] hover:bg-slate-200"
                 }`}
               >
@@ -165,7 +165,7 @@ export function CreatePostBox({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Título do evento (opcional)"
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)] outline-none focus:border-[var(--toq-lime-light)]"
+            className="w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)] outline-none focus:border-[var(--toq-accent)]"
           />
           <div className="flex flex-wrap gap-2">
             <label className="min-w-[140px] flex-1">
@@ -176,7 +176,7 @@ export function CreatePostBox({
                 type="date"
                 value={eventDate}
                 onChange={(e) => setEventDate(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+                className="w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
               />
             </label>
             <label className="min-w-[120px] flex-1">
@@ -187,7 +187,7 @@ export function CreatePostBox({
                 type="time"
                 value={eventTime}
                 onChange={(e) => setEventTime(e.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+                className="w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
               />
             </label>
           </div>
@@ -279,7 +279,7 @@ export function CreatePostBox({
           <button
             type="submit"
             disabled={loading || isSubmitting || !body.trim()}
-            className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-sm font-bold text-[var(--toq-navy)] transition hover:bg-[var(--toq-lime-bright)] disabled:opacity-50"
+            className="rounded-lg toq-btn-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-[var(--toq-accent-hover)] disabled:opacity-50"
           >
             {loading || isSubmitting ? "Publicando…" : "Publicar"}
           </button>

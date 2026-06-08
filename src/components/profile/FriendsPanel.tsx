@@ -9,7 +9,7 @@ type FriendRow = {
   profile: { username: string; avatar_url: string | null };
 };
 
-export function FriendsPanel({ userId }: { userId: string }) {
+export function FriendsPanel({ userId, embedded }: { userId: string; embedded?: boolean }) {
   const supabase = createClient();
   const [friends, setFriends] = useState<FriendRow[]>([]);
   const [username, setUsername] = useState("");
@@ -94,9 +94,15 @@ export function FriendsPanel({ userId }: { userId: string }) {
     await load();
   }
 
+  const wrapperClass = embedded
+    ? "space-y-4"
+    : "mt-6 toq-card p-5 shadow-sm";
+
   return (
-    <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-sm font-bold text-[var(--toq-navy)]">Amigos</h2>
+    <section className={wrapperClass}>
+      <h2 className={`font-bold text-[var(--toq-navy)] ${embedded ? "profile-section-label" : "text-sm"}`}>
+        {embedded ? "Rede de amigos" : "Amigos"}
+      </h2>
       <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
         Envie pedidos de amizade. Quando aceitos, você verá os posts <strong>privados</strong> deles no feed.
       </p>
@@ -107,12 +113,12 @@ export function FriendsPanel({ userId }: { userId: string }) {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="@nome_de_usuario"
-          className="min-w-[180px] flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+          className="min-w-[180px] flex-1 rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
         />
         <button
           type="submit"
           disabled={adding}
-          className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-sm font-bold text-[var(--toq-navy)] disabled:opacity-50"
+          className="rounded-lg bg-[var(--toq-profile-accent,#2563eb)] px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
         >
           {adding ? "…" : "Adicionar"}
         </button>

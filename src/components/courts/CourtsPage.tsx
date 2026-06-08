@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -8,6 +8,7 @@ import type { CourtWithOwner } from "@/types/courts";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { appContentClass } from "@/lib/layout";
 import { CourtCard } from "./CourtCard";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 export function CourtsPage() {
   const supabase = createClient();
@@ -59,27 +60,22 @@ export function CourtsPage() {
     <>
       <FeedTopBar />
       <main className={appContentClass}>
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-bold text-[var(--toq-navy)]">Quadras</h1>
-            <p className="mt-1 text-sm text-[var(--toq-text-muted)]">
-              Encontre quadras cadastradas ou anuncie a sua para outros jogadores.
-            </p>
-          </div>
-          <Link
-            href="/inicio/quadras/cadastrar"
-            className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-sm font-bold text-[var(--toq-navy)] transition hover:bg-[var(--toq-lime-bright)]"
-          >
-            Cadastrar quadra
-          </Link>
-        </div>
+        <PageHeader
+          title="Quadras"
+          subtitle="Encontre quadras cadastradas ou anuncie a sua para outros jogadores."
+          action={
+            <Link href="/inicio/quadras/cadastrar" className="toq-btn-primary rounded-xl px-4 py-2 text-sm text-white">
+              Cadastrar quadra
+            </Link>
+          }
+        />
 
         <input
           type="search"
           placeholder="Buscar por nome, cidade ou bairro…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="mb-6 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none ring-[var(--toq-sky)] focus:ring-2"
+          className="toq-input mb-6 w-full px-4 py-2.5 text-sm"
         />
 
         {error && (

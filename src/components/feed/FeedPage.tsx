@@ -13,6 +13,7 @@ import { CreatePostBox } from "./CreatePostBox";
 import { FeedTopBar } from "./FeedTopBar";
 import { PostCard } from "./PostCard";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 export function FeedPage() {
   const supabase = createClient();
@@ -157,6 +158,11 @@ export function FeedPage() {
     <>
       <FeedTopBar />
       <FeedPageGrid className="py-6" sidebar={<FeedSidebar />}>
+        <PageHeader
+          title="Página inicial"
+          subtitle="Acompanhe jogadores, eventos e novidades da rede."
+        />
+
         {error && (
           <p className="mb-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600" role="alert">
             {error}
@@ -172,7 +178,7 @@ export function FeedPage() {
         />
 
         <section>
-          <h2 className="mb-3 text-sm font-bold text-[var(--toq-navy)]">Feed geral</h2>
+          <h2 className="toq-section-label mb-3">Feed geral</h2>
           {posts.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
               <p className="text-sm font-semibold text-[var(--toq-navy)]">Nenhum post ainda</p>

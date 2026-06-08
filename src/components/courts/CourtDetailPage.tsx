@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -93,12 +93,12 @@ export function CourtDetailPage({ id }: { id: string }) {
           ← Quadras
         </Link>
 
-        <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <article className="overflow-hidden toq-card-lg">
           <div className="border-b border-slate-100 p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h1 className="text-xl font-bold text-[var(--toq-navy)]">{court.name}</h1>
-                <p className="mt-1 text-sm font-semibold text-[var(--toq-lime-dark)]">{court.size_label}</p>
+                <p className="mt-1 text-sm font-semibold text-[var(--toq-accent)]">{court.size_label}</p>
                 {court.owner && (
                   <Link
                     href={profilePath(court.owner.username)}
@@ -171,7 +171,7 @@ export function CourtDetailPage({ id }: { id: string }) {
                 setScheduleMsg("Agendamento online em breve. Use o WhatsApp por enquanto.");
                 setTimeout(() => setScheduleMsg(null), 4000);
               }}
-              className="rounded-lg bg-[var(--toq-lime-light)] px-5 py-2.5 text-sm font-bold text-[var(--toq-navy)] transition hover:bg-[var(--toq-lime-bright)]"
+              className="rounded-lg toq-btn-primary px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--toq-accent-hover)]"
             >
               Agendar agora
             </button>

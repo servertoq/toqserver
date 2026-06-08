@@ -70,7 +70,7 @@ export function AddressForm({ value, onChange, optionalLabel = "opcional" }: Pro
             inputMode="numeric"
             placeholder="00000-000"
             maxLength={9}
-            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+            className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
           />
           {cepLoading && (
             <span className="mt-1 block text-[10px] text-[var(--toq-text-muted)]">Buscando…</span>
@@ -87,7 +87,7 @@ export function AddressForm({ value, onChange, optionalLabel = "opcional" }: Pro
           <input
             value={value.city}
             onChange={(e) => patch({ city: e.target.value })}
-            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+            className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
             readOnly={cepLoading}
           />
         </label>
@@ -99,7 +99,7 @@ export function AddressForm({ value, onChange, optionalLabel = "opcional" }: Pro
             onChange={(e) => patch({ state: e.target.value.toUpperCase().slice(0, 2) })}
             maxLength={2}
             placeholder="UF"
-            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm uppercase text-[var(--toq-navy)]"
+            className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm uppercase text-[var(--toq-navy)]"
             readOnly={cepLoading}
           />
         </label>
@@ -111,7 +111,7 @@ export function AddressForm({ value, onChange, optionalLabel = "opcional" }: Pro
           value={value.street}
           onChange={(e) => patch({ street: e.target.value })}
           maxLength={120}
-          className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+          className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
         />
       </label>
 
@@ -122,7 +122,7 @@ export function AddressForm({ value, onChange, optionalLabel = "opcional" }: Pro
             value={value.number}
             onChange={(e) => patch({ number: e.target.value })}
             maxLength={20}
-            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+            className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
           />
         </label>
         <label className="block">
@@ -131,7 +131,7 @@ export function AddressForm({ value, onChange, optionalLabel = "opcional" }: Pro
             value={value.neighborhood}
             onChange={(e) => patch({ neighborhood: e.target.value })}
             maxLength={80}
-            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+            className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
           />
         </label>
       </div>
@@ -143,7 +143,7 @@ export function AddressForm({ value, onChange, optionalLabel = "opcional" }: Pro
           onChange={(e) => patch({ complement: e.target.value })}
           maxLength={80}
           placeholder="Apto, bloco, sala…"
-          className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+          className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
         />
       </label>
     </fieldset>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -166,7 +166,7 @@ export function ClubRankingPanel({ communityId, myRole }: Props) {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-xs font-bold text-[var(--toq-navy)] disabled:opacity-50"
+              className="rounded-lg toq-btn-primary px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
             >
               Criar categoria
             </button>
@@ -214,7 +214,7 @@ export function ClubRankingPanel({ communityId, myRole }: Props) {
                 <ol className="divide-y divide-slate-100">
                   {entries.map((entry, idx) => (
                     <li key={entry.id} className="flex items-center gap-3 px-4 py-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--toq-lime-light)]/40 text-sm font-bold text-[var(--toq-navy)]">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full toq-btn-primary/40 text-sm font-bold text-white">
                         {idx + 1}
                       </span>
                       {entry.profile?.avatar_url ? (
@@ -230,7 +230,7 @@ export function ClubRankingPanel({ communityId, myRole }: Props) {
                           @{entry.profile?.username ?? "jogador"}
                         </span>
                       </span>
-                      <span className="text-sm font-bold text-[var(--toq-lime-dark)]">
+                      <span className="text-sm font-bold text-[var(--toq-accent)]">
                         {entry.score.toLocaleString("pt-BR")} {cat.unit_label}
                       </span>
                       {canManage && (
@@ -278,7 +278,7 @@ export function ClubRankingPanel({ communityId, myRole }: Props) {
                     type="button"
                     disabled={saving}
                     onClick={() => void addEntry(cat.id)}
-                    className="rounded-lg bg-[var(--toq-lime-light)] px-3 py-1.5 text-xs font-bold text-[var(--toq-navy)] disabled:opacity-50"
+                    className="rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
                   >
                     Adicionar
                   </button>

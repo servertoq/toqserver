@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -158,7 +158,7 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
               onChange={(e) => setName(e.target.value)}
               maxLength={80}
               required
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)] outline-none focus:border-[var(--toq-lime-light)]"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)] outline-none focus:border-[var(--toq-accent)]"
             />
           </label>
 
@@ -170,7 +170,7 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
               maxLength={500}
               required
               rows={3}
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)] outline-none focus:border-[var(--toq-lime-light)]"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)] outline-none focus:border-[var(--toq-accent)]"
             />
           </label>
 
@@ -201,7 +201,7 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
                     value={shopWhatsapp}
                     onChange={(e) => setShopWhatsapp(e.target.value)}
                     placeholder="(11) 99999-9999"
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-navy)]"
+                    className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
                   />
                 </label>
               </div>
@@ -213,7 +213,7 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="mt-2 block rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[var(--toq-navy)]"
+              className="mt-2 block rounded-lg toq-input px-3 py-2 text-xs font-semibold text-[var(--toq-navy)]"
             >
               Trocar imagem
             </button>
@@ -240,7 +240,7 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-[var(--toq-lime-light)] py-2.5 text-sm font-bold text-[var(--toq-navy)] disabled:opacity-50"
+            className="w-full rounded-lg toq-btn-primary py-2.5 text-sm font-bold text-white disabled:opacity-50"
           >
             {loading ? "Salvando…" : "Salvar alterações"}
           </button>

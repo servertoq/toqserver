@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -140,7 +140,7 @@ export function MentionTextarea({
         required={required}
         className={
           className ||
-          "w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-[var(--toq-text)] outline-none focus:border-[var(--toq-lime-light)] focus:ring-2 focus:ring-[var(--toq-lime-light)]/20"
+          "w-full resize-none rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-text)] outline-none focus:border-[var(--toq-accent)] focus:ring-2 focus:ring-[var(--toq-accent-soft)]/20"
         }
       />
       {mentionQuery !== null && (suggestions.length > 0 || loading) && (

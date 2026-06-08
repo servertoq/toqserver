@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import { formatClubPrice, hasShopWhatsApp, productDisplayPrice } from "@/lib/clubFeatures";
@@ -127,7 +127,7 @@ export function ClubProductDetail({
             </button>
           </div>
           <p className="mt-2 text-sm text-[var(--toq-text-muted)]">{product.description}</p>
-          <p className="mt-3 text-lg font-bold text-[var(--toq-lime-dark)]">
+          <p className="mt-3 text-lg font-bold text-[var(--toq-accent)]">
             {formatClubPrice(displayPrice)}
             {selected && quantity > 1 && (
               <span className="ml-2 text-sm font-semibold text-[var(--toq-text-muted)]">

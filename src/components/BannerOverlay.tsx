@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 
 export function BannerOverlay() {
   return (
@@ -12,7 +12,7 @@ export function BannerOverlay() {
           <br />
           se encontram para
         </p>
-        <hr className="mx-auto mt-2 w-12 border-0 border-t-2 border-[#000040]" />
+        <hr className="mx-auto mt-2 w-12 border-0 border-t-2 border-[var(--toq-navy)]" />
       </header>
 
       <div className="w-full max-w-md">

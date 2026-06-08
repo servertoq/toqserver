@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -130,7 +130,7 @@ export function ClubTournamentForm({ communityId, tournament, onSaved, onClose }
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
       <form
         onSubmit={handleSubmit}
-        className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl"
+        className="max-h-[90dvh] w-full max-w-lg overflow-y-auto toq-card p-5 shadow-xl"
       >
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-lg font-bold text-[var(--toq-navy)]">
@@ -276,7 +276,7 @@ export function ClubTournamentForm({ communityId, tournament, onSaved, onClose }
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 rounded-lg bg-[var(--toq-lime-light)] py-2 text-sm font-bold text-[var(--toq-navy)] disabled:opacity-50"
+            className="flex-1 rounded-lg toq-btn-primary py-2 text-sm font-bold text-white disabled:opacity-50"
           >
             {loading ? "Salvando…" : isEdit ? "Salvar" : "Criar torneio"}
           </button>

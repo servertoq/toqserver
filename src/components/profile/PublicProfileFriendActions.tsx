@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -142,7 +142,7 @@ export function PublicProfileFriendActions({
       <div className="flex flex-wrap items-center gap-2">
         <Link
           href={`/inicio/mensagens?chat=${encodeURIComponent(profileUsername)}`}
-          className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-sm font-bold text-[var(--toq-navy)]"
+          className="rounded-lg toq-btn-primary px-4 py-2 text-sm font-bold text-white"
         >
           Conversar
         </Link>
@@ -170,7 +170,7 @@ export function PublicProfileFriendActions({
               type="button"
               disabled={acting}
               onClick={() => handleRespond(true)}
-              className="rounded-lg bg-[var(--toq-lime-light)] px-4 py-2 text-sm font-bold text-[var(--toq-navy)] disabled:opacity-50"
+              className="rounded-lg toq-btn-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
             >
               Aceitar pedido
             </button>

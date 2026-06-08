@@ -24,7 +24,7 @@ export function AppShell({
   return (
     <ProfileContext.Provider value={profile}>
       <PresenceHeartbeat />
-      <div className="feed-layout flex bg-slate-50">
+      <div className="feed-layout flex">
         <AppSidebar profile={profile} />
         <div className="feed-layout-main flex w-full flex-col pb-16 md:ml-[244px] md:pb-0 lg:ml-[260px]">
           {children}
