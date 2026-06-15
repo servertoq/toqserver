@@ -401,7 +401,7 @@ body {
 }
 
 .auth-mobile-slide--form {
-  min-height: min(100dvh, auto);
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -410,7 +410,22 @@ body {
     max(1rem, env(safe-area-inset-right))
     max(1.25rem, env(safe-area-inset-bottom))
     max(1rem, env(safe-area-inset-left));
-  background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 42%, #f8fafc 100%);
+  background-color: #040f22;
+  background-image:
+    radial-gradient(ellipse 90% 55% at 18% 100%, rgba(59, 130, 246, 0.42) 0%, transparent 52%),
+    radial-gradient(ellipse 70% 45% at 85% 92%, rgba(37, 99, 235, 0.28) 0%, transparent 48%),
+    radial-gradient(ellipse 100% 40% at 50% 0%, rgba(37, 99, 235, 0.18) 0%, transparent 55%),
+    linear-gradient(
+      180deg,
+      #040f22 0%,
+      #0a1830 14%,
+      #122848 32%,
+      #1a3560 48%,
+      #152d52 62%,
+      #0c1f3d 78%,
+      #061428 90%,
+      #040f22 100%
+    );
 }
 
 .auth-mobile-form-wrap {
@@ -418,11 +433,11 @@ body {
 }
 
 .auth-mobile-hero-img {
-  object-position: center 48%;
+  object-position: 34% 48%;
 }
 
 .auth-mobile-hero-img--right {
-  object-position: center 48%;
+  object-position: 40% 48%;
 }
 
 .auth-mobile-login-cta {
@@ -499,7 +514,7 @@ body {
   }
 
   .auth-mobile-slide--form .auth-form-card {
-    box-shadow: 0 16px 40px rgba(5, 16, 36, 0.14);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
     max-height: none;
     width: 100%;
   }
