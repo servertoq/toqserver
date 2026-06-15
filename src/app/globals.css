@@ -356,31 +356,114 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
-/* Auth — tela dividida 50/50 (desktop) e empilhada (mobile) */
+/* Auth — desktop: panorama 50/50 | mobile: 3 telas em scroll */
 .auth-layout {
   position: relative;
-  display: flex;
-  flex-direction: column;
   width: 100%;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
   background-color: #040f22;
 }
 
-@media (min-width: 768px) {
-  .auth-layout {
-    flex-direction: row;
-  }
+.auth-layout--boot {
+  height: 100dvh;
+}
+
+.auth-layout--desktop {
+  display: flex;
+  flex-direction: row;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.auth-layout--mobile {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.auth-mobile-scroll {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+
+.auth-mobile-slide {
+  position: relative;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.auth-mobile-slide--hero {
+  min-height: 100dvh;
+}
+
+.auth-mobile-slide--form {
+  min-height: min(100dvh, auto);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(1.25rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 42%, #f8fafc 100%);
+}
+
+.auth-mobile-form-wrap {
+  width: min(100%, 24rem);
+}
+
+.auth-mobile-hero-img {
+  object-position: center 48%;
+}
+
+.auth-mobile-hero-img--right {
+  object-position: center 48%;
+}
+
+.auth-mobile-login-cta {
+  position: absolute;
+  z-index: 2;
+  bottom: max(2.75rem, calc(env(safe-area-inset-bottom) + 1.5rem));
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 9999px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0.5rem 1.35rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--toq-accent);
+  box-shadow: 0 10px 28px rgba(5, 16, 36, 0.28);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.auth-mobile-login-cta:active {
+  transform: translateX(-50%) scale(0.97);
+}
+
+.auth-mobile-scroll-hint {
+  position: absolute;
+  z-index: 2;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  pointer-events: none;
 }
 
 .auth-panel-banner,
 .auth-panel-login {
   background-color: #040f22;
-}
-
-.auth-panel-banner--mobile {
-  height: clamp(10.5rem, 36dvh, 16.5rem);
 }
 
 .auth-panel-login {
@@ -398,33 +481,14 @@ body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   pointer-events: none;
-  padding:
-    max(0.75rem, env(safe-area-inset-top))
-    max(1rem, env(safe-area-inset-right))
-    max(0.75rem, env(safe-area-inset-bottom))
-    max(1rem, env(safe-area-inset-left));
+  padding: 1.5rem;
 }
 
 .auth-form-overlay .auth-form-card {
-  box-shadow: 0 24px 60px rgba(5, 16, 36, 0.28);
-  max-height: min(
-    calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1.5rem),
-    40rem
-  );
+  box-shadow: 0 28px 70px rgba(5, 16, 36, 0.32);
+  max-height: min(88dvh, 40rem);
   overflow-y: auto;
-  width: min(100%, 24rem);
-}
-
-@media (min-width: 768px) {
-  .auth-form-overlay {
-    padding: 1.5rem;
-  }
-
-  .auth-form-overlay .auth-form-card {
-    width: min(100%, 28rem);
-    max-height: min(88dvh, 40rem);
-    box-shadow: 0 28px 70px rgba(5, 16, 36, 0.32);
-  }
+  width: min(100%, 28rem);
 }
 
 @media (max-width: 767px) {
@@ -433,62 +497,21 @@ body {
   .auth-form-card select {
     font-size: 16px;
   }
+
+  .auth-mobile-slide--form .auth-form-card {
+    box-shadow: 0 16px 40px rgba(5, 16, 36, 0.14);
+    max-height: none;
+    width: 100%;
+  }
 }
 
-/* Mesma altura e recorte vertical nas duas metades do panorama */
+/* Mesma altura e recorte vertical nas duas metades do panorama (desktop) */
 .auth-split-img--left {
   object-position: 100% 48%;
 }
 
 .auth-split-img--right {
   object-position: 0% 48%;
-}
-
-@media (max-width: 767px) {
-  .auth-split-img--left {
-    object-position: 72% 42%;
-  }
-
-  .auth-split-img--right {
-    object-position: 28% 48%;
-  }
-}
-
-/* Celular deitado — layout lado a lado como no desktop */
-@media (max-width: 767px) and (orientation: landscape) and (max-height: 32rem) {
-  .auth-layout {
-    flex-direction: row;
-  }
-
-  .auth-panel-banner--mobile {
-    height: 100dvh;
-    width: 42%;
-    border-bottom: 0;
-    border-right: 2px solid #000000;
-  }
-
-  .auth-panel-login {
-    width: 58%;
-    flex: none;
-  }
-
-  .auth-split-img--left {
-    object-position: 100% 48%;
-  }
-
-  .auth-split-img--right {
-    object-position: 0% 48%;
-  }
-
-  .auth-form-overlay .auth-form-card {
-    width: min(100%, 20rem);
-    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.75rem);
-    padding: 0.875rem 1rem;
-  }
-
-  .auth-form-card--register {
-    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.5rem);
-  }
 }
 
 /* Tablet em pé — formulário um pouco mais largo */

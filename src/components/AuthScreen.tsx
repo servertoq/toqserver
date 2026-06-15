@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Image from "next/image";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LoginPanelBackground } from "@/components/LoginPanelBackground";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
@@ -22,6 +22,20 @@ function isEmail(value: string) {
 /** Apenas letras, números e _ — espaços viram underscore */
 function normalizeUsername(value: string) {
   return value.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
+}
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  return isDesktop;
 }
 
 export function AuthScreen() {
@@ -53,6 +67,25 @@ export function AuthScreen() {
     resetMessages();
     setView(next);
   };
+
+  const loginSectionRef = useRef<HTMLElement>(null);
+
+  const scrollToLogin = useCallback(() => {
+    loginSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const switchViewAndScroll = useCallback(
+    (next: View) => {
+      resetMessages();
+      setView(next);
+      if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+        requestAnimationFrame(() => {
+          loginSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+    },
+    [resetMessages],
+  );
 
   function handleAvatarChange(file: File | null) {
     setAvatarFile(file);
@@ -258,38 +291,14 @@ export function AuthScreen() {
   }
 
   const showBannerPanel = view === "login" || view === "register";
+  const isDesktop = useIsDesktop();
 
-  return (
-    <main className="auth-layout">
-      <aside
-        className={`auth-panel-banner relative shrink-0 overflow-hidden md:h-dvh md:w-1/2 ${
-          showBannerPanel ? "auth-panel-banner--mobile border-b-2 border-black md:border-b-0" : "hidden"
-        }`}
-      >
-        {showBannerPanel && (
-          <Image
-            src="/imagens_publicas/fundoumtoq.jpeg"
-            alt="Toq Tennis — Evoluir"
-            fill
-            priority
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className="auth-split-img auth-split-img--left object-cover"
-          />
-        )}
-      </aside>
-
-      <div className="auth-panel-login relative min-h-0 w-full flex-1 md:h-dvh md:w-1/2 md:flex-none">
-        <div className="absolute inset-0 z-0">
-          <LoginPanelBackground />
-        </div>
-      </div>
-
-      <div className="auth-form-overlay">
-        <section
-          className={`auth-form-card pointer-events-auto w-full max-w-md rounded-2xl ${
-            view === "register" ? "auth-form-card--register" : ""
-          }`}
-        >
+  const formCard = (
+    <section
+      className={`auth-form-card pointer-events-auto w-full max-w-md rounded-2xl ${
+        view === "register" ? "auth-form-card--register" : ""
+      }`}
+    >
           {view === "login" && (
             <div className="mb-4">
               <h2 className="text-center text-base font-bold leading-snug text-[var(--toq-text)] md:text-lg">
@@ -392,7 +401,7 @@ export function AuthScreen() {
               <SubmitButton loading={loading} label="Entrar" tone="light" />
               <Divider />
               <GoogleButton loading={loading} onClick={handleGoogleLogin} />
-              <RegisterButton onClick={() => switchView("register")} />
+              <RegisterButton onClick={() => switchViewAndScroll("register")} />
             </form>
           )}
 
@@ -541,7 +550,85 @@ export function AuthScreen() {
             </form>
           )}
         </section>
+  );
+
+  if (isDesktop === null) {
+    return <main className="auth-layout auth-layout--boot" />;
+  }
+
+  if (!isDesktop) {
+    return (
+      <main className="auth-layout auth-layout--mobile">
+        <div className="auth-mobile-scroll">
+          {showBannerPanel && (
+            <section className="auth-mobile-slide auth-mobile-slide--hero">
+              <Image
+                src="/imagens_publicas/fundoumtoq.jpeg"
+                alt="Toq Tennis — Evoluir"
+                fill
+                priority
+                sizes="100vw"
+                className="auth-mobile-hero-img object-cover"
+              />
+              <button type="button" className="auth-mobile-login-cta" onClick={scrollToLogin}>
+                Login
+              </button>
+              <p className="auth-mobile-scroll-hint" aria-hidden>
+                Arraste para baixo
+              </p>
+            </section>
+          )}
+
+          <section
+            ref={loginSectionRef}
+            className="auth-mobile-slide auth-mobile-slide--form"
+            id="auth-login-section"
+          >
+            <div className="auth-mobile-form-wrap">{formCard}</div>
+          </section>
+
+          <section className="auth-mobile-slide auth-mobile-slide--hero">
+            <Image
+              src="/imagens_publicas/fundotoqdois.png"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="auth-mobile-hero-img auth-mobile-hero-img--right object-cover"
+              aria-hidden
+            />
+          </section>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="auth-layout auth-layout--desktop">
+      <aside
+        className={`auth-panel-banner relative shrink-0 overflow-hidden md:h-dvh md:w-1/2 ${
+          showBannerPanel ? "border-b-0" : "hidden"
+        }`}
+      >
+        {showBannerPanel && (
+          <Image
+            src="/imagens_publicas/fundoumtoq.jpeg"
+            alt="Toq Tennis — Evoluir"
+            fill
+            priority
+            sizes="50vw"
+            className="auth-split-img auth-split-img--left object-cover"
+          />
+        )}
+      </aside>
+
+      <div className="auth-panel-login relative min-h-0 w-full md:h-dvh md:w-1/2 md:flex-none">
+        <div className="absolute inset-0 z-0">
+          <LoginPanelBackground />
+        </div>
       </div>
+
+      <div className="auth-form-overlay">{formCard}</div>
     </main>
   );
 }
