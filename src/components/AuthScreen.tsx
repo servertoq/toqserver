@@ -296,51 +296,30 @@ export function AuthScreen() {
   const formCard = (
     <section
       className={`auth-form-card pointer-events-auto w-full max-w-md rounded-2xl ${
-        view === "register" ? "auth-form-card--register" : ""
+        view === "register"
+          ? "auth-form-card--register"
+          : view === "login"
+            ? "auth-form-card--login"
+            : view === "forgot"
+              ? "auth-form-card--forgot"
+              : ""
       }`}
     >
           {view === "login" && (
-            <div className="mb-4">
+            <div className="auth-login-intro mb-4">
               <h2 className="text-center text-base font-bold leading-snug text-[var(--toq-text)] md:text-lg">
                 Conecte-se com outros jogadores
               </h2>
-              <div className="mt-4 flex items-center justify-center gap-2 md:mt-5 md:gap-4">
-                <div className="auth-ball-spin auth-ball-frame relative h-8 w-8 shrink-0 md:h-9 md:w-9">
-                  <Image
-                    src="/imagens_publicas/bola_tenis.png?v=5"
-                    alt=""
-                    fill
-                    sizes="36px"
-                    className="auth-ball-img object-cover"
-                    aria-hidden
-                  />
-                </div>
-                <div
-                  className="h-[5.625rem] w-[11.25rem] shrink-0 toq-btn-primary bg-[var(--toq-accent)] md:h-[6.25rem] md:w-[13.75rem]"
-                  style={{
-                    maskImage: "url(/imagens_publicas/logo_transp.png)",
-                    WebkitMaskImage: "url(/imagens_publicas/logo_transp.png)",
-                    maskSize: "contain",
-                    WebkitMaskSize: "contain",
-                    maskRepeat: "no-repeat",
-                    WebkitMaskRepeat: "no-repeat",
-                    maskPosition: "center",
-                    WebkitMaskPosition: "center",
-                  }}
-                  role="img"
-                  aria-label="Toq Tennis"
-                />
-                <div className="auth-ball-spin--reverse auth-ball-frame relative h-8 w-8 shrink-0 md:h-9 md:w-9">
-                  <Image
-                    src="/imagens_publicas/bola_tenis.png?v=5"
-                    alt=""
-                    fill
-                    sizes="36px"
-                    className="auth-ball-img object-cover"
-                    aria-hidden
-                  />
-                </div>
-              </div>
+              <ToqLogoWithBalls className="mt-4 md:mt-5" />
+            </div>
+          )}
+
+          {view === "forgot" && (
+            <div className="mb-4">
+              <ToqLogoWithBalls />
+              <h2 className="mt-3 text-center text-base font-bold text-[var(--toq-text)] md:text-lg">
+                Recuperar senha
+              </h2>
             </div>
           )}
 
@@ -373,7 +352,7 @@ export function AuthScreen() {
           )}
 
           {view === "login" && (
-            <form onSubmit={handleLogin} className="space-y-3">
+            <form onSubmit={handleLogin} className="auth-login-form flex flex-col gap-2.5">
               <Field
                 label="E-mail ou usuário"
                 id="identifier"
@@ -560,24 +539,22 @@ export function AuthScreen() {
     return (
       <main className="auth-layout auth-layout--mobile">
         <div className="auth-mobile-scroll">
-          {showBannerPanel && (
-            <section className="auth-mobile-slide auth-mobile-slide--hero">
-              <Image
-                src="/imagens_publicas/fundoumtoq.jpeg"
-                alt="Toq Tennis — Evoluir"
-                fill
-                priority
-                sizes="100vw"
-                className="auth-mobile-hero-img object-cover"
-              />
-              <button type="button" className="auth-mobile-login-cta" onClick={scrollToLogin}>
-                Login
-              </button>
-              <p className="auth-mobile-scroll-hint" aria-hidden>
-                Arraste para baixo
-              </p>
-            </section>
-          )}
+          <section className="auth-mobile-slide auth-mobile-slide--hero">
+            <Image
+              src="/imagens_publicas/fundoumtoq.jpeg"
+              alt="Toq Tennis — Evoluir"
+              fill
+              priority
+              sizes="100vw"
+              className="auth-mobile-hero-img object-cover"
+            />
+            <button type="button" className="auth-mobile-login-cta" onClick={scrollToLogin}>
+              Login
+            </button>
+            <p className="auth-mobile-scroll-hint" aria-hidden>
+              Arraste para baixo
+            </p>
+          </section>
 
           <section
             ref={loginSectionRef}
@@ -630,6 +607,48 @@ export function AuthScreen() {
 
       <div className="auth-form-overlay">{formCard}</div>
     </main>
+  );
+}
+
+function ToqLogoWithBalls({ className = "" }: { className?: string }) {
+  return (
+    <div className={`auth-toq-logo-row flex items-center justify-center gap-2 md:gap-4 ${className}`}>
+      <div className="auth-ball-spin auth-ball-frame relative h-8 w-8 shrink-0 md:h-9 md:w-9">
+        <Image
+          src="/imagens_publicas/bola_tenis.png?v=5"
+          alt=""
+          fill
+          sizes="36px"
+          className="auth-ball-img object-cover"
+          aria-hidden
+        />
+      </div>
+      <div
+        className="auth-logo-mark h-[5.625rem] w-[11.25rem] shrink-0 toq-btn-primary bg-[var(--toq-accent)] md:h-[6.25rem] md:w-[13.75rem]"
+        style={{
+          maskImage: "url(/imagens_publicas/logo_transp.png)",
+          WebkitMaskImage: "url(/imagens_publicas/logo_transp.png)",
+          maskSize: "contain",
+          WebkitMaskSize: "contain",
+          maskRepeat: "no-repeat",
+          WebkitMaskRepeat: "no-repeat",
+          maskPosition: "center",
+          WebkitMaskPosition: "center",
+        }}
+        role="img"
+        aria-label="Toq Tennis"
+      />
+      <div className="auth-ball-spin--reverse auth-ball-frame relative h-8 w-8 shrink-0 md:h-9 md:w-9">
+        <Image
+          src="/imagens_publicas/bola_tenis.png?v=5"
+          alt=""
+          fill
+          sizes="36px"
+          className="auth-ball-img object-cover"
+          aria-hidden
+        />
+      </div>
+    </div>
   );
 }
 
