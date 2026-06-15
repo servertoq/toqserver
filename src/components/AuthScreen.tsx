@@ -2,10 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useState } from "react";
-import { BannerCourtLines } from "@/components/BannerCourtLines";
 import { LoginPanelBackground } from "@/components/LoginPanelBackground";
-import { BannerTennisBalls } from "@/components/BannerTennisBalls";
-import { BannerOverlay } from "@/components/BannerOverlay";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
@@ -263,47 +260,30 @@ export function AuthScreen() {
   const showBannerPanel = view === "login" || view === "register";
 
   return (
-    <main className="flex h-dvh max-h-dvh w-full flex-col overflow-hidden md:flex-row">
-      {/* Painel esquerdo — azul céu (banner) */}
+    <main className="auth-layout flex h-dvh max-h-dvh w-full flex-col overflow-hidden md:flex-row">
+      {/* Painel esquerdo — arte promocional TOQ */}
       <aside
-        className={`auth-panel-sky relative shrink-0 overflow-hidden md:w-1/2 md:border-r-2 md:border-[var(--toq-navy)] md:h-dvh lg:w-[48%] ${
+        className={`auth-panel-banner relative shrink-0 overflow-hidden md:w-1/2 md:border-r-2 md:border-black md:h-dvh lg:w-[48%] ${
           showBannerPanel
-            ? "h-[50dvh] border-b-2 border-[var(--toq-navy)] md:border-b-0"
+            ? "h-[36dvh] min-h-[180px] max-h-[280px] border-b-2 border-black md:h-dvh md:max-h-none md:border-b-0"
             : "hidden"
         }`}
       >
         {showBannerPanel && (
-          <div className="relative h-full w-full overflow-hidden">
-            <Image
-              src="/imagens_publicas/logo_transp.png"
-              alt="Toq Tennis"
-              width={160}
-              height={80}
-              priority
-              className="absolute left-3 top-3 z-20 h-auto w-[4.5rem] md:left-5 md:top-5 md:w-24"
-            />
-            <BannerCourtLines />
-            <BannerTennisBalls />
-            <div className="relative z-[2] flex h-full w-full flex-col items-center">
-              <Image
-                src="/imagens_publicas/banner_principal.png?v=4"
-                alt=""
-                width={1084}
-                height={1451}
-                priority
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="mt-auto block h-auto max-h-full w-auto max-w-full object-contain object-bottom"
-                aria-hidden
-              />
-            </div>
-            <BannerOverlay />
-          </div>
+          <Image
+            src="/imagens_publicas/fundoumtoq.jpeg"
+            alt="Toq Tennis — Evoluir"
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover object-center"
+          />
         )}
       </aside>
 
       {/* Painel direito — login */}
       <div
-        className="auth-panel-login relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-4 py-6 md:px-10 lg:px-14"
+        className="auth-panel-login relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-6 md:overflow-hidden md:px-10 lg:px-14"
       >
         <div className="absolute inset-0 z-0">
           <LoginPanelBackground />
@@ -312,7 +292,7 @@ export function AuthScreen() {
         <section
           className={`auth-form-card relative z-10 w-full max-w-md rounded-2xl ${
             view === "register"
-              ? "max-h-[min(88dvh,640px)] overflow-y-auto p-4 md:p-5"
+              ? "max-h-none overflow-visible p-4 md:max-h-[min(88dvh,640px)] md:overflow-y-auto md:p-5"
               : "p-5 md:p-6"
           }`}
         >

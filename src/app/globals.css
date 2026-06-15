@@ -36,6 +36,8 @@
   --toq-profile-border: var(--toq-border);
   --toq-profile-ring-bg: #e8eef7;
   --toq-profile-surface: var(--toq-surface);
+  --app-mobile-header-h: calc(3.5rem + env(safe-area-inset-top, 0px));
+  --app-topbar-h: 3.25rem;
 }
 
 html,
@@ -62,6 +64,40 @@ body {
   background-image:
     radial-gradient(circle at 10% 6%, rgba(37, 99, 235, 0.06) 0%, transparent 40%),
     radial-gradient(circle at 90% 94%, rgba(37, 99, 235, 0.04) 0%, transparent 36%);
+  padding-top: var(--app-mobile-header-h);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (min-width: 768px) {
+  .feed-layout-main {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .feed-layout-main .toq-topbar {
+    top: 0;
+  }
+}
+
+/* Evita zoom indesejado ao focar campos no iOS */
+@media (max-width: 767px) {
+  .feed-layout-main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  .feed-layout-main textarea,
+  .feed-layout-main select,
+  .auth-form-card input,
+  .auth-form-card textarea,
+  .auth-form-card select {
+    font-size: 16px;
+  }
+}
+
+/* Imagens e mídia não ultrapassam o container */
+.feed-layout-main img,
+.feed-layout-main video {
+  max-width: 100%;
+  height: auto;
 }
 
 .feed-layout-main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
@@ -108,8 +144,134 @@ body {
 }
 
 .app-sidebar-mobile {
+  display: none;
+}
+
+/* Cabeçalho mobile + menu hambúrguer */
+.app-mobile-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: var(--app-mobile-header-h);
+  padding: env(safe-area-inset-top, 0px) 0.5rem 0;
   background: var(--toq-accent);
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 2px solid #000000;
+  box-shadow: 0 4px 20px rgba(5, 16, 36, 0.12);
+}
+
+.app-mobile-header-brand {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.app-mobile-header-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-mobile-header-spacer {
+  width: 2.75rem;
+  flex-shrink: 0;
+}
+
+.app-hamburger {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  border-radius: 0.75rem;
+  transition: background-color 0.2s ease;
+}
+
+.app-hamburger:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.app-hamburger:active {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.app-hamburger-line {
+  display: block;
+  width: 1.375rem;
+  height: 2px;
+  border-radius: 2px;
+  background: #ffffff;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+  transform-origin: center;
+}
+
+.app-hamburger--open .app-hamburger-line:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.app-hamburger--open .app-hamburger-line:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.app-hamburger--open .app-hamburger-line:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.app-mobile-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  border: none;
+  background: rgba(5, 16, 36, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+
+.app-mobile-drawer-backdrop--open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.app-mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 58;
+  width: min(280px, 88vw);
+  height: 100dvh;
+  border-right: 2px solid #000000;
+  background: var(--toq-accent);
+  color: #ffffff;
+  transform: translateX(-105%);
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  box-shadow: 8px 0 32px rgba(5, 16, 36, 0.2);
+}
+
+.app-mobile-drawer--open {
+  transform: translateX(0);
+}
+
+.app-mobile-drawer-inner {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: calc(var(--app-mobile-header-h) + 1rem) 0.75rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.app-mobile-drawer svg {
+  max-width: 24px;
+  max-height: 24px;
 }
 
 .app-sidebar .sidebar-nav-active {
@@ -147,6 +309,24 @@ body {
   border-radius: 1.25rem;
   background: #ffffff;
   box-shadow: 0 8px 32px rgba(5, 16, 36, 0.06);
+  min-height: 0;
+}
+
+@media (max-width: 767px) {
+  .messages-inbox {
+    border-radius: 1rem;
+    flex: 1 1 auto;
+    min-height: 280px;
+    height: calc(100dvh - var(--app-mobile-header-h) - 1.5rem);
+    max-height: calc(100dvh - var(--app-mobile-header-h) - 1.5rem);
+  }
+}
+
+@media (min-width: 768px) {
+  .messages-inbox {
+    height: calc(100dvh - 2rem);
+    max-height: calc(100dvh - 2rem);
+  }
 }
 
 .messages-inbox-list {
@@ -177,12 +357,12 @@ body {
 }
 
 /* Auth */
-.auth-panel-sky {
-  background: linear-gradient(135deg, #3b82f6 0%, var(--toq-accent) 50%, var(--toq-navy-mid) 100%);
+.auth-panel-banner {
+  background: var(--toq-accent);
 }
 
 .auth-panel-login {
-  background: linear-gradient(180deg, var(--toq-navy) 0%, var(--toq-navy-deep) 100%);
+  background: var(--toq-accent);
   color: #e2e8f0;
 }
 
@@ -348,6 +528,69 @@ button {
 
 .profile-dashboard {
   background: linear-gradient(180deg, #ffffff 0%, #fafcff 100%);
+}
+
+.profile-tabs-scroll {
+  display: flex;
+  gap: 0.375rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.profile-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.profile-tab-chip {
+  display: inline-flex;
+  shrink: 0;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  border: 1px solid var(--toq-profile-border);
+  padding: 0.5rem 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.profile-tab-chip--active {
+  border-color: var(--toq-profile-accent);
+  background: var(--toq-profile-accent-soft);
+  color: var(--toq-profile-accent);
+}
+
+.profile-tab-chip:not(.profile-tab-chip--active) {
+  background: #ffffff;
+  color: var(--toq-profile-muted);
+}
+
+@media (min-width: 1024px) {
+  .profile-tabs-mobile {
+    display: none;
+  }
+}
+
+.auth-layout {
+  min-height: 100dvh;
+}
+
+@media (max-width: 767px) {
+  .auth-panel-login {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    align-items: flex-start;
+    padding-top: 1.25rem;
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .auth-form-card {
+    margin-top: auto;
+    margin-bottom: auto;
+  }
 }
 
 .profile-sidebar {

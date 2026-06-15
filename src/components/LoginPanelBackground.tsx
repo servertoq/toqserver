@@ -3,7 +3,7 @@ import Image from "next/image";
 export function LoginPanelBackground() {
   return (
     <Image
-      src="/imagens_publicas/fundo_raquete.jpg?v=2"
+      src="/imagens_publicas/fundo2toq.jpeg"
       alt=""
       fill
       priority

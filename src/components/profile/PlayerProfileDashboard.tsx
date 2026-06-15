@@ -224,7 +224,7 @@ export function PlayerProfileDashboard({
               )}
             </div>
 
-            <nav className="mt-8 space-y-1">
+            <nav className="mt-8 hidden space-y-1 lg:block">
               {navTabs.map((item) => (
                 <button
                   key={item.id}
@@ -248,7 +248,22 @@ export function PlayerProfileDashboard({
           </aside>
 
           {/* Main */}
-          <div className="min-w-0 flex-1 p-6 lg:p-8">
+          <div className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+            <nav className="profile-tabs-mobile mb-5 lg:hidden" aria-label="Seções do perfil">
+              <div className="profile-tabs-scroll">
+                {navTabs.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setTab(item.id)}
+                    className={`profile-tab-chip ${tab === item.id ? "profile-tab-chip--active" : ""}`}
+                  >
+                    <TabIcon type={item.icon} />
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </nav>
             {tab === "resumo" && (
               <div className="space-y-6">
                 <section>

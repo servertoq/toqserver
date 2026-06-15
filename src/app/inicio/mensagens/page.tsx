@@ -12,7 +12,7 @@ function MensagensPageInner() {
   const communityId = searchParams.get("g");
 
   return (
-    <main className={`${appContentClass} !py-4 md:!py-6`}>
+    <main className={`${appContentClass} flex min-h-0 flex-col !py-3 md:!py-6`}>
       <MessagesInbox
         variant="page"
         initialUsername={chat}

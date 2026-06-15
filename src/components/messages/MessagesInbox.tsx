@@ -391,7 +391,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
     <div
       className={
         isPage
-          ? "messages-inbox flex h-[calc(100dvh-4.5rem)] min-h-0 w-full flex-col overflow-hidden md:h-[calc(100dvh-2rem)] md:flex-row"
+          ? "messages-inbox flex min-h-0 w-full flex-col overflow-hidden md:flex-row"
           : "messages-popup toq-card-lg flex h-[min(520px,75dvh)] flex-col overflow-hidden text-[var(--toq-navy)] shadow-[0_16px_48px_rgba(5,16,36,0.14)]"
       }
     >

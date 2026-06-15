@@ -5,6 +5,7 @@ import type { AppProfile } from "./AppSidebar";
 import { AppSidebar } from "./AppSidebar";
 import { PresenceHeartbeat } from "@/components/feed/PresenceHeartbeat";
 import { FloatingMessages } from "@/components/messages/FloatingMessages";
+import { mobileMainOffsetClass } from "@/lib/responsive";
 
 const ProfileContext = createContext<AppProfile | null>(null);
 
@@ -26,7 +27,7 @@ export function AppShell({
       <PresenceHeartbeat />
       <div className="feed-layout flex">
         <AppSidebar profile={profile} />
-        <div className="feed-layout-main flex w-full flex-col pb-16 md:ml-[244px] md:pb-0 lg:ml-[260px]">
+        <div className={`feed-layout-main flex flex-col ${mobileMainOffsetClass}`}>
           {children}
           <FloatingMessages />
         </div>
