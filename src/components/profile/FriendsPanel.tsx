@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { formatFriendRequestError } from "@/lib/friendRequest";
 
 type FriendRow = {
   friend_id: string;
@@ -79,7 +80,7 @@ export function FriendsPanel({ userId, embedded }: { userId: string; embedded?: 
       });
 
       if (requestErr) {
-        setMessage(requestErr.message || "Não foi possível enviar o pedido.");
+        setMessage(formatFriendRequestError(requestErr.message));
         return;
       }
 

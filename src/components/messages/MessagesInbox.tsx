@@ -412,7 +412,6 @@ export function MessagesInbox(props: MessagesInboxProps) {
           <InboxSearchBar
             value={searchQuery}
             onChange={setSearchQuery}
-            isPage={isPage}
           />
           {!isSearching && (
             <InboxTabs
@@ -421,7 +420,6 @@ export function MessagesInbox(props: MessagesInboxProps) {
               friendsCount={friendsCount}
               pendingCount={pendingCount}
               groupsCount={groupsCount}
-              isPage={isPage}
             />
           )}
           {isSearching ? (
@@ -474,7 +472,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
                 onExpand={!isPage ? handleExpand : undefined}
               />
               {activeConversation && (
-                <div className={`shrink-0 border-b px-4 py-2 ${isPage ? "border-[var(--toq-border)] bg-white" : "border-zinc-800 bg-zinc-900"}`}>
+                <div className="shrink-0 border-b border-[var(--toq-border)] bg-white px-4 py-2">
                   {isCommunityConversation(activeConversation) ? (
                     <>
                       {conversationHref(activeConversation) && (
@@ -485,7 +483,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
                           Ver {activeConversation.community.group_kind === "club" ? "clube" : "comunidade"}
                         </Link>
                       )}
-                      <p className={`text-[11px] ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-500"}`}>
+                      <p className={`text-[11px] text-[var(--toq-text-muted)]`}>
                         Chat do grupo — só membros podem enviar mensagens.
                       </p>
                     </>
@@ -498,7 +496,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
                         Ver perfil
                       </Link>
                       {!activeConversation.is_friend && (
-                        <p className={`text-[11px] ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-500"}`}>
+                        <p className={`text-[11px] text-[var(--toq-text-muted)]`}>
                           Pendente — ao virarem amigos, a conversa vai para Amigos.
                         </p>
                       )}
@@ -514,7 +512,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
                 isPage={isPage}
                 showSenderNames={activeConversation?.kind === "community"}
               />
-              <MessageComposer draft={draft} setDraft={setDraft} onSubmit={handleSend} sending={sending} isPage={isPage} />
+              <MessageComposer draft={draft} setDraft={setDraft} onSubmit={handleSend} sending={sending} />
             </>
           ) : null}
         </section>
@@ -541,9 +539,9 @@ function InboxHeader({
   onExpand?: () => void;
 }) {
   return (
-    <div className={`flex shrink-0 items-center justify-between border-b px-4 py-3 ${isPage ? "border-[var(--toq-border)] bg-white" : "border-zinc-700/80"}`}>
+    <div className="flex shrink-0 items-center justify-between border-b border-[var(--toq-border)] bg-white px-4 py-3">
       <div className="flex items-center gap-2">
-        <h2 className={`text-xl font-bold ${isPage ? "text-[var(--toq-navy)]" : ""}`}>Mensagens</h2>
+        <h2 className="text-xl font-bold text-[var(--toq-navy)]">Mensagens</h2>
         {listUnread > 0 && (
           <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white">
             {listUnread > 9 ? "9+" : listUnread}
@@ -553,12 +551,12 @@ function InboxHeader({
       {!isPage && (
         <div className="flex items-center gap-1">
           {onExpand && (
-            <button type="button" onClick={onExpand} className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label="Expandir mensagens">
+            <button type="button" onClick={onExpand} className="rounded-lg p-2 text-[var(--toq-text-muted)] hover:bg-slate-100 hover:text-[var(--toq-navy)]" aria-label="Expandir mensagens">
               <ExpandIcon />
             </button>
           )}
           {onClose && (
-            <button type="button" onClick={onClose} className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label="Fechar">
+            <button type="button" onClick={onClose} className="rounded-lg p-2 text-[var(--toq-text-muted)] hover:bg-slate-100 hover:text-[var(--toq-navy)]" aria-label="Fechar">
               <CloseIcon />
             </button>
           )}
@@ -588,9 +586,9 @@ function ChatHeaderBar({
   onExpand?: () => void;
 }) {
   return (
-    <div className={`flex shrink-0 items-center justify-between border-b px-4 py-3 ${isPage ? "border-[var(--toq-border)] bg-white" : "border-zinc-700/80 bg-zinc-900"}`}>
+    <div className="flex shrink-0 items-center justify-between border-b border-[var(--toq-border)] bg-white px-4 py-3">
       <button type="button" onClick={onBack} className="flex min-w-0 items-center gap-2 text-left">
-        <span className={`text-xl leading-none md:hidden ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>‹</span>
+        <span className="text-xl leading-none text-[var(--toq-text-muted)] md:hidden">‹</span>
         {conversation && (
           <>
             <ChatAvatar
@@ -599,10 +597,10 @@ function ChatHeaderBar({
               size="md"
             />
             <span className="min-w-0">
-              <span className={`block truncate text-sm font-semibold ${isPage ? "text-[var(--toq-navy)]" : ""}`}>
+              <span className="block truncate text-sm font-semibold text-[var(--toq-navy)]">
                 {conversationTitle(conversation)}
               </span>
-              <span className={`block text-[11px] ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>
+              <span className="block text-[11px] text-[var(--toq-text-muted)]">
                 {isCommunityConversation(conversation)
                   ? conversation.community.group_kind === "club"
                     ? "Chat do clube"
@@ -622,12 +620,12 @@ function ChatHeaderBar({
           </button>
         )}
         {!isPage && onExpand && (
-          <button type="button" onClick={onExpand} className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label="Expandir mensagens">
+            <button type="button" onClick={onExpand} className="rounded-lg p-2 text-[var(--toq-text-muted)] hover:bg-slate-100 hover:text-[var(--toq-navy)]" aria-label="Expandir mensagens">
             <ExpandIcon />
           </button>
         )}
         {!isPage && onClose && (
-          <button type="button" onClick={onClose} className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label="Fechar">
+            <button type="button" onClick={onClose} className="rounded-lg p-2 text-[var(--toq-text-muted)] hover:bg-slate-100 hover:text-[var(--toq-navy)]" aria-label="Fechar">
             <CloseIcon />
           </button>
         )}
@@ -642,20 +640,18 @@ function InboxTabs({
   friendsCount,
   pendingCount,
   groupsCount,
-  isPage,
 }: {
   tab: MessagesTab;
   setTab: (t: MessagesTab) => void;
   friendsCount: number;
   pendingCount: number;
   groupsCount: number;
-  isPage: boolean;
 }) {
   return (
-    <div className={`flex shrink-0 border-b px-1 ${isPage ? "border-[var(--toq-border)] bg-white" : "border-zinc-700/80"}`}>
-      <TabButton active={tab === "friends"} onClick={() => setTab("friends")} label="Amigos" count={friendsCount} isPage={isPage} />
-      <TabButton active={tab === "pending"} onClick={() => setTab("pending")} label="Pendentes" count={pendingCount} isPage={isPage} />
-      <TabButton active={tab === "groups"} onClick={() => setTab("groups")} label="Grupos" count={groupsCount} isPage={isPage} />
+    <div className="flex shrink-0 border-b border-[var(--toq-border)] bg-white px-1">
+      <TabButton active={tab === "friends"} onClick={() => setTab("friends")} label="Amigos" count={friendsCount} />
+      <TabButton active={tab === "pending"} onClick={() => setTab("pending")} label="Pendentes" count={pendingCount} />
+      <TabButton active={tab === "groups"} onClick={() => setTab("groups")} label="Grupos" count={groupsCount} />
     </div>
   );
 }
@@ -663,18 +659,14 @@ function InboxTabs({
 function InboxSearchBar({
   value,
   onChange,
-  isPage,
 }: {
   value: string;
   onChange: (value: string) => void;
-  isPage: boolean;
 }) {
   return (
-    <div className={`shrink-0 border-b px-3 py-2.5 ${isPage ? "border-[var(--toq-border)] bg-white" : "border-zinc-700/80"}`}>
-      <div
-        className={`flex items-center gap-2 rounded-full border px-3 py-1.5 transition ${isPage ? "border-[var(--toq-border)] bg-[var(--toq-surface)] focus-within:border-[var(--toq-accent)] focus-within:bg-white" : "border-zinc-700/80 bg-zinc-800 focus-within:border-zinc-600"}`}
-      >
-        <SearchIcon className={isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-500"} />
+    <div className="shrink-0 border-b border-[var(--toq-border)] bg-white px-3 py-2.5">
+      <div className="flex items-center gap-2 rounded-full border border-[var(--toq-border)] bg-[var(--toq-surface)] px-3 py-1.5 transition focus-within:border-[var(--toq-accent)] focus-within:bg-white">
+        <SearchIcon className="text-[var(--toq-text-muted)]" />
         <input
           type="search"
           value={value}
@@ -682,13 +674,13 @@ function InboxSearchBar({
           placeholder="Buscar conversas ou jogadores…"
           aria-label="Buscar conversas ou jogadores"
           autoComplete="off"
-          className={`min-w-0 flex-1 border-0 bg-transparent p-0 text-sm leading-normal shadow-none outline-none ring-0 focus:ring-0 ${isPage ? "text-[var(--toq-navy)] placeholder:text-[var(--toq-text-muted)]" : "text-white placeholder:text-zinc-500"}`}
+          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm leading-normal text-[var(--toq-navy)] shadow-none outline-none ring-0 placeholder:text-[var(--toq-text-muted)] focus:ring-0"
         />
         {value && (
           <button
             type="button"
             onClick={() => onChange("")}
-            className={`rounded-full p-0.5 ${isPage ? "text-[var(--toq-text-muted)] hover:bg-slate-200" : "text-zinc-500 hover:bg-zinc-700"}`}
+            className="rounded-full p-0.5 text-[var(--toq-text-muted)] hover:bg-slate-200"
             aria-label="Limpar busca"
           >
             <CloseIcon />
@@ -729,16 +721,16 @@ function InboxSearchResults({
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       {loading && !hasConversations && !hasPeople && !showPeopleLoading ? (
-        <p className={`px-4 py-8 text-center text-sm ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>Carregando…</p>
+        <p className={`px-4 py-8 text-center text-sm text-[var(--toq-text-muted)]`}>Carregando…</p>
       ) : !hasConversations && !hasPeople && !showPeopleLoading ? (
-        <p className={`px-4 py-8 text-center text-sm ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>
+        <p className={`px-4 py-8 text-center text-sm text-[var(--toq-text-muted)]`}>
           Nenhum resultado para &ldquo;{query}&rdquo;
         </p>
       ) : (
         <>
           {hasConversations && (
             <section>
-              <p className={`px-4 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-500"}`}>
+              <p className={`px-4 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--toq-text-muted)]`}>
                 Conversas
               </p>
               <ul>
@@ -758,11 +750,11 @@ function InboxSearchResults({
 
           {(hasPeople || showPeopleLoading) && (
             <section>
-              <p className={`px-4 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-500"}`}>
+              <p className={`px-4 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--toq-text-muted)]`}>
                 Jogadores
               </p>
               {showPeopleLoading ? (
-                <p className={`px-4 py-4 text-sm ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>Buscando…</p>
+                <p className={`px-4 py-4 text-sm text-[var(--toq-text-muted)]`}>Buscando…</p>
               ) : (
                 <ul>
                   {people.map((person) => (
@@ -774,10 +766,10 @@ function InboxSearchResults({
                       >
                         <ChatAvatar src={person.avatar_url} name={person.username} size="lg" />
                         <span className="min-w-0 flex-1">
-                          <span className={`block truncate text-[15px] font-semibold ${isPage ? "text-[var(--toq-navy)]" : "text-zinc-200"}`}>
+                          <span className="block truncate text-[15px] font-semibold text-[var(--toq-navy)]">
                             {person.username}
                           </span>
-                          <span className={`mt-0.5 block truncate text-[13px] ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-500"}`}>
+                          <span className={`mt-0.5 block truncate text-[13px] text-[var(--toq-text-muted)]`}>
                             Iniciar conversa
                           </span>
                         </span>
@@ -834,10 +826,10 @@ function ConversationListItem({
       >
         <ChatAvatar src={conversationAvatar(conv)} name={title} size="lg" />
         <span className="min-w-0 flex-1">
-          <span className={`block truncate text-[15px] ${unread ? "font-bold" : isPage ? "font-normal text-[var(--toq-navy)]" : "font-normal text-zinc-200"}`}>
+          <span className={`block truncate text-[15px] ${unread ? "font-bold text-[var(--toq-navy)]" : "font-normal text-[var(--toq-navy)]"}`}>
             {title}
           </span>
-          <span className={`mt-0.5 block truncate text-[13px] ${unread ? (isPage ? "font-semibold text-[var(--toq-navy)]" : "font-semibold text-zinc-300") : isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-500"}`}>
+          <span className={`mt-0.5 block truncate text-[13px] ${unread ? "font-semibold text-[var(--toq-navy)]" : "text-[var(--toq-text-muted)]"}`}>
             {preview}
             {conv.last_message ? ` · ${formatMessageTime(conv.last_message.created_at)}` : ""}
           </span>
@@ -868,9 +860,9 @@ function ConversationList({
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       {loading && items.length === 0 ? (
-        <p className={`px-4 py-8 text-center text-sm ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>Carregando…</p>
+        <p className={`px-4 py-8 text-center text-sm text-[var(--toq-text-muted)]`}>Carregando…</p>
       ) : items.length === 0 ? (
-        <p className={`px-4 py-8 text-center text-sm ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>
+        <p className={`px-4 py-8 text-center text-sm text-[var(--toq-text-muted)]`}>
           {tab === "friends"
             ? "Nenhuma conversa com amigos."
             : tab === "pending"
@@ -927,20 +919,20 @@ function MessageThread({
   return (
     <div ref={scrollRef} className={`min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3 ${isPage ? "bg-[var(--toq-surface)]" : "bg-white"}`}>
       {loading && messages.length === 0 ? (
-        <p className={`text-center text-sm ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>Carregando…</p>
+        <p className={`text-center text-sm text-[var(--toq-text-muted)]`}>Carregando…</p>
       ) : messages.length === 0 ? (
-        <p className={`text-center text-sm ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-400"}`}>Envie a primeira mensagem 🎾</p>
+        <p className={`text-center text-sm text-[var(--toq-text-muted)]`}>Envie a primeira mensagem 🎾</p>
       ) : (
         messages.map((msg) => {
           const mine = msg.sender_id === profileId;
           return (
             <div key={msg.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
               {showSenderNames && !mine && msg.sender?.username && (
-                <span className={`mb-0.5 px-1 text-[11px] font-semibold ${isPage ? "text-[var(--toq-text-muted)]" : "text-zinc-500"}`}>
+                <span className={`mb-0.5 px-1 text-[11px] font-semibold text-[var(--toq-text-muted)]`}>
                   {msg.sender.username}
                 </span>
               )}
-              <p className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm leading-relaxed md:max-w-[65%] ${mine ? (isPage ? "rounded-br-sm toq-btn-primary text-white" : "rounded-br-sm bg-[#0084ff] text-white") : isPage ? "rounded-bl-sm bg-white text-[var(--toq-navy)] shadow-sm" : "rounded-bl-sm bg-zinc-700 text-zinc-100"}`}>
+              <p className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm leading-relaxed md:max-w-[65%] ${mine ? "rounded-br-sm toq-btn-primary text-white" : "rounded-bl-sm bg-white text-[var(--toq-navy)] shadow-sm"}`}>
                 {msg.body}
               </p>
             </div>
@@ -956,26 +948,24 @@ function MessageComposer({
   setDraft,
   onSubmit,
   sending,
-  isPage,
 }: {
   draft: string;
   setDraft: (v: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   sending: boolean;
-  isPage: boolean;
 }) {
   return (
-    <form onSubmit={onSubmit} className={`shrink-0 border-t px-3 py-3 ${isPage ? "border-[var(--toq-border)] bg-white" : "border-zinc-800 bg-zinc-900"}`}>
-      <div className={`flex items-center gap-2 rounded-full border px-3 py-2 transition ${isPage ? "border-[var(--toq-border)] bg-[var(--toq-surface)] focus-within:border-[var(--toq-accent)] focus-within:bg-white" : "border-zinc-700/80 bg-zinc-800 focus-within:border-zinc-600"}`}>
+    <form onSubmit={onSubmit} className="shrink-0 border-t border-[var(--toq-border)] bg-white px-3 py-3">
+      <div className="flex items-center gap-2 rounded-full border border-[var(--toq-border)] bg-[var(--toq-surface)] px-3 py-2 transition focus-within:border-[var(--toq-accent)] focus-within:bg-white">
         <input
           type="text"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Mensagem…"
           maxLength={4000}
-          className={`min-w-0 flex-1 border-0 bg-transparent p-0 text-[15px] leading-normal shadow-none outline-none ring-0 focus:ring-0 ${isPage ? "text-[var(--toq-navy)] placeholder:text-[var(--toq-text-muted)]" : "text-white placeholder:text-zinc-500"}`}
+          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[15px] leading-normal text-[var(--toq-navy)] shadow-none outline-none ring-0 placeholder:text-[var(--toq-text-muted)] focus:ring-0"
         />
-        <button type="submit" disabled={sending || !draft.trim()} className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full disabled:opacity-40 ${isPage ? "text-[var(--toq-accent)]" : "text-[#0084ff] hover:bg-zinc-700/60"}`} aria-label="Enviar">
+        <button type="submit" disabled={sending || !draft.trim()} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--toq-accent)] disabled:opacity-40" aria-label="Enviar">
           <SendIcon />
         </button>
       </div>
@@ -983,12 +973,12 @@ function MessageComposer({
   );
 }
 
-function TabButton({ active, onClick, label, count, isPage }: { active: boolean; onClick: () => void; label: string; count: number; isPage: boolean }) {
+function TabButton({ active, onClick, label, count }: { active: boolean; onClick: () => void; label: string; count: number }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 py-2.5 text-sm font-semibold transition ${active ? (isPage ? "border-b-2 border-[var(--toq-accent)] text-[var(--toq-navy)]" : "border-b-2 border-white text-white") : isPage ? "text-[var(--toq-text-muted)] hover:text-[var(--toq-navy)]" : "text-zinc-500 hover:text-zinc-300"}`}
+      className={`flex-1 py-2.5 text-sm font-semibold transition ${active ? "border-b-2 border-[var(--toq-accent)] text-[var(--toq-navy)]" : "text-[var(--toq-text-muted)] hover:text-[var(--toq-navy)]"}`}
     >
       {label}
       {count > 0 ? ` (${count})` : ""}

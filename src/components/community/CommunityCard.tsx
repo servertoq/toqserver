@@ -12,13 +12,13 @@ export function CommunityCard({ community }: { community: CommunityWithMembershi
       href={groupDetailHref(kind, community.slug)}
       className="block overflow-hidden toq-card-lg transition hover:border-[var(--toq-sky)]/40 hover:shadow-md"
     >
-      <div className="relative h-28 bg-gradient-to-br from-[var(--toq-navy)] to-[var(--toq-accent)]">
+      <div className="community-card-cover relative aspect-[3/1] w-full shrink-0 overflow-hidden bg-gradient-to-br from-[var(--toq-navy)] to-[var(--toq-accent)]">
         {community.cover_image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={community.cover_image_url}
             alt=""
-            className="h-full w-full object-cover"
+            className="community-cover-img h-full w-full object-cover"
           />
         ) : null}
         <span
@@ -27,7 +27,7 @@ export function CommunityCard({ community }: { community: CommunityWithMembershi
           {groupVisibilityLabel(kind, community.is_private)}
         </span>
       </div>
-      <div className="p-4" style={{ borderTopWidth: 3, borderTopColor: community.accent_color }}>
+      <div className="relative z-[1] bg-white p-4" style={{ borderTopWidth: 3, borderTopColor: community.accent_color }}>
         <h3 className="font-bold text-[var(--toq-navy)]">{community.name}</h3>
         <p className="mt-1 line-clamp-2 text-xs leading-snug text-[var(--toq-text-muted)]">
           {community.description}

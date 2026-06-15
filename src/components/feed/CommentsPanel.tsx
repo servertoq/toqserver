@@ -307,8 +307,10 @@ function CommentThread({
 function CommentAvatar({ src, name }: { src: string | null; name: string }) {
   if (src) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
+      <span className="inline-flex h-7 w-7 shrink-0 overflow-hidden rounded-full bg-slate-200">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt="" className="comment-avatar-img h-full w-full object-cover" />
+      </span>
     );
   }
   return (

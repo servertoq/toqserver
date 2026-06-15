@@ -344,6 +344,16 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
   }, [pathname, closeMenu]);
 
   useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const onChange = () => {
+      if (mq.matches) closeMenu();
+    };
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, [closeMenu]);
+
+  useEffect(() => {
     if (!menuOpen) return;
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") closeMenu();

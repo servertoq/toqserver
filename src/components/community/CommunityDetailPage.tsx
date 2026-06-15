@@ -303,13 +303,13 @@ export function CommunityDetailPage({
         </Link>
 
         <header className="overflow-hidden toq-card-lg">
-          <div className="relative h-40 bg-gradient-to-br from-[var(--toq-navy)] to-[var(--toq-accent)] sm:h-48 lg:h-56">
+          <div className="community-cover-banner relative aspect-[3/1] max-h-56 w-full overflow-hidden bg-gradient-to-br from-[var(--toq-navy)] to-[var(--toq-accent)]">
             {community.cover_image_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={community.cover_image_url}
                 alt=""
-                className="h-full w-full object-cover"
+                className="community-cover-img h-full w-full object-cover"
               />
             )}
           </div>

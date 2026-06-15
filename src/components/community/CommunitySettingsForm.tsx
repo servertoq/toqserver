@@ -19,6 +19,10 @@ import {
 } from "@/lib/operatingHours";
 import { AddressForm } from "@/components/shared/AddressForm";
 import { OperatingHoursForm } from "@/components/shared/OperatingHoursForm";
+import {
+  COMMUNITY_COVER_HINT,
+  processCommunityCoverSelection,
+} from "@/lib/communityCoverImage";
 
 type Props = {
   community: Community;
@@ -46,10 +50,29 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
   const [shopEnabled, setShopEnabled] = useState(community.shop_enabled ?? false);
   const [shopWhatsapp, setShopWhatsapp] = useState(community.shop_whatsapp ?? "");
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [coverProcessing, setCoverProcessing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { isSubmitting: loading, guard } = useSingleSubmit();
   const { isSubmitting: deleting, guard: guardDelete } = useSingleSubmit();
   const [error, setError] = useState<string | null>(null);
+
+  async function handleCover(file: File | null) {
+    if (!file) return;
+    setError(null);
+    setCoverProcessing(true);
+    try {
+      const { file: prepared, previewUrl } = await processCommunityCoverSelection(file);
+      setCoverFile(prepared);
+      if (coverPreview) URL.revokeObjectURL(coverPreview);
+      setCoverPreview(previewUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível processar a imagem.");
+    } finally {
+      setCoverProcessing(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,11 +87,10 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
       let coverUrl = community.cover_image_url;
 
       if (coverFile) {
-        const ext = coverFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
-        const path = `${profile.id}/${community.id}/cover.${ext}`;
+        const path = `${profile.id}/${community.id}/cover.jpg`;
         const { error: uploadErr } = await supabase.storage
           .from("community-covers")
-          .upload(path, coverFile, { upsert: true, contentType: coverFile.type });
+          .upload(path, coverFile, { upsert: true, contentType: "image/jpeg" });
 
         if (!uploadErr) {
           const { data: urlData } = supabase.storage.from("community-covers").getPublicUrl(path);
@@ -210,20 +232,34 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
 
           <div>
             <span className="text-xs font-semibold text-[var(--toq-navy)]">Nova capa</span>
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="mt-2 block rounded-lg toq-input px-3 py-2 text-xs font-semibold text-[var(--toq-navy)]"
-            >
-              Trocar imagem
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)}
-            />
+            <p className="mt-1 text-[11px] leading-snug text-[var(--toq-text-muted)]">
+              {COMMUNITY_COVER_HINT}
+            </p>
+            <div className="mt-2 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={coverProcessing}
+                className="rounded-lg toq-input px-3 py-2 text-xs font-semibold text-[var(--toq-navy)] disabled:opacity-50"
+              >
+                {coverProcessing ? "Processando…" : "Trocar imagem"}
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={(e) => void handleCover(e.target.files?.[0] ?? null)}
+              />
+              {(coverPreview || community.cover_image_url) && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={coverPreview ?? community.cover_image_url ?? ""}
+                  alt=""
+                  className="h-14 w-[4.2rem] rounded-lg object-cover"
+                />
+              )}
+            </div>
           </div>
 
           {!isClub && (

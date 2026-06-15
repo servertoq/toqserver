@@ -53,13 +53,14 @@ export function AuthScreen() {
   const [email, setEmail] = useState("");
   const [emailConfirm, setEmailConfirm] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
-  const [registerPasswordConfirm, setRegisterPasswordConfirm] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState<Gender>("masculino");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   // Esqueci senha
   const [forgotEmail, setForgotEmail] = useState("");
+
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const resetMessages = useCallback(() => setMessage(null), []);
 
@@ -181,9 +182,6 @@ export function AuthScreen() {
       return "Os e-mails não coincidem.";
     }
     if (registerPassword.length < 8) return "A senha deve ter no mínimo 8 caracteres.";
-    if (registerPassword !== registerPasswordConfirm) {
-      return "As senhas não coincidem.";
-    }
     if (!birthDate) return "Informe sua data de nascimento completa.";
     if (!gender) return "Selecione o sexo.";
     return null;
@@ -290,7 +288,6 @@ export function AuthScreen() {
     });
   }
 
-  const showBannerPanel = view === "login" || view === "register";
   const isDesktop = useIsDesktop();
 
   const formCard = (
@@ -324,7 +321,7 @@ export function AuthScreen() {
           )}
 
           {view === "register" && (
-            <div className="mb-4">
+            <div className="auth-register-header mb-4">
               <button
                 type="button"
                 onClick={() => switchView("login")}
@@ -332,7 +329,8 @@ export function AuthScreen() {
               >
                 ← Voltar ao login
               </button>
-              <h2 className="mt-2 text-center text-lg font-bold text-[var(--toq-text)]">
+              <ToqLogoWithBalls className="mt-3" />
+              <h2 className="mt-3 text-center text-lg font-bold text-[var(--toq-text)]">
                 Criar conta
               </h2>
             </div>
@@ -385,7 +383,7 @@ export function AuthScreen() {
           )}
 
           {view === "register" && (
-            <form onSubmit={handleRegister} className="space-y-2">
+            <form onSubmit={handleRegister} className="auth-register-form flex min-w-0 flex-col gap-2">
               <Field
                 label="Nome de usuário"
                 id="username"
@@ -395,7 +393,7 @@ export function AuthScreen() {
                 hint="Letras, números e _. Espaços viram _ (ex.: Gabriel_Carrara)"
                 required
               />
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div className="grid min-w-0 grid-cols-1 gap-2 md:grid-cols-2">
                 <Field
                   label="E-mail"
                   id="email"
@@ -415,29 +413,17 @@ export function AuthScreen() {
                   required
                 />
               </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <Field
-                  label="Senha (mín. 8 dígitos)"
-                  id="registerPassword"
-                  type="password"
-                  value={registerPassword}
-                  onChange={setRegisterPassword}
-                  autoComplete="new-password"
-                  minLength={8}
-                  required
-                />
-                <Field
-                  label="Confirmar senha"
-                  id="registerPasswordConfirm"
-                  type="password"
-                  value={registerPasswordConfirm}
-                  onChange={setRegisterPasswordConfirm}
-                  autoComplete="new-password"
-                  minLength={8}
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:items-end">
+              <Field
+                label="Senha (mín. 8 dígitos)"
+                id="registerPassword"
+                type="password"
+                value={registerPassword}
+                onChange={setRegisterPassword}
+                autoComplete="new-password"
+                minLength={8}
+                required
+              />
+              <div className="grid min-w-0 grid-cols-1 gap-2 md:grid-cols-2 md:items-end">
                 <Field
                   label="Data de nascimento"
                   id="birthDate"
@@ -446,11 +432,11 @@ export function AuthScreen() {
                   onChange={setBirthDate}
                   required
                 />
-                <div>
+                <div className="min-w-0">
                   <span className="mb-1 block text-xs font-medium text-[var(--toq-text-muted)]">
                     Sexo
                   </span>
-                  <div className="grid h-[38px] grid-cols-3 gap-1">
+                  <div className="auth-gender-grid grid h-[38px] grid-cols-3 gap-1">
                     {GENDER_OPTIONS.map((o) => (
                       <label
                         key={o.value}
@@ -474,12 +460,12 @@ export function AuthScreen() {
                   </div>
                 </div>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div className="auth-avatar-picker rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <span className="mb-2 block text-xs font-medium text-[var(--toq-text-muted)]">
                   Foto de perfil <span className="text-slate-400">(opcional)</span>
                 </span>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
+                  <div className="auth-avatar-preview flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white md:h-11 md:w-11">
                     {avatarPreview ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -491,13 +477,26 @@ export function AuthScreen() {
                       <span className="text-[10px] text-[var(--toq-text-muted)]">Sem foto</span>
                     )}
                   </div>
-                  <input
-                    id="avatar"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    onChange={(e) => handleAvatarChange(e.target.files?.[0] ?? null)}
-                    className="min-w-0 flex-1 text-xs file:mr-2 file:rounded file:border-0 file:toq-btn-primary file:px-2 file:py-1 file:text-xs file:font-semibold file:text-white file:hover:bg-[var(--toq-accent-hover)]"
-                  />
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <input
+                      ref={avatarInputRef}
+                      id="avatar"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={(e) => handleAvatarChange(e.target.files?.[0] ?? null)}
+                      className="sr-only"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => avatarInputRef.current?.click()}
+                      className="auth-avatar-add-btn rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-[var(--toq-text-muted)] transition hover:border-slate-300 hover:bg-slate-50 hover:text-[var(--toq-text)]"
+                    >
+                      Adicionar foto
+                    </button>
+                    {avatarFile && (
+                      <p className="truncate text-[10px] text-[var(--toq-text-muted)]">{avatarFile.name}</p>
+                    )}
+                  </div>
                 </div>
               </div>
               <SubmitButton loading={loading} label="Criar conta" tone="light" />
@@ -505,7 +504,7 @@ export function AuthScreen() {
           )}
 
           {view === "forgot" && (
-            <form onSubmit={handleForgot} className="space-y-3">
+            <form onSubmit={handleForgot} className="auth-forgot-form flex flex-col gap-2.5">
               <p className="text-sm text-[var(--toq-text-muted)]">
                 Informe o e-mail da sua conta para receber o link de redefinição.
               </p>
@@ -582,21 +581,15 @@ export function AuthScreen() {
 
   return (
     <main className="auth-layout auth-layout--desktop">
-      <aside
-        className={`auth-panel-banner relative shrink-0 overflow-hidden md:h-dvh md:w-1/2 ${
-          showBannerPanel ? "border-b-0" : "hidden"
-        }`}
-      >
-        {showBannerPanel && (
-          <Image
-            src="/imagens_publicas/fundoumtoq.jpeg"
-            alt="Toq Tennis — Evoluir"
-            fill
-            priority
-            sizes="50vw"
-            className="auth-split-img auth-split-img--left object-cover"
-          />
-        )}
+      <aside className="auth-panel-banner relative shrink-0 overflow-hidden border-b-0 md:h-dvh md:w-1/2">
+        <Image
+          src="/imagens_publicas/fundoumtoq.jpeg"
+          alt="Toq Tennis — Evoluir"
+          fill
+          priority
+          sizes="50vw"
+          className="auth-split-img auth-split-img--left object-cover"
+        />
       </aside>
 
       <div className="auth-panel-login relative min-h-0 w-full md:h-dvh md:w-1/2 md:flex-none">
@@ -674,7 +667,7 @@ function Field({
   hint?: string;
 }) {
   return (
-    <div>
+    <div className="min-w-0">
       <label htmlFor={id} className="mb-1 block text-xs font-medium text-[var(--toq-text-muted)]">
         {label}
       </label>
@@ -686,10 +679,12 @@ function Field({
         autoComplete={autoComplete}
         required={required}
         minLength={minLength}
-        className="toq-input w-full px-3 py-2 text-sm text-[var(--toq-text)] outline-none focus:ring-2 focus:ring-[var(--toq-accent)]/20"
+        className={`toq-input w-full min-w-0 max-w-full px-3 py-2 text-sm text-[var(--toq-text)] outline-none focus:ring-2 focus:ring-[var(--toq-accent)]/20${
+          type === "date" ? " auth-date-input" : ""
+        }`}
       />
       {hint && (
-        <p className="mt-1 text-[10px] leading-snug text-[var(--toq-text-muted)]">{hint}</p>
+        <p className="auth-field-hint mt-1 text-[10px] leading-snug text-[var(--toq-text-muted)]">{hint}</p>
       )}
     </div>
   );

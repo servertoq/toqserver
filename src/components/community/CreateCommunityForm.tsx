@@ -16,6 +16,10 @@ import {
 } from "@/lib/operatingHours";
 import { AddressForm } from "@/components/shared/AddressForm";
 import { OperatingHoursForm } from "@/components/shared/OperatingHoursForm";
+import {
+  COMMUNITY_COVER_HINT,
+  processCommunityCoverSelection,
+} from "@/lib/communityCoverImage";
 
 export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: CommunityGroupKind }) {
   const config = COMMUNITY_GROUP_CONFIG[groupKind];
@@ -30,17 +34,28 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
   const [isPrivate, setIsPrivate] = useState(isClub);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [coverProcessing, setCoverProcessing] = useState(false);
   const [address, setAddress] = useState<AddressFields>(EMPTY_ADDRESS);
   const [hours, setHours] = useState<DayHours[]>(defaultOperatingHours);
   const { isSubmitting: loading, guard } = useSingleSubmit();
   const [error, setError] = useState<string | null>(null);
 
-  function handleCover(list: FileList | null) {
+  async function handleCover(list: FileList | null) {
     const file = list?.[0];
     if (!file) return;
-    setCoverFile(file);
-    if (coverPreview) URL.revokeObjectURL(coverPreview);
-    setCoverPreview(URL.createObjectURL(file));
+    setError(null);
+    setCoverProcessing(true);
+    try {
+      const { file: prepared, previewUrl } = await processCommunityCoverSelection(file);
+      setCoverFile(prepared);
+      if (coverPreview) URL.revokeObjectURL(coverPreview);
+      setCoverPreview(previewUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível processar a imagem.");
+    } finally {
+      setCoverProcessing(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -102,11 +117,10 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
       }
 
       if (coverFile) {
-        const ext = coverFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
-        const path = `${profile.id}/${community.id}/cover.${ext}`;
+        const path = `${profile.id}/${community.id}/cover.jpg`;
         const { error: uploadErr } = await supabase.storage
           .from("community-covers")
-          .upload(path, coverFile, { upsert: true, contentType: coverFile.type });
+          .upload(path, coverFile, { upsert: true, contentType: "image/jpeg" });
 
         if (!uploadErr) {
           const { data: urlData } = supabase.storage.from("community-covers").getPublicUrl(path);
@@ -166,24 +180,28 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
 
           <div>
             <span className="text-xs font-semibold text-[var(--toq-navy)]">Imagem de capa</span>
+            <p className="mt-1 text-[11px] leading-snug text-[var(--toq-text-muted)]">
+              {COMMUNITY_COVER_HINT}
+            </p>
             <div className="mt-2 flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="rounded-lg toq-input px-3 py-2 text-xs font-semibold text-[var(--toq-navy)]"
+                disabled={coverProcessing}
+                className="rounded-lg toq-input px-3 py-2 text-xs font-semibold text-[var(--toq-navy)] disabled:opacity-50"
               >
-                Escolher imagem
+                {coverProcessing ? "Processando…" : "Escolher imagem"}
               </button>
               <input
                 ref={fileRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif"
                 className="hidden"
-                onChange={(e) => handleCover(e.target.files)}
+                onChange={(e) => void handleCover(e.target.files)}
               />
               {coverPreview && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={coverPreview} alt="" className="h-14 w-24 rounded-lg object-cover" />
+                <img src={coverPreview} alt="" className="h-14 w-[4.2rem] rounded-lg object-cover" />
               )}
             </div>
           </div>

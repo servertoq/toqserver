@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { formatFriendRequestError } from "@/lib/friendRequest";
 
 export type FriendRelation =
   | { status: "none" }
@@ -90,7 +91,7 @@ export function PublicProfileFriendActions({
         p_addressee_id: profileId,
       });
       if (error) {
-        setMessage(error.message || "Não foi possível enviar o pedido.");
+        setMessage(formatFriendRequestError(error.message));
         return;
       }
       setMessage("Pedido de amizade enviado.");
