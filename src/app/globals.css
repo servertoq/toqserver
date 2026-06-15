@@ -356,21 +356,169 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
-/* Auth */
-.auth-panel-banner {
-  background: var(--toq-accent);
+/* Auth — tela dividida 50/50 (desktop) e empilhada (mobile) */
+.auth-layout {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background-color: #040f22;
+}
+
+@media (min-width: 768px) {
+  .auth-layout {
+    flex-direction: row;
+  }
+}
+
+.auth-panel-banner,
+.auth-panel-login {
+  background-color: #040f22;
+}
+
+.auth-panel-banner--mobile {
+  height: clamp(10.5rem, 36dvh, 16.5rem);
 }
 
 .auth-panel-login {
-  background: var(--toq-accent);
   color: #e2e8f0;
+}
+
+.auth-form-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  pointer-events: none;
+  padding:
+    max(0.75rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(0.75rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+}
+
+.auth-form-overlay .auth-form-card {
+  box-shadow: 0 24px 60px rgba(5, 16, 36, 0.28);
+  max-height: min(
+    calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1.5rem),
+    40rem
+  );
+  overflow-y: auto;
+  width: min(100%, 24rem);
+}
+
+@media (min-width: 768px) {
+  .auth-form-overlay {
+    padding: 1.5rem;
+  }
+
+  .auth-form-overlay .auth-form-card {
+    width: min(100%, 28rem);
+    max-height: min(88dvh, 40rem);
+    box-shadow: 0 28px 70px rgba(5, 16, 36, 0.32);
+  }
+}
+
+@media (max-width: 767px) {
+  .auth-form-card input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  .auth-form-card textarea,
+  .auth-form-card select {
+    font-size: 16px;
+  }
+}
+
+/* Mesma altura e recorte vertical nas duas metades do panorama */
+.auth-split-img--left {
+  object-position: 100% 48%;
+}
+
+.auth-split-img--right {
+  object-position: 0% 48%;
+}
+
+@media (max-width: 767px) {
+  .auth-split-img--left {
+    object-position: 72% 42%;
+  }
+
+  .auth-split-img--right {
+    object-position: 28% 48%;
+  }
+}
+
+/* Celular deitado — layout lado a lado como no desktop */
+@media (max-width: 767px) and (orientation: landscape) and (max-height: 32rem) {
+  .auth-layout {
+    flex-direction: row;
+  }
+
+  .auth-panel-banner--mobile {
+    height: 100dvh;
+    width: 42%;
+    border-bottom: 0;
+    border-right: 2px solid #000000;
+  }
+
+  .auth-panel-login {
+    width: 58%;
+    flex: none;
+  }
+
+  .auth-split-img--left {
+    object-position: 100% 48%;
+  }
+
+  .auth-split-img--right {
+    object-position: 0% 48%;
+  }
+
+  .auth-form-overlay .auth-form-card {
+    width: min(100%, 20rem);
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.75rem);
+    padding: 0.875rem 1rem;
+  }
+
+  .auth-form-card--register {
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.5rem);
+  }
+}
+
+/* Tablet em pé — formulário um pouco mais largo */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .auth-form-overlay .auth-form-card {
+    width: min(100%, 26rem);
+  }
 }
 
 .auth-form-card {
   background: #ffffff;
   border: 1px solid var(--toq-border);
-  box-shadow: 0 24px 60px rgba(5, 16, 36, 0.12);
   border-radius: 1.25rem;
+  padding: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .auth-form-card {
+    padding: 1.5rem;
+  }
+}
+
+.auth-form-card--register {
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .auth-form-card--register {
+    padding: 1.25rem;
+  }
 }
 
 .auth-ball-frame {
@@ -571,25 +719,6 @@ button {
 @media (min-width: 1024px) {
   .profile-tabs-mobile {
     display: none;
-  }
-}
-
-.auth-layout {
-  min-height: 100dvh;
-}
-
-@media (max-width: 767px) {
-  .auth-panel-login {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    align-items: flex-start;
-    padding-top: 1.25rem;
-    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
-  }
-
-  .auth-form-card {
-    margin-top: auto;
-    margin-bottom: auto;
   }
 }
 

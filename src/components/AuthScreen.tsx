@@ -260,13 +260,10 @@ export function AuthScreen() {
   const showBannerPanel = view === "login" || view === "register";
 
   return (
-    <main className="auth-layout flex h-dvh max-h-dvh w-full flex-col overflow-hidden md:flex-row">
-      {/* Painel esquerdo — arte promocional TOQ */}
+    <main className="auth-layout">
       <aside
-        className={`auth-panel-banner relative shrink-0 overflow-hidden md:w-1/2 md:border-r-2 md:border-black md:h-dvh lg:w-[48%] ${
-          showBannerPanel
-            ? "h-[36dvh] min-h-[180px] max-h-[280px] border-b-2 border-black md:h-dvh md:max-h-none md:border-b-0"
-            : "hidden"
+        className={`auth-panel-banner relative shrink-0 overflow-hidden md:h-dvh md:w-1/2 ${
+          showBannerPanel ? "auth-panel-banner--mobile border-b-2 border-black md:border-b-0" : "hidden"
         }`}
       >
         {showBannerPanel && (
@@ -276,24 +273,21 @@ export function AuthScreen() {
             fill
             priority
             sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-cover object-center"
+            className="auth-split-img auth-split-img--left object-cover"
           />
         )}
       </aside>
 
-      {/* Painel direito — login */}
-      <div
-        className="auth-panel-login relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-6 md:overflow-hidden md:px-10 lg:px-14"
-      >
+      <div className="auth-panel-login relative min-h-0 w-full flex-1 md:h-dvh md:w-1/2 md:flex-none">
         <div className="absolute inset-0 z-0">
           <LoginPanelBackground />
         </div>
+      </div>
 
+      <div className="auth-form-overlay">
         <section
-          className={`auth-form-card relative z-10 w-full max-w-md rounded-2xl ${
-            view === "register"
-              ? "max-h-none overflow-visible p-4 md:max-h-[min(88dvh,640px)] md:overflow-y-auto md:p-5"
-              : "p-5 md:p-6"
+          className={`auth-form-card pointer-events-auto w-full max-w-md rounded-2xl ${
+            view === "register" ? "auth-form-card--register" : ""
           }`}
         >
           {view === "login" && (
