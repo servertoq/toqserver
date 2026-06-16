@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { LoginPanelBackground } from "@/components/LoginPanelBackground";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
-type View = "login" | "register" | "forgot";
+type View = "login" | "register" | "forgot" | "reset";
 type Gender = "masculino" | "feminino" | "outro";
 
 const GENDER_OPTIONS: { value: Gender; label: string }[] = [
@@ -40,6 +41,8 @@ function useIsDesktop() {
 
 export function AuthScreen() {
   const supabase = createClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [view, setView] = useState<View>("login");
   const { isSubmitting: loading, guard } = useSingleSubmit();
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -60,7 +63,72 @@ export function AuthScreen() {
   // Esqueci senha
   const [forgotEmail, setForgotEmail] = useState("");
 
+  // Nova senha (link de recuperação)
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
+  const [resetChecking, setResetChecking] = useState(false);
+  const [resetReady, setResetReady] = useState(false);
+
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (searchParams.get("forgot") === "1") {
+      setView("forgot");
+    }
+    if (searchParams.get("reset") === "1") {
+      setView("reset");
+      if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+        requestAnimationFrame(() => {
+          loginSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (view !== "reset") return;
+
+    let cancelled = false;
+    setResetChecking(true);
+
+    async function initRecovery() {
+      const hash = window.location.hash.startsWith("#")
+        ? window.location.hash.slice(1)
+        : window.location.hash;
+      const hashParams = new URLSearchParams(hash);
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      const type = hashParams.get("type");
+
+      if (type === "recovery" && accessToken && refreshToken) {
+        await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        window.history.replaceState(null, "", `${window.location.pathname}?reset=1`);
+      }
+
+      const { data } = await supabase.auth.getSession();
+      if (!cancelled) {
+        setResetReady(!!data.session);
+        setResetChecking(false);
+      }
+    }
+
+    void initRecovery();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+        setResetReady(true);
+        setResetChecking(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      listener.subscription.unsubscribe();
+    };
+  }, [view, supabase]);
 
   const resetMessages = useCallback(() => setMessage(null), []);
 
@@ -158,7 +226,9 @@ export function AuthScreen() {
     await guard(async () => {
       const { error } = await supabase.auth.resetPasswordForEmail(
         forgotEmail.trim().toLowerCase(),
-        { redirectTo: `${window.location.origin}/auth/callback?next=/?reset=1` }
+        {
+          redirectTo: `${window.location.origin}/auth/callback?next=/?reset=1`,
+        }
       );
 
       if (error) {
@@ -169,6 +239,44 @@ export function AuthScreen() {
       setMessage({
         type: "success",
         text: "Enviamos um link de recuperação para o seu e-mail.",
+      });
+    });
+  }
+
+  async function handleResetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    resetMessages();
+    if (loading || !resetReady) return;
+
+    if (newPassword.length < 8) {
+      setMessage({ type: "error", text: "A nova senha deve ter no mínimo 8 caracteres." });
+      return;
+    }
+    if (newPassword !== newPasswordConfirm) {
+      setMessage({ type: "error", text: "As senhas não coincidem." });
+      return;
+    }
+
+    await guard(async () => {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+      if (error) {
+        setMessage({
+          type: "error",
+          text: "Não foi possível atualizar a senha. Solicite um novo link de recuperação.",
+        });
+        return;
+      }
+
+      await supabase.auth.signOut();
+      setNewPassword("");
+      setNewPasswordConfirm("");
+      setResetReady(false);
+      router.replace("/", { scroll: false });
+      switchView("login");
+      setMessage({
+        type: "success",
+        text: "Senha atualizada! Entre com sua nova senha.",
       });
     });
   }
@@ -297,7 +405,7 @@ export function AuthScreen() {
           ? "auth-form-card--register"
           : view === "login"
             ? "auth-form-card--login"
-            : view === "forgot"
+          : view === "forgot" || view === "reset"
               ? "auth-form-card--forgot"
               : ""
       }`}
@@ -317,6 +425,18 @@ export function AuthScreen() {
               <h2 className="mt-3 text-center text-base font-bold text-[var(--toq-text)] md:text-lg">
                 Recuperar senha
               </h2>
+            </div>
+          )}
+
+          {view === "reset" && (
+            <div className="mb-4">
+              <ToqLogoWithBalls />
+              <h2 className="mt-3 text-center text-base font-bold text-[var(--toq-text)] md:text-lg">
+                Nova senha
+              </h2>
+              <p className="mt-2 text-center text-sm text-[var(--toq-text-muted)]">
+                Defina uma nova senha para sua conta.
+              </p>
             </div>
           )}
 
@@ -526,6 +646,65 @@ export function AuthScreen() {
                 Voltar ao login
               </button>
             </form>
+          )}
+
+          {view === "reset" && (
+            <div className="auth-forgot-form flex flex-col gap-2.5">
+              {resetChecking ? (
+                <p className="text-center text-sm text-[var(--toq-text-muted)]">Verificando link…</p>
+              ) : !resetReady ? (
+                <>
+                  <p className="text-sm text-[#ff6b6b]">
+                    Link inválido ou expirado. Solicite uma nova recuperação de senha.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => switchView("forgot")}
+                    className="w-full text-center text-xs font-semibold text-[var(--toq-accent)] hover:underline"
+                  >
+                    Recuperar senha novamente
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => switchView("login")}
+                    className="w-full text-center text-xs text-[var(--toq-text-muted)] hover:text-[var(--toq-accent)]"
+                  >
+                    Voltar ao login
+                  </button>
+                </>
+              ) : (
+                <form onSubmit={handleResetPassword} className="flex flex-col gap-2.5">
+                  <Field
+                    label="Nova senha"
+                    id="newPassword"
+                    type="password"
+                    value={newPassword}
+                    onChange={setNewPassword}
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                  />
+                  <Field
+                    label="Confirmar nova senha"
+                    id="newPasswordConfirm"
+                    type="password"
+                    value={newPasswordConfirm}
+                    onChange={setNewPasswordConfirm}
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                  />
+                  <SubmitButton loading={loading} label="Salvar nova senha" tone="light" />
+                  <button
+                    type="button"
+                    onClick={() => switchView("login")}
+                    className="w-full text-center text-xs text-[var(--toq-text-muted)] hover:text-[var(--toq-accent)]"
+                  >
+                    Voltar ao login
+                  </button>
+                </form>
+              )}
+            </div>
           )}
         </section>
   );

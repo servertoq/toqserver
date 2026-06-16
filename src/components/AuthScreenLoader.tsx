@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { SupabaseConfigMissing } from "./SupabaseConfigMissing";
 
@@ -21,5 +22,15 @@ export function AuthScreenLoader() {
     return <SupabaseConfigMissing />;
   }
 
-  return <AuthScreen />;
+  return (
+    <Suspense
+      fallback={
+        <main className="auth-panel-login flex h-dvh items-center justify-center">
+          <p className="text-sm text-[var(--toq-muted)]">Carregando…</p>
+        </main>
+      }
+    >
+      <AuthScreen />
+    </Suspense>
+  );
 }
