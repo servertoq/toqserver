@@ -801,21 +801,8 @@ body {
   inset: 0;
 }
 
-.auth-splash-panorama--desktop {
-  display: none;
-  flex-direction: row;
-}
-
-.auth-splash-panorama--mobile {
-  display: block;
-}
-
 .auth-pano-bg {
-  object-position: 50% 48%;
-}
-
-.auth-pano-bg--mobile {
-  object-position: 42% 42%;
+  object-position: center center;
 }
 
 .auth-splash-overlay {
@@ -954,14 +941,6 @@ body {
 }
 
 @media (min-width: 768px) {
-  .auth-splash-panorama--desktop {
-    display: flex;
-  }
-
-  .auth-splash-panorama--mobile {
-    display: none;
-  }
-
   .auth-splash-hero {
     align-items: center;
     justify-content: center;
@@ -1216,13 +1195,10 @@ body {
 
 .auth-form-page--mobile {
   background-color: #040f22;
-  background-image:
-    radial-gradient(ellipse 90% 55% at 18% 100%, rgba(59, 130, 246, 0.28) 0%, transparent 52%),
-    linear-gradient(180deg, #040f22 0%, #061428 100%);
 }
 
 .auth-form-page-bg {
-  object-position: 50% 48%;
+  object-position: center center;
 }
 
 .auth-form-page-scrim {

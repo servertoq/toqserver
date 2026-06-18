@@ -5,6 +5,7 @@ import { useCallback, useRef } from "react";
 import { AuthFeatureGrid } from "./AuthFeatureGrid";
 import { AuthHowItWorks } from "./AuthHowItWorks";
 import { AuthPersonaCards } from "./AuthPersonaCards";
+import { AUTH_HERO_IMAGE } from "./authLandingData";
 
 type Props = {
   onLogin: () => void;
@@ -32,26 +33,14 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
   return (
     <div className="auth-landing">
       <section className="auth-splash-hero">
-        <div className="auth-splash-panorama auth-splash-panorama--desktop" aria-hidden>
+        <div className="auth-splash-panorama" aria-hidden>
           <Image
-            src="/imagens_publicas/panorama_auth.jpg"
+            src={AUTH_HERO_IMAGE}
             alt=""
             fill
             priority
             sizes="100vw"
             className="auth-pano-bg object-cover"
-            aria-hidden
-          />
-        </div>
-
-        <div className="auth-splash-panorama auth-splash-panorama--mobile" aria-hidden>
-          <Image
-            src="/imagens_publicas/panorama_auth.jpg"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="auth-pano-bg auth-pano-bg--mobile object-cover"
             aria-hidden
           />
         </div>

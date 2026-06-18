@@ -1,9 +1,10 @@
 import Image from "next/image";
+import { AUTH_HERO_IMAGE } from "./auth/authLandingData";
 
 export function LoginPanelBackground() {
   return (
     <Image
-      src="/imagens_publicas/fundotoqdois.png"
+      src={AUTH_HERO_IMAGE}
       alt=""
       fill
       priority

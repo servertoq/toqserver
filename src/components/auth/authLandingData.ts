@@ -1,3 +1,5 @@
+export const AUTH_HERO_IMAGE = "/imagens_publicas/imgcompleta.png";
+
 export type PersonaId = "player" | "coach" | "arena";
 
 export type PersonaData = {

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { AuthDiscoverContent } from "./AuthDiscoverContent";
+import { AUTH_HERO_IMAGE } from "./authLandingData";
 
 type Props = {
   variant: "mobile" | "desktop";
@@ -26,9 +27,9 @@ export function AuthDiscoverPage({ variant, onBack, onLogin, onRegister }: Props
     <div className={`auth-discover-page auth-discover-page--${variant}`}>
       {variant === "desktop" && (
         <>
-          <div className="auth-splash-panorama auth-splash-panorama--desktop" aria-hidden>
+          <div className="auth-splash-panorama" aria-hidden>
             <Image
-              src="/imagens_publicas/panorama_auth.jpg"
+              src={AUTH_HERO_IMAGE}
               alt=""
               fill
               priority

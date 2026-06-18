@@ -1,11 +1,12 @@
 import Image from "next/image";
 import { AuthDiscoverContent } from "./AuthDiscoverContent";
+import { AUTH_HERO_IMAGE } from "./authLandingData";
 
 export function AuthMarketingPanel() {
   return (
     <aside className="auth-marketing-panel">
       <Image
-        src="/imagens_publicas/fundoumtoq.jpeg"
+        src={AUTH_HERO_IMAGE}
         alt=""
         fill
         priority
