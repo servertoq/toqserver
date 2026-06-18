@@ -3,11 +3,13 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LoginPanelBackground } from "@/components/LoginPanelBackground";
+import { AuthFormPage } from "@/components/auth/AuthFormPage";
+import { AuthSplash } from "@/components/auth/AuthSplash";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
 type View = "login" | "register" | "forgot" | "reset";
+type Screen = "splash" | "auth";
 type Gender = "masculino" | "feminino" | "outro";
 
 const GENDER_OPTIONS: { value: Gender; label: string }[] = [
@@ -44,6 +46,7 @@ export function AuthScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [view, setView] = useState<View>("login");
+  const [screen, setScreen] = useState<Screen>("splash");
   const { isSubmitting: loading, guard } = useSingleSubmit();
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
@@ -74,14 +77,11 @@ export function AuthScreen() {
   useEffect(() => {
     if (searchParams.get("forgot") === "1") {
       setView("forgot");
+      setScreen("auth");
     }
     if (searchParams.get("reset") === "1") {
       setView("reset");
-      if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
-        requestAnimationFrame(() => {
-          loginSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-      }
+      setScreen("auth");
     }
   }, [searchParams]);
 
@@ -137,24 +137,26 @@ export function AuthScreen() {
     setView(next);
   };
 
-  const loginSectionRef = useRef<HTMLElement>(null);
-
-  const scrollToLogin = useCallback(() => {
-    loginSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
-
-  const switchViewAndScroll = useCallback(
+  const openAuth = useCallback(
     (next: View) => {
       resetMessages();
       setView(next);
-      if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
-        requestAnimationFrame(() => {
-          loginSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-      }
+      setScreen("auth");
     },
     [resetMessages],
   );
+
+  const handleAuthBack = useCallback(() => {
+    resetMessages();
+    if (view === "forgot" || view === "reset") {
+      setView("login");
+      if (view === "reset") {
+        router.replace("/", { scroll: false });
+      }
+      return;
+    }
+    setScreen("splash");
+  }, [resetMessages, view, router]);
 
   function handleAvatarChange(file: File | null) {
     setAvatarFile(file);
@@ -441,7 +443,7 @@ export function AuthScreen() {
           )}
 
           {view === "register" && (
-            <div className="auth-register-header mb-4">
+            <div className="auth-register-header mb-3 md:mb-4">
               <button
                 type="button"
                 onClick={() => switchView("login")}
@@ -449,8 +451,8 @@ export function AuthScreen() {
               >
                 ← Voltar ao login
               </button>
-              <ToqLogoWithBalls className="mt-3" />
-              <h2 className="mt-3 text-center text-lg font-bold text-[var(--toq-text)]">
+              <ToqLogoWithBalls className="auth-register-logo mt-2 md:mt-3" />
+              <h2 className="mt-2 text-center text-base font-bold text-[var(--toq-text)] md:mt-3 md:text-lg">
                 Criar conta
               </h2>
             </div>
@@ -498,12 +500,12 @@ export function AuthScreen() {
               <SubmitButton loading={loading} label="Entrar" tone="light" />
               <Divider />
               <GoogleButton loading={loading} onClick={handleGoogleLogin} />
-              <RegisterButton onClick={() => switchViewAndScroll("register")} />
+              <RegisterButton onClick={() => openAuth("register")} />
             </form>
           )}
 
           {view === "register" && (
-            <form onSubmit={handleRegister} className="auth-register-form flex min-w-0 flex-col gap-2">
+            <form onSubmit={handleRegister} className="auth-register-form flex min-w-0 flex-col gap-1.5 md:gap-2">
               <Field
                 label="Nome de usuário"
                 id="username"
@@ -580,12 +582,12 @@ export function AuthScreen() {
                   </div>
                 </div>
               </div>
-              <div className="auth-avatar-picker rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <span className="mb-2 block text-xs font-medium text-[var(--toq-text-muted)]">
+              <div className="auth-avatar-picker rounded-lg border border-slate-200 bg-slate-50 p-2 md:p-3">
+                <span className="mb-1 block text-[11px] font-medium text-[var(--toq-text-muted)] md:mb-2 md:text-xs">
                   Foto de perfil <span className="text-slate-400">(opcional)</span>
                 </span>
                 <div className="flex items-center gap-3">
-                  <div className="auth-avatar-preview flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white md:h-11 md:w-11">
+                  <div className="auth-avatar-preview flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white md:h-11 md:w-11">
                     {avatarPreview ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -715,69 +717,35 @@ export function AuthScreen() {
 
   if (!isDesktop) {
     return (
-      <main className="auth-layout auth-layout--mobile">
-        <div className="auth-mobile-scroll">
-          <section className="auth-mobile-slide auth-mobile-slide--hero">
-            <Image
-              src="/imagens_publicas/fundoumtoq.jpeg"
-              alt="Toq Tennis — Evoluir"
-              fill
-              priority
-              sizes="100vw"
-              className="auth-mobile-hero-img object-cover"
-            />
-            <button type="button" className="auth-mobile-login-cta" onClick={scrollToLogin}>
-              Login
-            </button>
-            <p className="auth-mobile-scroll-hint" aria-hidden>
-              Arraste para baixo
-            </p>
-          </section>
-
-          <section
-            ref={loginSectionRef}
-            className="auth-mobile-slide auth-mobile-slide--form"
-            id="auth-login-section"
-          >
-            <div className="auth-mobile-form-wrap">{formCard}</div>
-          </section>
-
-          <section className="auth-mobile-slide auth-mobile-slide--hero">
-            <Image
-              src="/imagens_publicas/fundotoqdois.png"
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              className="auth-mobile-hero-img auth-mobile-hero-img--right object-cover"
-              aria-hidden
-            />
-          </section>
-        </div>
+      <main className={`auth-layout auth-layout--mobile auth-layout--${screen}`}>
+        {screen === "splash" && (
+          <AuthSplash
+            onLogin={() => openAuth("login")}
+            onRegister={() => openAuth("register")}
+          />
+        )}
+        {screen === "auth" && (
+          <AuthFormPage variant="mobile" onBack={handleAuthBack}>
+            {formCard}
+          </AuthFormPage>
+        )}
       </main>
     );
   }
 
   return (
-    <main className="auth-layout auth-layout--desktop">
-      <aside className="auth-panel-banner relative shrink-0 overflow-hidden border-b-0 md:h-dvh md:w-1/2">
-        <Image
-          src="/imagens_publicas/fundoumtoq.jpeg"
-          alt="Toq Tennis — Evoluir"
-          fill
-          priority
-          sizes="50vw"
-          className="auth-split-img auth-split-img--left object-cover"
+    <main className={`auth-layout auth-layout--desktop auth-layout--${screen}`}>
+      {screen === "splash" && (
+        <AuthSplash
+          onLogin={() => openAuth("login")}
+          onRegister={() => openAuth("register")}
         />
-      </aside>
-
-      <div className="auth-panel-login relative min-h-0 w-full md:h-dvh md:w-1/2 md:flex-none">
-        <div className="absolute inset-0 z-0">
-          <LoginPanelBackground />
-        </div>
-      </div>
-
-      <div className="auth-form-overlay">{formCard}</div>
+      )}
+      {screen === "auth" && (
+        <AuthFormPage variant="desktop" onBack={handleAuthBack}>
+          {formCard}
+        </AuthFormPage>
+      )}
     </main>
   );
 }
