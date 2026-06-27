@@ -13,6 +13,7 @@ import { useAppProfile } from "@/components/app/AppShell";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { PlayerProfileDashboard } from "@/components/profile/PlayerProfileDashboard";
 import { PublicProfileFriendActions } from "@/components/profile/PublicProfileFriendActions";
+import { ReportButton } from "@/components/report/ReportButton";
 import { appContentClass } from "@/lib/layout";
 
 type Props = { username: string };
@@ -171,11 +172,22 @@ export function PublicProfileView({ username }: Props) {
                   Editar perfil
                 </Link>
               ) : (
-                <PublicProfileFriendActions
-                  viewerId={viewer.id}
-                  profileId={profile.id}
-                  profileUsername={profile.username}
-                />
+                <div className="flex w-full flex-col gap-2">
+                  <PublicProfileFriendActions
+                    viewerId={viewer.id}
+                    profileId={profile.id}
+                    profileUsername={profile.username}
+                  />
+                  <ReportButton
+                    userId={viewer.id}
+                    target={{
+                      type: "profile",
+                      id: profile.id,
+                      label: `perfil @${profile.username}`,
+                    }}
+                    className="w-full justify-center rounded-xl border border-slate-200 py-2 text-xs font-semibold text-[var(--toq-text-muted)] hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                  />
+                </div>
               )
             }
           />

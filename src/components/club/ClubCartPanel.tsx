@@ -63,8 +63,10 @@ export function ClubCartPanel({
             className="flex gap-3 rounded-xl border border-slate-200 bg-white p-3"
           >
             {item.imageUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={item.imageUrl} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+              <div className="club-product-thumb shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={item.imageUrl} alt="" className="rounded-lg" />
+              </div>
             )}
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold text-[var(--toq-navy)]">{item.productName}</p>

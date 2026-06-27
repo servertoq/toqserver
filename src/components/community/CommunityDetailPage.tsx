@@ -22,6 +22,7 @@ import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { PostCard } from "@/components/feed/PostCard";
 import { Suspense } from "react";
 import { ClubMemberArea } from "@/components/club/ClubMemberArea";
+import { ReportButton } from "@/components/report/ReportButton";
 import { CommunityModerationPanel } from "./CommunityModerationPanel";
 import { CommunitySettingsForm } from "./CommunitySettingsForm";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
@@ -352,7 +353,15 @@ export function CommunityDetailPage({
                   </div>
                 )}
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <ReportButton
+                  userId={profile.id}
+                  target={{
+                    type: "community",
+                    id: community.id,
+                    label: `${groupKind === "club" ? "clube" : "comunidade"} ${community.name}`,
+                  }}
+                />
                 {isMember && (
                   <Link
                     href={`/inicio/mensagens?g=${encodeURIComponent(community.id)}`}

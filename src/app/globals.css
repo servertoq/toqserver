@@ -104,6 +104,233 @@ body {
   object-fit: cover;
 }
 
+.club-product-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background-color: #f1f5f9;
+}
+
+.club-product-media--detail {
+  aspect-ratio: 16 / 10;
+  max-height: 13rem;
+}
+
+.feed-layout-main .club-product-media img,
+.club-product-media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+}
+
+.feed-layout-main .club-product-thumb img {
+  width: 3.5rem;
+  height: 3.5rem;
+  max-width: 3.5rem;
+  max-height: 3.5rem;
+  object-fit: cover;
+}
+
+/* ── Club ranking podium ── */
+
+.club-ranking-podium {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 1rem 0.75rem 0.5rem;
+}
+
+.club-ranking-podium-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.club-ranking-podium-row--2 {
+  gap: clamp(1.5rem, 8vw, 3rem);
+}
+
+.club-ranking-podium-row--3 {
+  gap: clamp(2.5rem, 14vw, 5rem);
+}
+
+.club-ranking-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(100%, 9.5rem);
+}
+
+.club-ranking-slot-body {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.375rem 0.25rem 0.5rem;
+}
+
+.club-ranking-rank {
+  flex-shrink: 0;
+  width: 1.75rem;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+}
+
+.club-ranking-rank--gold {
+  color: #b45309;
+}
+
+.club-ranking-rank--silver {
+  color: #64748b;
+}
+
+.club-ranking-rank--bronze {
+  color: #c2410c;
+}
+
+.club-ranking-rank--default {
+  color: #94a3b8;
+}
+
+.club-ranking-avatar {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: #e2e8f0;
+  box-shadow: 0 2px 8px rgba(5, 16, 36, 0.1);
+}
+
+.club-ranking-avatar--sm {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.club-ranking-avatar--md {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.club-ranking-avatar--lg {
+  width: 3.25rem;
+  height: 3.25rem;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35), 0 4px 12px rgba(5, 16, 36, 0.12);
+}
+
+.feed-layout-main .club-ranking-avatar img,
+.club-ranking-avatar img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+}
+
+.club-ranking-avatar-fallback {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--toq-navy);
+}
+
+.club-ranking-avatar--lg .club-ranking-avatar-fallback {
+  font-size: 0.875rem;
+}
+
+.club-ranking-slot-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.club-ranking-slot-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--toq-navy);
+}
+
+.club-ranking-slot-score {
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--toq-accent);
+  line-height: 1.2;
+}
+
+.club-ranking-slot-unit {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--toq-text-muted);
+}
+
+.club-ranking-slot-remove {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+  color: #dc2626;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.club-ranking-slot-remove:hover {
+  opacity: 1;
+}
+
+.club-ranking-pedestal {
+  width: 100%;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.08) 100%);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  border-bottom: none;
+}
+
+.club-ranking-pedestal--rank-1 {
+  height: 3.5rem;
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.35) 0%, rgba(245, 158, 11, 0.12) 100%);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.club-ranking-pedestal--rank-2 {
+  height: 2.5rem;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.35) 0%, rgba(148, 163, 184, 0.12) 100%);
+  border-color: rgba(148, 163, 184, 0.25);
+}
+
+.club-ranking-pedestal--rank-3 {
+  height: 2rem;
+  background: linear-gradient(180deg, rgba(234, 88, 12, 0.28) 0%, rgba(234, 88, 12, 0.1) 100%);
+  border-color: rgba(234, 88, 12, 0.22);
+}
+
+.club-ranking-pedestal--rank-4,
+.club-ranking-pedestal--rank-5 {
+  height: 1.25rem;
+}
+
+.club-ranking-top-note {
+  margin-top: 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--toq-text-muted);
+  text-align: center;
+}
+
 .feed-layout-main .comment-avatar-img {
   width: 100%;
   height: 100%;
@@ -2353,6 +2580,58 @@ body {
   }
 }
 
+/* Publicidade — editor e artigo */
+.advertising-editor p,
+.advertising-article-body p {
+  margin: 0.75rem 0;
+  line-height: 1.65;
+}
+
+.advertising-editor ul,
+.advertising-article-body ul,
+.advertising-editor ol,
+.advertising-article-body ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.advertising-editor a,
+.advertising-article-body a {
+  color: var(--toq-accent);
+  text-decoration: underline;
+}
+
+.advertising-editor img,
+.advertising-article-body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1rem auto;
+  border-radius: 0.75rem;
+}
+
+.advertising-editor img[style*="text-align: center"],
+.advertising-article-body img[style*="text-align: center"] {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.advertising-editor h2,
+.advertising-article-body h2 {
+  margin-top: 1.25rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--toq-navy);
+}
+
+.advertising-editor h3,
+.advertising-article-body h3 {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--toq-navy);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .auth-ball-spin,
   .auth-ball-spin--reverse {
@@ -2435,6 +2714,17 @@ button {
   border-bottom: 1px solid var(--toq-border);
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(12px);
+}
+
+/* Publicidade fixa na coluna direita do feed (desktop) */
+@media (min-width: 1024px) {
+  .feed-ad-sidebar-slot {
+    position: fixed;
+    top: 8.5rem;
+    z-index: 20;
+    width: 280px;
+    right: max(1rem, calc((100vw - 260px - 1040px) / 2 + 1rem));
+  }
 }
 
 .online-friends-scroll {

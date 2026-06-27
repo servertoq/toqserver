@@ -10,6 +10,7 @@ import type { FeedPost } from "@/types/feed";
 import { CommentsPanel } from "./CommentsPanel";
 import { PostBody } from "./PostBody";
 import { PostMediaGrid } from "./PostMediaGrid";
+import { ReportButton } from "@/components/report/ReportButton";
 
 type Props = {
   post: FeedPost;
@@ -104,6 +105,17 @@ export function PostCard({
             </p>
           )}
         </div>
+        {post.author.id !== currentUserId && (
+          <ReportButton
+            userId={currentUserId}
+            target={{
+              type: "post",
+              id: post.id,
+              label: `publicação de @${post.author.username}`,
+            }}
+            compact
+          />
+        )}
       </header>
 
       {post.title && (

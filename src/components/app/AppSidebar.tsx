@@ -2,13 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { StaffRole } from "@/types/staff";
 
 export type AppProfile = {
   id: string;
   username: string;
   avatar_url: string | null;
+  staffRole: StaffRole | null;
+  isBanned: boolean;
 };
 
 type NavItem = {
@@ -112,6 +115,27 @@ function IconMessages({ active }: { active: boolean }) {
   );
 }
 
+function IconModeration({ active }: { active: boolean }) {
+  return (
+    <NavIcon>
+      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4z" />
+      </svg>
+    </NavIcon>
+  );
+}
+
+function IconAdvertising({ active }: { active: boolean }) {
+  return (
+    <NavIcon>
+      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 5H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7 15l3-3 2 2 4-4 3 3" />
+      </svg>
+    </NavIcon>
+  );
+}
+
 const NAV_ITEMS: NavItem[] = [
   {
     href: "/inicio",
@@ -148,6 +172,12 @@ const NAV_ITEMS: NavItem[] = [
     label: "Torneios",
     icon: (active) => <IconTournaments active={active} />,
     match: (path) => path.startsWith("/inicio/torneios"),
+  },
+  {
+    href: "/inicio/publicidade",
+    label: "Publicidade",
+    icon: (active) => <IconAdvertising active={active} />,
+    match: (path) => path.startsWith("/inicio/publicidade"),
   },
   {
     href: "/inicio/perfil",
@@ -279,11 +309,13 @@ function MobileDrawer({
   pathname,
   open,
   onClose,
+  navItems,
 }: {
   profile: AppProfile;
   pathname: string;
   open: boolean;
   onClose: () => void;
+  navItems: NavItem[];
 }) {
   return (
     <>
@@ -304,7 +336,7 @@ function MobileDrawer({
         <div className="app-mobile-drawer-inner">
           <ToqLogo className="mb-6" />
           <nav className="flex flex-col gap-1">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <NavLink
                 key={item.href}
                 item={item}
@@ -325,7 +357,27 @@ function MobileDrawer({
 
 export function AppSidebar({ profile }: { profile: AppProfile }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const navItems = useMemo(() => {
+    const items = [...NAV_ITEMS];
+    if (profile.staffRole) {
+      items.push({
+        href: "/inicio/moderacao",
+        label: "Moderação",
+        icon: (active) => <IconModeration active={active} />,
+        match: (path) => path.startsWith("/inicio/moderacao"),
+      });
+    }
+    return items;
+  }, [profile.staffRole]);
+
+  useEffect(() => {
+    if (profile.isBanned && !pathname.startsWith("/inicio/bloqueado")) {
+      router.replace("/inicio/bloqueado");
+    }
+  }, [profile.isBanned, pathname, router]);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
   const toggleMenu = useCallback(() => setMenuOpen((v) => !v), []);
@@ -367,7 +419,7 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
       <aside className="app-sidebar hidden md:flex md:w-[244px] md:shrink-0 md:flex-col md:px-3 md:py-8 lg:w-[260px]">
         <ToqLogo className="mb-8" />
         <nav className="flex flex-col gap-1">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <NavLink
               key={item.href}
               item={item}
@@ -380,7 +432,13 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
       </aside>
 
       <MobileHeader open={menuOpen} onToggle={toggleMenu} />
-      <MobileDrawer profile={profile} pathname={pathname} open={menuOpen} onClose={closeMenu} />
+      <MobileDrawer
+        profile={profile}
+        pathname={pathname}
+        open={menuOpen}
+        onClose={closeMenu}
+        navItems={navItems}
+      />
     </>
   );
 }

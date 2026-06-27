@@ -9,7 +9,11 @@ export type NotificationType =
   | "friend_request"
   | "community_join"
   | "community_join_request"
-  | "community_invite";
+  | "community_invite"
+  | "staff_report_upheld"
+  | "staff_report_dismissed"
+  | "staff_suggestion_ack"
+  | "staff_support_resolved";
 
 export type AppNotification = {
   id: string;
@@ -22,6 +26,7 @@ export type AppNotification = {
   friend_request_id: string | null;
   join_request_id: string | null;
   community_invite_id: string | null;
+  support_ticket_id: string | null;
   actor: FeedProfile;
   community: { id: string; name: string; slug: string; kind?: "community" | "club" } | null;
 };

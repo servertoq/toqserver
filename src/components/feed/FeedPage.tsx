@@ -14,6 +14,7 @@ import { FeedTopBar } from "./FeedTopBar";
 import { PostCard } from "./PostCard";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { FloatingMessages } from "@/components/messages/FloatingMessages";
 
 export function FeedPage() {
   const supabase = createClient();
@@ -156,8 +157,8 @@ export function FeedPage() {
 
   return (
     <>
-      <FeedTopBar />
-      <FeedPageGrid className="py-6" sidebar={<FeedSidebar />}>
+      <FeedTopBar showOnlineFriends />
+      <FeedPageGrid className="py-6" sidebar={<FeedSidebar />} pinSidebar>
         <PageHeader
           title="Página inicial"
           subtitle="Acompanhe jogadores, eventos e novidades da rede."
@@ -206,6 +207,7 @@ export function FeedPage() {
           )}
         </section>
       </FeedPageGrid>
+      <FloatingMessages />
     </>
   );
 }

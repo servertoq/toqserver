@@ -8,6 +8,7 @@ import { appContentClass } from "@/lib/layout";
 import type { GenderType } from "@/lib/profile";
 import { FriendsPanel } from "@/components/profile/FriendsPanel";
 import { ProfileEditForm, type EditableProfile } from "@/components/profile/ProfileEditForm";
+import { ProfileSupportForm } from "@/components/profile/ProfileSupportForm";
 import { PlayerProfileDashboard } from "@/components/profile/PlayerProfileDashboard";
 import { addressFromRow } from "@/lib/address";
 import { mapPostRow } from "@/lib/feed";
@@ -146,6 +147,7 @@ export default function PerfilPage() {
             isOwnProfile
             onLikeToggle={handleLikeToggle}
             friendsPanel={<FriendsPanel userId={appProfile.id} embedded />}
+            supportForm={<ProfileSupportForm userId={appProfile.id} />}
             editForm={<ProfileEditForm initial={profile} onSaved={handleSaved} />}
           />
         ) : (

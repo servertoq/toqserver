@@ -4,7 +4,6 @@ import { createContext, useContext } from "react";
 import type { AppProfile } from "./AppSidebar";
 import { AppSidebar } from "./AppSidebar";
 import { PresenceHeartbeat } from "@/components/feed/PresenceHeartbeat";
-import { FloatingMessages } from "@/components/messages/FloatingMessages";
 import { mobileMainOffsetClass } from "@/lib/responsive";
 
 const ProfileContext = createContext<AppProfile | null>(null);
@@ -29,7 +28,6 @@ export function AppShell({
         <AppSidebar profile={profile} />
         <div className={`feed-layout-main flex flex-col ${mobileMainOffsetClass}`}>
           {children}
-          <FloatingMessages />
         </div>
       </div>
     </ProfileContext.Provider>

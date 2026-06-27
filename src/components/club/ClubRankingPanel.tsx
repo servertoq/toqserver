@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { canModerate } from "@/lib/community";
 import type { CommunityMember, CommunityMemberRole } from "@/types/community";
 import type { ClubRankingCategory, ClubRankingEntry } from "@/types/clubFeatures";
+import { ClubRankingPodium } from "./ClubRankingPodium";
 
 type Props = {
   communityId: string;
@@ -25,6 +27,8 @@ export function ClubRankingPanel({ communityId, myRole }: Props) {
   const [addUserId, setAddUserId] = useState<Record<string, string>>({});
   const [addScore, setAddScore] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<ClubRankingCategory | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -107,10 +111,13 @@ export function ClubRankingPanel({ communityId, myRole }: Props) {
     setSaving(false);
   }
 
-  async function deleteCategory(id: string) {
-    if (!confirm("Excluir esta categoria e todas as pontuações?")) return;
-    await supabase.from("club_ranking_categories").delete().eq("id", id);
+  async function deleteCategory() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    await supabase.from("club_ranking_categories").delete().eq("id", deleteTarget.id);
+    setDeleteTarget(null);
     await load();
+    setDeleting(false);
   }
 
   async function addEntry(categoryId: string) {
@@ -184,110 +191,102 @@ export function ClubRankingPanel({ communityId, myRole }: Props) {
           )}
         </div>
       ) : (
-        categories.map((cat) => {
-          const entries = entriesByCategory[cat.id] ?? [];
-          const availableMembers = members;
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {categories.map((cat) => {
+            const entries = entriesByCategory[cat.id] ?? [];
 
-          return (
-            <section key={cat.id} className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-slate-50 px-4 py-3">
-                <div>
-                  <h3 className="font-bold text-[var(--toq-navy)]">{cat.name}</h3>
-                  <p className="text-[11px] text-[var(--toq-text-muted)]">Medido em: {cat.unit_label}</p>
-                </div>
-                {canManage && (
-                  <button
-                    type="button"
-                    onClick={() => void deleteCategory(cat.id)}
-                    className="text-xs font-semibold text-red-600"
-                  >
-                    Excluir categoria
-                  </button>
-                )}
-              </div>
-
-              {entries.length === 0 ? (
-                <p className="px-4 py-6 text-center text-xs text-[var(--toq-text-muted)]">
-                  Nenhum jogador nesta categoria ainda.
-                </p>
-              ) : (
-                <ol className="divide-y divide-slate-100">
-                  {entries.map((entry, idx) => (
-                    <li key={entry.id} className="flex items-center gap-3 px-4 py-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full toq-btn-primary/40 text-sm font-bold text-white">
-                        {idx + 1}
-                      </span>
-                      {entry.profile?.avatar_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={entry.profile.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
-                      ) : (
-                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--toq-sky)] text-xs font-bold text-white">
-                          {entry.profile?.username?.charAt(0).toUpperCase() ?? "?"}
-                        </span>
-                      )}
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-semibold text-[var(--toq-navy)]">
-                          @{entry.profile?.username ?? "jogador"}
-                        </span>
-                      </span>
-                      <span className="text-sm font-bold text-[var(--toq-accent)]">
-                        {entry.score.toLocaleString("pt-BR")} {cat.unit_label}
-                      </span>
-                      {canManage && (
-                        <button
-                          type="button"
-                          onClick={() => void removeEntry(entry.id)}
-                          className="text-xs text-red-600"
-                        >
-                          ×
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ol>
-              )}
-
-              {canManage && members.length > 0 && (
-                <div className="flex flex-wrap items-end gap-2 border-t border-slate-100 bg-slate-50/50 px-4 py-3">
-                  <label className="min-w-[140px] flex-1">
-                    <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">Membro</span>
-                    <select
-                      value={addUserId[cat.id] ?? ""}
-                      onChange={(e) => setAddUserId((p) => ({ ...p, [cat.id]: e.target.value }))}
-                      className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+            return (
+              <section
+                key={cat.id}
+                className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 bg-slate-50 px-4 py-3">
+                  <div className="min-w-0">
+                    <h3 className="truncate font-bold text-[var(--toq-navy)]">{cat.name}</h3>
+                    <p className="text-[11px] text-[var(--toq-text-muted)]">Medido em: {cat.unit_label}</p>
+                  </div>
+                  {canManage && (
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget(cat)}
+                      className="shrink-0 text-xs font-semibold text-red-600"
                     >
-                      <option value="">Selecionar…</option>
-                      {availableMembers.map((m) => (
-                        <option key={m.user_id} value={m.user_id}>
-                          @{m.profile.username}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="w-24">
-                    <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">{cat.unit_label}</span>
-                    <input
-                      type="text"
-                      value={addScore[cat.id] ?? ""}
-                      onChange={(e) => setAddScore((p) => ({ ...p, [cat.id]: e.target.value }))}
-                      placeholder="0"
-                      className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    disabled={saving}
-                    onClick={() => void addEntry(cat.id)}
-                    className="rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
-                  >
-                    Adicionar
-                  </button>
+                      Excluir
+                    </button>
+                  )}
                 </div>
-              )}
-            </section>
-          );
-        })
+
+                <ClubRankingPodium
+                  entries={entries}
+                  unitLabel={cat.unit_label}
+                  canManage={canManage}
+                  onRemove={(id) => void removeEntry(id)}
+                />
+
+                {canManage && members.length > 0 && (
+                  <div className="mt-auto flex flex-col gap-2 border-t border-slate-100 bg-slate-50/50 px-3 py-3">
+                    <label className="block">
+                      <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">Membro</span>
+                      <select
+                        value={addUserId[cat.id] ?? ""}
+                        onChange={(e) => setAddUserId((p) => ({ ...p, [cat.id]: e.target.value }))}
+                        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                      >
+                        <option value="">Selecionar…</option>
+                        {members.map((m) => (
+                          <option key={m.user_id} value={m.user_id}>
+                            @{m.profile.username}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="flex gap-2">
+                      <label className="min-w-0 flex-1">
+                        <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">
+                          {cat.unit_label}
+                        </span>
+                        <input
+                          type="text"
+                          value={addScore[cat.id] ?? ""}
+                          onChange={(e) => setAddScore((p) => ({ ...p, [cat.id]: e.target.value }))}
+                          placeholder="0"
+                          className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() => void addEntry(cat.id)}
+                        className="mt-auto shrink-0 rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+                      >
+                        Adicionar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </section>
+            );
+          })}
+        </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Excluir categoria"
+        message={
+          deleteTarget
+            ? `Excluir "${deleteTarget.name}" e todas as pontuações desta categoria? Esta ação não pode ser desfeita.`
+            : ""
+        }
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        variant="danger"
+        loading={deleting}
+        onConfirm={() => void deleteCategory()}
+        onCancel={() => {
+          if (!deleting) setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 }

@@ -320,9 +320,9 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
             <span className="text-xs font-semibold text-[var(--toq-navy)]">Fotos (até 3)</span>
             <div className="mt-2 flex flex-wrap gap-2">
               {existingImages.map((img) => (
-                <div key={img.id} className="relative">
+                <div key={img.id} className="relative h-16 w-16 overflow-hidden rounded-lg bg-slate-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img.url} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                  <img src={img.url} alt="" className="h-full w-full object-cover" />
                   <button
                     type="button"
                     onClick={() => void removeImage(img.id)}

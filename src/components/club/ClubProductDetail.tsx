@@ -111,10 +111,12 @@ export function ClubProductDetail({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
       <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-xl">
-        {product.images?.[0] && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={product.images[0].url} alt="" className="aspect-[4/3] w-full object-cover" />
-        )}
+        {product.images?.[0] ? (
+          <div className="club-product-media club-product-media--detail">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={product.images[0].url} alt="" />
+          </div>
+        ) : null}
         <div className="p-5">
           <div className="flex items-start justify-between gap-2">
             <h2 className="text-lg font-bold text-[var(--toq-navy)]">{product.name}</h2>

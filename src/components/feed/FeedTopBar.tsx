@@ -3,7 +3,7 @@ import { NotificationsBell } from "./NotificationsBell";
 import { OnlineFriendsStrip } from "./OnlineFriendsStrip";
 import { SearchBar } from "./SearchBar";
 
-export function FeedTopBar() {
+export function FeedTopBar({ showOnlineFriends = false }: { showOnlineFriends?: boolean }) {
   return (
     <header className="sticky top-0 z-30 toq-topbar backdrop-blur-md">
       <FeedPageGrid className="py-3">
@@ -14,7 +14,7 @@ export function FeedTopBar() {
           <NotificationsBell />
         </div>
       </FeedPageGrid>
-      <OnlineFriendsStrip />
+      {showOnlineFriends && <OnlineFriendsStrip />}
     </header>
   );
 }

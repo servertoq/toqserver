@@ -1,0 +1,105 @@
+"use client";
+
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { StaffUsernameSearch, type UsernameSearchUser } from "./StaffUsernameSearch";
+import { StaffDeleteContentPanel } from "./StaffDeleteContentPanel";
+
+type Props = {
+  onAction: () => void;
+};
+
+export function StaffToolsPanel({ onAction }: Props) {
+  const supabase = createClient();
+  const [selectedUser, setSelectedUser] = useState<UsernameSearchUser | null>(null);
+  const [reason, setReason] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function run(
+    label: string,
+    fn: () => PromiseLike<{ error: { message: string } | null }>,
+    clearUser = false
+  ) {
+    setLoading(true);
+    setMessage(null);
+    const { error } = await fn();
+    setLoading(false);
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+    setMessage(`${label} executado com sucesso.`);
+    if (clearUser) setSelectedUser(null);
+    onAction();
+  }
+
+  async function runUserAction(
+    label: string,
+    fn: () => PromiseLike<{ error: { message: string } | null }>
+  ) {
+    if (!selectedUser) {
+      setMessage("Selecione um usuário na lista.");
+      return;
+    }
+    await run(label, fn, true);
+  }
+
+  return (
+    <>
+      <section className="overflow-visible rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h2 className="text-sm font-bold text-[var(--toq-navy)]">Banimento de usuários</h2>
+        <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
+          Busque o @usuário para banir ou desbanir da plataforma.
+        </p>
+
+        <div className="mt-4">
+          <StaffUsernameSearch value={selectedUser} onChange={setSelectedUser} />
+          <input
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Motivo do banimento (opcional)"
+            className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+          />
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() =>
+                runUserAction("Banimento", () =>
+                  supabase.rpc("staff_ban_user", {
+                    p_user_id: selectedUser!.id,
+                    p_reason: reason || null,
+                  })
+                )
+              }
+              className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+            >
+              Banir usuário
+            </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() =>
+                runUserAction("Desbanimento", () =>
+                  supabase.rpc("staff_unban_user", { p_user_id: selectedUser!.id })
+                )
+              }
+              className="rounded-lg border border-green-200 px-3 py-1.5 text-xs font-semibold text-green-700 disabled:opacity-50"
+            >
+              Desbanir usuário
+            </button>
+          </div>
+        </div>
+
+        {message && (
+          <p className="mt-3 rounded-lg bg-slate-100 px-3 py-2 text-xs text-[var(--toq-navy)]">
+            {message}
+          </p>
+        )}
+      </section>
+
+      <StaffDeleteContentPanel onAction={onAction} />
+    </>
+  );
+}

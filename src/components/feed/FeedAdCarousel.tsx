@@ -1,116 +1,103 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useState } from "react";
-
-type AdSlide = {
-  id: string;
-  tag: string;
-  title: string;
-  description: string;
-  cta: string;
-  gradient: string;
-  accent: string;
-};
-
-const ADS: AdSlide[] = [
-  {
-    id: "aulas",
-    tag: "Parceiro",
-    title: "Aulas de tênis",
-    description: "Primeira aula experimental grátis na sua região.",
-    cta: "Agendar agora",
-    gradient: "from-[#0a1a5c] via-[#1e3a8a] to-[#437df4]",
-    accent: "toq-btn-primary text-white",
-  },
-  {
-    id: "wilson",
-    tag: "Equipamentos",
-    title: "Raquetes Wilson",
-    description: "Até 30% off em modelos selecionados para iniciantes.",
-    cta: "Ver ofertas",
-    gradient: "from-[#14532d] via-[#166534] to-[#22c55e]",
-    accent: "bg-white text-[#14532d]",
-  },
-  {
-    id: "toq-open",
-    tag: "Evento",
-    title: "TOQ Open 2026",
-    description: "Inscrições abertas para o torneio amador da comunidade.",
-    cta: "Inscrever-se",
-    gradient: "from-[#312e81] via-[#4338ca] to-[#6366f1]",
-    accent: "toq-btn-primary text-white",
-  },
-  {
-    id: "quadra",
-    tag: "Reservas",
-    title: "Quadra coberta",
-    description: "Jogue à noite com conforto. Horários disponíveis hoje.",
-    cta: "Reservar quadra",
-    gradient: "from-[#7c2d12] via-[#c2410c] to-[#fb923c]",
-    accent: "bg-white text-[#7c2d12]",
-  },
-];
+import Image from "next/image";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { listCarouselArticles } from "@/lib/advertising";
+import type { AdvertisingCarouselItem } from "@/types/advertising";
 
 const ROTATE_MS = 6000;
 
 export function FeedAdCarousel() {
+  const supabase = useMemo(() => createClient(), []);
+  const [ads, setAds] = useState<AdvertisingCarouselItem[]>([]);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
-  const goTo = useCallback((next: number) => {
-    setIndex((next + ADS.length) % ADS.length);
-  }, []);
+  useEffect(() => {
+    async function load() {
+      const { data } = await listCarouselArticles(supabase);
+      setAds(data);
+      setIndex(0);
+    }
+    void load();
+  }, [supabase]);
+
+  const goTo = useCallback(
+    (next: number) => {
+      if (ads.length === 0) return;
+      setIndex((next + ads.length) % ads.length);
+    },
+    [ads.length]
+  );
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || ads.length <= 1) return;
     const timer = window.setInterval(() => {
-      setIndex((current) => (current + 1) % ADS.length);
+      setIndex((current) => (current + 1) % ads.length);
     }, ROTATE_MS);
     return () => window.clearInterval(timer);
-  }, [paused]);
+  }, [paused, ads.length]);
 
-  const ad = ADS[index];
+  if (ads.length === 0) {
+    return (
+      <div>
+        <div className="toq-card-lg flex aspect-square items-center justify-center p-5 text-center">
+          <p className="text-xs text-[var(--toq-text-muted)]">
+            Novidades e publicidade em breve.
+          </p>
+        </div>
+        <p className="mt-2 text-center text-[10px] font-medium uppercase tracking-wide text-[var(--toq-text-muted)]">
+          Publicidade
+        </p>
+      </div>
+    );
+  }
+
+  const ad = ads[index];
 
   return (
     <div onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-      <div
-        className="relative aspect-square overflow-hidden toq-card-lg"
-        role="region"
-        aria-label="Propagandas"
-        aria-live="polite"
-      >
-        <div
-          className={`absolute inset-0 bg-gradient-to-br ${ad.gradient} p-5 transition-opacity duration-500`}
+      <div className="relative aspect-square overflow-hidden toq-card-lg">
+        <Link
+          href={`/inicio/publicidade/${ad.slug}`}
+          className="relative block h-full w-full"
+          aria-label={`Publicidade: ${ad.title}`}
         >
-          <span className="inline-block rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-            {ad.tag}
-          </span>
-          <p className="mt-4 text-xl font-extrabold leading-tight text-white">{ad.title}</p>
-          <p className="mt-2 text-sm leading-snug text-white/90">{ad.description}</p>
-          <span
-            className={`mt-5 inline-block rounded-lg px-3 py-1.5 text-xs font-bold ${ad.accent}`}
-          >
-            {ad.cta}
-          </span>
-          <span className="absolute bottom-4 right-4 text-5xl opacity-20" aria-hidden>
-            🎾
-          </span>
-        </div>
+          <Image src={ad.card_image_url} alt="" fill className="object-cover" unoptimized />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10 p-5">
+            <span className="inline-block rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+              Publicidade
+            </span>
+            <p className="mt-4 text-xl font-extrabold leading-tight text-white">{ad.title}</p>
+            {ad.card_excerpt && (
+              <p className="mt-2 line-clamp-3 text-sm leading-snug text-white/90">
+                {ad.card_excerpt}
+              </p>
+            )}
+            <span className="mt-5 inline-block rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white">
+              Ler notícia
+            </span>
+          </div>
+        </Link>
 
-        <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-          {ADS.map((slide, i) => (
-            <button
-              key={slide.id}
-              type="button"
-              aria-label={`Propaganda ${i + 1}: ${slide.title}`}
-              aria-current={i === index ? "true" : undefined}
-              onClick={() => goTo(i)}
-              className={`h-2 rounded-full transition-all ${
-                i === index ? "w-5 bg-white" : "w-2 bg-white/50 hover:bg-white/80"
-              }`}
-            />
-          ))}
-        </div>
+        {ads.length > 1 && (
+          <div className="pointer-events-none absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+            {ads.map((slide, i) => (
+              <button
+                key={slide.id}
+                type="button"
+                aria-label={`Publicidade ${i + 1}: ${slide.title}`}
+                aria-current={i === index ? "true" : undefined}
+                onClick={() => goTo(i)}
+                className={`pointer-events-auto h-2 rounded-full transition-all ${
+                  i === index ? "w-5 bg-white" : "w-2 bg-white/50 hover:bg-white/80"
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <p className="mt-2 text-center text-[10px] font-medium uppercase tracking-wide text-[var(--toq-text-muted)]">

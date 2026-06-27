@@ -26,12 +26,29 @@ export function notificationMessage(n: AppNotification): string {
       const label = n.community?.kind === "club" ? "um clube" : "uma comunidade";
       return `${name} convidou você para ${n.community?.name ?? label}`;
     }
+    case "staff_report_upheld":
+      return "Sua denúncia foi analisada e as providências foram tomadas conforme os princípios da comunidade.";
+    case "staff_report_dismissed":
+      return "Sua denúncia foi analisada. O conteúdo reportado não infringe os princípios da comunidade.";
+    case "staff_suggestion_ack":
+      return "Recebemos sua sugestão e encaminharemos aos setores responsáveis.";
+    case "staff_support_resolved":
+      return "Seu pedido de suporte foi marcado como resolvido pela equipe Toq Tennis.";
     default:
       return "Nova notificação";
   }
 }
 
 export function notificationHref(n: AppNotification): string | null {
+  if (
+    n.type === "staff_report_upheld" ||
+    n.type === "staff_report_dismissed" ||
+    n.type === "staff_suggestion_ack" ||
+    n.type === "staff_support_resolved"
+  ) {
+    return "/inicio/perfil";
+  }
+
   if (n.type === "community_invite") {
     return null;
   }
@@ -83,6 +100,7 @@ export function mapNotificationRow(row: {
   friend_request_id: string | null;
   join_request_id: string | null;
   community_invite_id: string | null;
+  support_ticket_id: string | null;
   actor: FeedProfile | FeedProfile[] | null;
   community:
     | { id: string; name: string; slug: string; kind?: "community" | "club" }
@@ -103,6 +121,7 @@ export function mapNotificationRow(row: {
     friend_request_id: row.friend_request_id,
     join_request_id: row.join_request_id,
     community_invite_id: row.community_invite_id,
+    support_ticket_id: row.support_ticket_id ?? null,
     actor: actor ?? { id: "", username: "?", avatar_url: null },
     community: community ?? null,
   };

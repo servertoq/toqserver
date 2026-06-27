@@ -25,6 +25,7 @@ export type ProfileTab =
   | "partidas"
   | "publicacoes"
   | "amigos"
+  | "suporte"
   | "editar";
 
 type Props = {
@@ -45,9 +46,10 @@ type Props = {
   headerActions?: ReactNode;
   friendsPanel?: ReactNode;
   editForm?: ReactNode;
+  supportForm?: ReactNode;
 };
 
-const TABS: { id: ProfileTab; label: string; icon: "grid" | "chart" | "clock" | "trophy" | "posts" | "users" | "edit" }[] = [
+const TABS: { id: ProfileTab; label: string; icon: "grid" | "chart" | "clock" | "trophy" | "posts" | "users" | "support" | "edit" }[] = [
   { id: "resumo", label: "Resumo", icon: "grid" },
   { id: "desempenho", label: "Desempenho", icon: "chart" },
   { id: "historico", label: "Histórico", icon: "clock" },
@@ -110,6 +112,13 @@ function TabIcon({ type }: { type: (typeof TABS)[number]["icon"] }) {
           <path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z" />
         </svg>
       );
+    case "support":
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 8v4M12 16h.01" strokeLinecap="round" />
+        </svg>
+      );
   }
 }
 
@@ -152,6 +161,7 @@ export function PlayerProfileDashboard({
   headerActions,
   friendsPanel,
   editForm,
+  supportForm,
 }: Props) {
   const [tab, setTab] = useState<ProfileTab>("resumo");
   const stats = useMemo(() => computeEngagementStats(posts), [posts]);
@@ -163,6 +173,7 @@ export function PlayerProfileDashboard({
     const items = [...TABS];
     if (isOwnProfile) {
       items.push({ id: "amigos" as const, label: "Amigos", icon: "users" as const });
+      items.push({ id: "suporte" as const, label: "Suporte", icon: "support" as const });
       items.push({ id: "editar" as const, label: "Editar", icon: "edit" as const });
     }
     return items;
@@ -428,6 +439,10 @@ export function PlayerProfileDashboard({
 
             {tab === "amigos" && isOwnProfile && friendsPanel && (
               <div>{friendsPanel}</div>
+            )}
+
+            {tab === "suporte" && isOwnProfile && supportForm && (
+              <div>{supportForm}</div>
             )}
 
             {tab === "editar" && isOwnProfile && editForm && (

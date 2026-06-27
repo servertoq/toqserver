@@ -168,7 +168,7 @@ export function ClubShopPanel({
           )}
         </div>
       ) : (
-        <ul className="mt-4 grid gap-4 sm:grid-cols-2">
+        <ul className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 lg:gap-4">
           {products.map((product) => {
             const optionCount = product.variants?.length ?? 0;
             return (
@@ -178,13 +178,21 @@ export function ClubShopPanel({
                   onClick={() => setViewing(product)}
                   className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition hover:border-[var(--toq-accent)]"
                 >
-                  {product.images && product.images[0] && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={product.images[0].url} alt="" className="aspect-[4/3] w-full object-cover" />
+                  {product.images && product.images[0] ? (
+                    <div className="club-product-media">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={product.images[0].url} alt="" />
+                    </div>
+                  ) : (
+                    <div className="club-product-media flex items-center justify-center text-2xl text-slate-300">
+                      🛍️
+                    </div>
                   )}
-                  <div className="p-4">
+                  <div className="p-3 sm:p-4">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-bold text-[var(--toq-navy)]">{product.name}</h3>
+                      <h3 className="text-sm font-bold leading-snug text-[var(--toq-navy)] sm:text-base">
+                        {product.name}
+                      </h3>
                       <span className="shrink-0 text-sm font-bold text-[var(--toq-accent)]">
                         {formatClubPrice(productDisplayPrice(product))}
                       </span>
