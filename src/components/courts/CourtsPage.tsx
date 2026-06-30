@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { mapCourtRow } from "@/lib/courts";
+import { matchesLocationSearch, LOCATION_SEARCH_PLACEHOLDER } from "@/lib/locationSearch";
+import { fetchPlanUsage, planLimitMessage } from "@/lib/plans";
+import type { PlanUsage } from "@/types/plans";
 import type { CourtWithOwner } from "@/types/courts";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { appContentClass } from "@/lib/layout";
@@ -16,18 +19,23 @@ export function CourtsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [planUsage, setPlanUsage] = useState<PlanUsage | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
-    const { data, error: listErr } = await supabase
-      .from("courts")
-      .select(
-        `
+    const [{ data, error: listErr }, usage] = await Promise.all([
+      supabase
+        .from("courts")
+        .select(
+          `
         *,
         owner:profiles!courts_owner_id_fkey(id, username, avatar_url)
       `
-      )
-      .order("created_at", { ascending: false });
+        )
+        .order("created_at", { ascending: false }),
+      fetchPlanUsage(supabase),
+    ]);
+    setPlanUsage(usage);
 
     if (listErr) {
       setError(
@@ -45,16 +53,17 @@ export function CourtsPage() {
     load();
   }, [load]);
 
-  const filtered = courts.filter((c) => {
-    const q = search.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      c.name.toLowerCase().includes(q) ||
-      c.city.toLowerCase().includes(q) ||
-      c.description.toLowerCase().includes(q) ||
-      (c.neighborhood?.toLowerCase().includes(q) ?? false)
-    );
-  });
+  const filtered = courts.filter((c) =>
+    matchesLocationSearch(search, {
+      name: c.name,
+      city: c.city,
+      cep: c.cep,
+      neighborhood: c.neighborhood,
+      street: c.street,
+      description: c.description,
+      formattedAddress: c.formatted_address,
+    })
+  );
 
   return (
     <>
@@ -64,15 +73,26 @@ export function CourtsPage() {
           title="Quadras"
           subtitle="Encontre quadras cadastradas ou anuncie a sua para outros jogadores."
           action={
-            <Link href="/inicio/quadras/cadastrar" className="toq-btn-primary rounded-xl px-4 py-2 text-sm text-white">
-              Cadastrar quadra
-            </Link>
+            planUsage?.can_create_court ? (
+              <Link
+                href="/inicio/quadras/cadastrar"
+                className="toq-btn-primary rounded-xl px-4 py-2 text-sm text-white"
+              >
+                Cadastrar quadra
+              </Link>
+            ) : undefined
           }
         />
 
+        {planUsage && !planUsage.can_create_court && (
+          <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            {planLimitMessage(planUsage, "court")}
+          </p>
+        )}
+
         <input
           type="search"
-          placeholder="Buscar por nome, cidade ou bairro…"
+          placeholder={LOCATION_SEARCH_PLACEHOLDER}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="toq-input mb-6 w-full px-4 py-2.5 text-sm"

@@ -4,8 +4,13 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { mapCommunityRow } from "@/lib/community";
+import { fetchPlanUsage, planLimitMessage } from "@/lib/plans";
+import { matchesLocationSearch, LOCATION_SEARCH_PLACEHOLDER } from "@/lib/locationSearch";
+import type { PlanUsage } from "@/types/plans";
 import { COMMUNITY_GROUP_CONFIG } from "@/lib/communityGroup";
 import type { Community, CommunityGroupKind, CommunityMemberRole } from "@/types/community";
+import { useAppProfile } from "@/components/app/AppShell";
+import { ClubRecommendDialog } from "@/components/club/ClubRecommendDialog";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { appContentClass } from "@/lib/layout";
 import { CommunityCard } from "./CommunityCard";
@@ -13,11 +18,14 @@ import { PageHeader } from "@/components/shared/PageHeader";
 
 export function CommunitiesPage({ groupKind = "community" }: { groupKind?: CommunityGroupKind }) {
   const config = COMMUNITY_GROUP_CONFIG[groupKind];
+  const profile = useAppProfile();
   const supabase = createClient();
   const [communities, setCommunities] = useState<ReturnType<typeof mapCommunityRow>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [recommendOpen, setRecommendOpen] = useState(false);
+  const [planUsage, setPlanUsage] = useState<PlanUsage | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -100,15 +108,34 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
   }, [groupKind, supabase]);
 
   useEffect(() => {
+    fetchPlanUsage(supabase).then(setPlanUsage);
+  }, [supabase]);
+
+  const canCreateGroup =
+    groupKind === "club" ? planUsage?.can_create_club ?? false : planUsage?.can_create_community ?? true;
+
+  useEffect(() => {
     load();
   }, [load]);
 
-  const filtered = communities.filter(
-    (c) =>
-      !search.trim() ||
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.description.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = communities.filter((c) => {
+    if (groupKind === "club") {
+      return matchesLocationSearch(search, {
+        name: c.name,
+        city: c.address_city,
+        cep: c.address_zip,
+        neighborhood: c.address_neighborhood,
+        street: c.address_street,
+        description: c.description,
+      });
+    }
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      c.name.toLowerCase().includes(q) ||
+      c.description.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <>
@@ -118,18 +145,37 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
           title={config.listTitle}
           subtitle={config.listSubtitle}
           action={
-            <Link
-              href={config.createHref}
-              className="toq-btn-primary rounded-xl px-4 py-2 text-sm text-white"
-            >
-              {config.createButton}
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              {groupKind === "club" && (
+                <button
+                  type="button"
+                  onClick={() => setRecommendOpen(true)}
+                  className="rounded-xl border border-[var(--toq-accent)] bg-white px-4 py-2 text-sm font-semibold text-[var(--toq-accent)] hover:bg-[var(--toq-accent)]/5"
+                >
+                  Indicar um clube
+                </button>
+              )}
+              {canCreateGroup && (
+                <Link
+                  href={config.createHref}
+                  className="toq-btn-primary rounded-xl px-4 py-2 text-sm text-white"
+                >
+                  {config.createButton}
+                </Link>
+              )}
+            </div>
           }
         />
 
+        {planUsage && !canCreateGroup && (
+          <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            {planLimitMessage(planUsage, groupKind === "club" ? "club" : "community")}
+          </p>
+        )}
+
         <input
           type="search"
-          placeholder={config.searchPlaceholder}
+          placeholder={groupKind === "club" ? LOCATION_SEARCH_PLACEHOLDER : config.searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="toq-input mb-6 w-full px-4 py-2.5 text-sm"
@@ -164,6 +210,14 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
           </ul>
         )}
       </main>
+
+      {groupKind === "club" && (
+        <ClubRecommendDialog
+          open={recommendOpen}
+          userId={profile.id}
+          onClose={() => setRecommendOpen(false)}
+        />
+      )}
     </>
   );
 }

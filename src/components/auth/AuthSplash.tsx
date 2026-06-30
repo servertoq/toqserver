@@ -5,6 +5,7 @@ import { useCallback, useRef } from "react";
 import { AuthFeatureGrid } from "./AuthFeatureGrid";
 import { AuthHowItWorks } from "./AuthHowItWorks";
 import { AuthPersonaCards } from "./AuthPersonaCards";
+import { AuthPlansSection } from "./AuthPlansSection";
 import { AUTH_HERO_IMAGE } from "./authLandingData";
 
 type Props = {
@@ -120,6 +121,20 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
             </p>
           </header>
           <AuthHowItWorks />
+        </div>
+      </section>
+
+      <section className="auth-landing-section auth-landing-section--alt">
+        <div className="auth-landing-section-inner">
+          <header className="auth-landing-section-header">
+            <p className="auth-landing-eyebrow">Planos</p>
+            <h2 className="auth-landing-section-title">Escolha como quer crescer na TOQ</h2>
+            <p className="auth-landing-section-lead">
+              Comece grátis. Evolua para Professor ou Empresário quando fizer sentido — pague só a
+              diferença ao mudar de plano.
+            </p>
+          </header>
+          <AuthPlansSection onRegister={onRegister} />
         </div>
       </section>
 

@@ -1,10 +1,12 @@
 ﻿"use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { COMMUNITY_GROUP_CONFIG, groupDetailHref } from "@/lib/communityGroup";
+import { fetchPlanUsage, planLimitMessage } from "@/lib/plans";
+import type { PlanUsage } from "@/types/plans";
 import type { CommunityGroupKind } from "@/types/community";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
@@ -39,6 +41,15 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
   const [hours, setHours] = useState<DayHours[]>(defaultOperatingHours);
   const { isSubmitting: loading, guard } = useSingleSubmit();
   const [error, setError] = useState<string | null>(null);
+  const [planUsage, setPlanUsage] = useState<PlanUsage | null>(null);
+
+  useEffect(() => {
+    fetchPlanUsage(supabase).then(setPlanUsage);
+  }, [supabase]);
+
+  const canCreate = isClub
+    ? planUsage?.can_create_club ?? false
+    : planUsage?.can_create_community ?? true;
 
   async function handleCover(list: FileList | null) {
     const file = list?.[0];
@@ -68,6 +79,11 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
     }
     if (!trimmedDesc) {
       setError("Adicione uma descrição para a comunidade.");
+      return;
+    }
+
+    if (planUsage && !canCreate) {
+      setError(planLimitMessage(planUsage, isClub ? "club" : "community"));
       return;
     }
 
@@ -147,6 +163,11 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          {planUsage && !canCreate && (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900" role="alert">
+              {planLimitMessage(planUsage, isClub ? "club" : "community")}
+            </p>
+          )}
           {error && (
             <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600" role="alert">
               {error}
@@ -254,7 +275,7 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (planUsage !== null && !canCreate)}
             className="w-full rounded-lg toq-btn-primary py-2.5 text-sm font-bold text-white transition hover:bg-[var(--toq-accent-hover)] disabled:opacity-50"
           >
             {loading ? "Criando…" : config.createButton}

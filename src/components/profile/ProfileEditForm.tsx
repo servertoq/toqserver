@@ -11,6 +11,8 @@ import {
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { type AddressFields, EMPTY_ADDRESS, addressToDbPayload } from "@/lib/address";
 import { AddressForm } from "@/components/shared/AddressForm";
+import { ProfilePlanSection } from "./ProfilePlanSection";
+import type { UserPlan } from "@/types/plans";
 
 export type EditableProfile = {
   id: string;
@@ -22,6 +24,8 @@ export type EditableProfile = {
   bio: string;
   created_at: string;
   address: AddressFields;
+  plan: UserPlan;
+  show_plan_badge: boolean;
 };
 
 type Props = {
@@ -38,6 +42,7 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
   const [gender, setGender] = useState<GenderType>(initial.gender);
   const [bio, setBio] = useState(initial.bio ?? "");
   const [address, setAddress] = useState<AddressFields>(initial.address ?? EMPTY_ADDRESS);
+  const [showPlanBadge, setShowPlanBadge] = useState(initial.show_plan_badge ?? true);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(initial.avatar_url);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const { isSubmitting: saving, guard } = useSingleSubmit();
@@ -130,6 +135,7 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
           gender,
           bio: trimmedBio,
           avatar_url: avatarUrl,
+          show_plan_badge: showPlanBadge,
           ...addressToDbPayload(address),
         })
         .eq("id", initial.id);
@@ -161,6 +167,13 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
           {success}
         </p>
       )}
+
+      <ProfilePlanSection
+        plan={initial.plan}
+        showPlanBadge={showPlanBadge}
+        onToggleBadge={setShowPlanBadge}
+        saving={saving}
+      />
 
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
         <div className="relative shrink-0">

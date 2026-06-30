@@ -711,7 +711,7 @@ body {
 }
 
 .auth-scroll-hint-text {
-  font-size: 0.625rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -886,6 +886,164 @@ body {
   width: 0.3rem;
   border-radius: 9999px;
   background: #60a5fa;
+}
+
+.auth-plans-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .auth-plans-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+    align-items: stretch;
+  }
+}
+
+.auth-plan-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1.25rem 1.25rem 1.375rem;
+  transition: border-color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+.auth-plan-card:hover {
+  border-color: rgba(147, 197, 253, 0.35);
+  background: rgba(255, 255, 255, 0.07);
+  transform: translateY(-2px);
+}
+
+.auth-plan-card--highlight {
+  border-color: rgba(96, 165, 250, 0.45);
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(59, 130, 246, 0.22) 0%, transparent 60%),
+    rgba(255, 255, 255, 0.07);
+  box-shadow: 0 12px 40px rgba(37, 99, 235, 0.15);
+}
+
+.auth-plan-card--professor {
+  background:
+    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(52, 211, 153, 0.12) 0%, transparent 55%),
+    rgba(255, 255, 255, 0.05);
+}
+
+.auth-plan-card--empresario {
+  background:
+    radial-gradient(ellipse 80% 60% at 0% 100%, rgba(167, 139, 250, 0.14) 0%, transparent 55%),
+    rgba(255, 255, 255, 0.05);
+}
+
+.auth-plan-badge {
+  position: absolute;
+  top: -0.625rem;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.auth-plan-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.auth-plan-price {
+  margin-top: 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+
+.auth-plan-tagline {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.auth-plan-features {
+  margin-top: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.auth-plan-features li {
+  position: relative;
+  padding-left: 0.875rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.auth-plan-features li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #60a5fa;
+}
+
+.auth-plan-cta {
+  margin-top: 1.125rem;
+  width: 100%;
+  border: none;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  padding: 0.65rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.auth-plan-cta:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.auth-plan-cta--secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.auth-plan-cta--secondary:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.auth-plans-footnote {
+  margin-top: 1.25rem;
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.auth-plans-footnote strong {
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 700;
 }
 
 .auth-landing-section .auth-features {
@@ -2720,7 +2878,7 @@ button {
 @media (min-width: 1024px) {
   .feed-ad-sidebar-slot {
     position: fixed;
-    top: 8.5rem;
+    top: 12rem;
     z-index: 20;
     width: 280px;
     right: max(1rem, calc((100vw - 260px - 1040px) / 2 + 1rem));

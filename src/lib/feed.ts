@@ -1,5 +1,6 @@
 import { mapMentionRows } from "@/lib/mentions";
 import type { FeedComment, FeedCommunity, FeedPost, FeedProfile } from "@/types/feed";
+import type { UserPlan } from "@/types/plans";
 
 type RawPostRow = {
   id: string;
@@ -11,7 +12,21 @@ type RawPostRow = {
   visibility?: "public" | "private";
   event_date?: string | null;
   event_time?: string | null;
-  author: { id: string; username: string; avatar_url: string | null } | { id: string; username: string; avatar_url: string | null }[];
+  author:
+    | {
+        id: string;
+        username: string;
+        avatar_url: string | null;
+        plan?: UserPlan;
+        show_plan_badge?: boolean;
+      }
+    | {
+        id: string;
+        username: string;
+        avatar_url: string | null;
+        plan?: UserPlan;
+        show_plan_badge?: boolean;
+      }[];
   images: { url: string; sort_order: number; media_type?: "image" | "video" }[] | null;
   communities: { name: string; slug: string; accent_color: string } | { name: string; slug: string; accent_color: string }[] | null;
   mentions?: { mentioned_user: FeedProfile | FeedProfile[] | null }[] | null;
@@ -42,7 +57,7 @@ export function mapPostRow(
     event_date: row.event_date ?? null,
     event_time: row.event_time ?? null,
     mentions: mapMentionRows(row.mentions),
-    author: author ?? { id: "", username: "jogador", avatar_url: null },
+    author: author ?? { id: "", username: "jogador", avatar_url: null, plan: "free", show_plan_badge: true },
     images: (row.images ?? [])
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((img) => ({

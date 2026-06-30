@@ -28,7 +28,7 @@ export default function PerfilPage() {
     const { data } = await supabase
       .from("profiles")
       .select(
-        "id, username, email, avatar_url, birth_date, gender, bio, created_at, address_zip, address_street, address_number, address_neighborhood, address_complement, address_city, address_state"
+        "id, username, email, avatar_url, birth_date, gender, bio, created_at, plan, show_plan_badge, address_zip, address_street, address_number, address_neighborhood, address_complement, address_city, address_state"
       )
       .eq("id", appProfile.id)
       .single();
@@ -39,6 +39,8 @@ export default function PerfilPage() {
         id: data.id ?? appProfile.id,
         gender: data.gender as GenderType,
         bio: data.bio ?? "",
+        plan: (data.plan as EditableProfile["plan"]) ?? "free",
+        show_plan_badge: data.show_plan_badge ?? true,
         address: addressFromRow(data),
       });
     } else {

@@ -24,7 +24,7 @@ export default async function InicioLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, avatar_url, is_banned")
+    .select("id, username, avatar_url, is_banned, plan, show_plan_badge")
     .eq("id", user.id)
     .single();
 
@@ -42,6 +42,8 @@ export default async function InicioLayout({
         avatar_url: profile.avatar_url,
         staffRole: (staffRole as AppProfile["staffRole"]) ?? null,
         isBanned: profile.is_banned ?? false,
+        plan: (profile.plan as AppProfile["plan"]) ?? "free",
+        showPlanBadge: profile.show_plan_badge ?? true,
       }}
     >
       {children}

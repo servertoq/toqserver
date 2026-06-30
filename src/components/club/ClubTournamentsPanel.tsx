@@ -93,7 +93,7 @@ export function ClubTournamentsPanel({
           <p className="text-sm font-semibold text-[var(--toq-navy)]">Nenhum torneio cadastrado</p>
           {canManage ? (
             <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
-              Crie o primeiro torneio com nome, premiação, regras e WhatsApp para inscrições.
+              Crie o primeiro torneio com nome, imagem, premiação, regras e WhatsApp para inscrições.
             </p>
           ) : (
             <p className="mt-1 text-xs text-[var(--toq-text-muted)]">

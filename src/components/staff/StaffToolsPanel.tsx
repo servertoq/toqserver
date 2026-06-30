@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { PLAN_LABELS } from "@/lib/plans";
+import type { UserPlan } from "@/types/plans";
 import { StaffUsernameSearch, type UsernameSearchUser } from "./StaffUsernameSearch";
 import { StaffDeleteContentPanel } from "./StaffDeleteContentPanel";
 
@@ -15,6 +17,8 @@ export function StaffToolsPanel({ onAction }: Props) {
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [planUser, setPlanUser] = useState<UsernameSearchUser | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<UserPlan>("free");
 
   async function run(
     label: string,
@@ -97,6 +101,49 @@ export function StaffToolsPanel({ onAction }: Props) {
             {message}
           </p>
         )}
+      </section>
+
+      <section className="mt-4 overflow-visible rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h2 className="text-sm font-bold text-[var(--toq-navy)]">Plano do usuário</h2>
+        <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
+          Atribua Usuário, Professor ou Empresário (sem cobrança automática por enquanto).
+        </p>
+        <div className="mt-4">
+          <StaffUsernameSearch value={planUser} onChange={setPlanUser} />
+          <select
+            value={selectedPlan}
+            onChange={(e) => setSelectedPlan(e.target.value as UserPlan)}
+            className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+          >
+            {(Object.keys(PLAN_LABELS) as UserPlan[]).map((plan) => (
+              <option key={plan} value={plan}>
+                {PLAN_LABELS[plan]}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={async () => {
+              if (!planUser) {
+                setMessage("Selecione um usuário para alterar o plano.");
+                return;
+              }
+              await run(
+                "Plano atualizado",
+                () =>
+                  supabase.rpc("staff_set_user_plan", {
+                    p_user_id: planUser.id,
+                    p_plan: selectedPlan,
+                  }),
+                false
+              );
+            }}
+            className="mt-2 rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+          >
+            Salvar plano
+          </button>
+        </div>
       </section>
 
       <StaffDeleteContentPanel onAction={onAction} />

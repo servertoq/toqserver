@@ -36,8 +36,25 @@ export function ClubTournamentForm({ communityId, tournament, onSaved, onClose }
   const [endsAt, setEndsAt] = useState(toDatetimeLocal(tournament?.ends_at ?? null));
   const [imageUrl, setImageUrl] = useState(tournament?.image_url ?? "");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function handleImagePick(file: File | null) {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImageFile(file);
+    setImagePreview(file ? URL.createObjectURL(file) : null);
+    if (file) setImageUrl("");
+  }
+
+  function removeImage() {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImageFile(null);
+    setImagePreview(null);
+    setImageUrl("");
+  }
+
+  const displayPreview = imagePreview || imageUrl || null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -100,19 +117,24 @@ export function ClubTournamentForm({ communityId, tournament, onSaved, onClose }
         const { error: upErr } = await supabase.storage
           .from("club-tournament-images")
           .upload(path, imageFile, { upsert: true, contentType: imageFile.type });
-        if (!upErr) {
-          const { data: urlData } = supabase.storage
-            .from("club-tournament-images")
-            .getPublicUrl(path);
-          finalImageUrl = urlData.publicUrl;
+        if (upErr) {
+          throw new Error(
+            "Torneio salvo, mas a imagem não foi enviada. Verifique a migration 026 e o bucket club-tournament-images."
+          );
         }
+        const { data: urlData } = supabase.storage
+          .from("club-tournament-images")
+          .getPublicUrl(path);
+        finalImageUrl = urlData.publicUrl;
       }
 
-      if (tournamentId && finalImageUrl !== (tournament?.image_url ?? null)) {
-        await supabase
+      const savedImageUrl = finalImageUrl;
+      if (tournamentId && savedImageUrl !== (tournament?.image_url ?? null)) {
+        const { error: imgErr } = await supabase
           .from("club_tournaments")
-          .update({ image_url: finalImageUrl })
+          .update({ image_url: savedImageUrl })
           .eq("id", tournamentId);
+        if (imgErr) throw new Error(imgErr.message);
       }
 
       onSaved();
@@ -124,7 +146,7 @@ export function ClubTournamentForm({ communityId, tournament, onSaved, onClose }
     }
   }
 
-  const previewSrc = imageFile ? URL.createObjectURL(imageFile) : imageUrl || null;
+  const previewSrc = displayPreview;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
@@ -155,6 +177,55 @@ export function ClubTournamentForm({ communityId, tournament, onSaved, onClose }
               required
             />
           </label>
+
+          <div>
+            <span className="text-xs font-semibold text-[var(--toq-navy)]">Imagem de divulgação</span>
+            <p className="mt-0.5 text-[11px] text-[var(--toq-text-muted)]">
+              Aparece no card do torneio na aba Torneios e no clube.
+            </p>
+
+            {previewSrc ? (
+              <div className="relative mt-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={previewSrc}
+                  alt=""
+                  className="aspect-[16/9] w-full rounded-xl object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute right-2 top-2 rounded-lg bg-black/60 px-2 py-1 text-[11px] font-bold text-white hover:bg-black/80"
+                >
+                  Remover
+                </button>
+              </div>
+            ) : (
+              <div className="mt-2 flex aspect-[16/9] w-full items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50">
+                <p className="px-4 text-center text-xs text-[var(--toq-text-muted)]">
+                  Nenhuma imagem — adicione uma foto para divulgar o torneio.
+                </p>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="mt-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-[var(--toq-navy)] hover:bg-slate-50"
+            >
+              {displayPreview ? "Trocar imagem" : "Adicionar imagem"}
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => {
+                handleImagePick(e.target.files?.[0] ?? null);
+                e.target.value = "";
+              }}
+            />
+          </div>
 
           <label className="block">
             <span className="text-xs font-semibold text-[var(--toq-navy)]">Descrição</span>
@@ -238,25 +309,6 @@ export function ClubTournamentForm({ communityId, tournament, onSaved, onClose }
               Desmarcado = todos os usuários do site veem na aba Torneios.
             </span>
           </label>
-
-          <div>
-            <span className="text-xs font-semibold text-[var(--toq-navy)]">Imagem de divulgação</span>
-            {previewSrc && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={previewSrc}
-                alt=""
-                className="mt-2 aspect-[16/9] w-full rounded-xl object-cover"
-              />
-            )}
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="mt-2 w-full text-sm"
-              onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
-            />
-          </div>
         </div>
 
         {error && (

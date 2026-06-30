@@ -29,3 +29,9 @@ export function canManageStaff(role: StaffRole | null): boolean {
 export function canManageAdvertising(role: StaffRole | null): boolean {
   return role === "ceo" || role === "cto" || role === "marketing";
 }
+
+export function canAccessClubRecommendations(role: StaffRole | null): boolean {
+  if (!role) return false;
+  if (canModeratePlatform(role)) return true;
+  return role === "marketing";
+}

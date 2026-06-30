@@ -12,6 +12,8 @@ export type AppProfile = {
   avatar_url: string | null;
   staffRole: StaffRole | null;
   isBanned: boolean;
+  plan: "free" | "professor" | "empresario";
+  showPlanBadge: boolean;
 };
 
 type NavItem = {
@@ -58,6 +60,17 @@ function IconLogout() {
     <NavIcon>
       <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+      </svg>
+    </NavIcon>
+  );
+}
+
+function IconPlans({ active }: { active: boolean }) {
+  return (
+    <NavIcon>
+      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} aria-hidden>
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <path strokeLinecap="round" d="M3 10h18M8 4v4M16 4v4" />
       </svg>
     </NavIcon>
   );
@@ -125,6 +138,18 @@ function IconModeration({ active }: { active: boolean }) {
   );
 }
 
+function IconLearn({ active }: { active: boolean }) {
+  return (
+    <NavIcon>
+      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 14v7" />
+      </svg>
+    </NavIcon>
+  );
+}
+
 function IconAdvertising({ active }: { active: boolean }) {
   return (
     <NavIcon>
@@ -174,10 +199,22 @@ const NAV_ITEMS: NavItem[] = [
     match: (path) => path.startsWith("/inicio/torneios"),
   },
   {
+    href: "/inicio/aprenda-a-jogar",
+    label: "Aprenda à Jogar",
+    icon: (active) => <IconLearn active={active} />,
+    match: (path) => path.startsWith("/inicio/aprenda-a-jogar"),
+  },
+  {
     href: "/inicio/publicidade",
     label: "Publicidade",
     icon: (active) => <IconAdvertising active={active} />,
     match: (path) => path.startsWith("/inicio/publicidade"),
+  },
+  {
+    href: "/inicio/planos",
+    label: "Planos",
+    icon: (active) => <IconPlans active={active} />,
+    match: (path) => path.startsWith("/inicio/planos"),
   },
   {
     href: "/inicio/perfil",

@@ -25,7 +25,7 @@ const POST_SELECT = `
   visibility,
   event_date,
   event_time,
-  author:profiles!posts_author_id_fkey(id, username, avatar_url),
+  author:profiles!posts_author_id_fkey(id, username, avatar_url, plan, show_plan_badge),
   images:post_images(url, sort_order, media_type),
   communities(name, slug, accent_color),
   mentions:post_mentions(

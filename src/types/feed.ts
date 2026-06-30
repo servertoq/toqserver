@@ -6,6 +6,8 @@ export type FeedProfile = {
   id: string;
   username: string;
   avatar_url: string | null;
+  plan?: "free" | "professor" | "empresario";
+  show_plan_badge?: boolean;
 };
 
 export type FeedCommunity = {

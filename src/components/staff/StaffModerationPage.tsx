@@ -7,15 +7,20 @@ import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { useAppProfile } from "@/components/app/AppShell";
 import { appContentClass } from "@/lib/layout";
 import {
+  canAccessClubRecommendations,
   canAccessTicketBox,
   canManageAdvertising,
   canManageStaff,
   canModeratePlatform,
   STAFF_ROLE_LABELS,
 } from "@/lib/staff";
+import { loadStaffClubRecommendations } from "@/lib/staffClubRecommendations";
 import { loadStaffTickets } from "@/lib/staffTickets";
+import type { ClubRecommendationWithReporter } from "@/types/clubRecommendations";
 import type { StaffRole } from "@/types/staff";
 import type { SupportTicketWithReporter } from "@/types/support";
+import { StaffClubRecommendBox } from "./StaffClubRecommendBox";
+import { StaffClubRecommendDetailModal } from "./StaffClubRecommendDetailModal";
 import { StaffTicketBox } from "./StaffTicketBox";
 import { StaffTicketDetailModal } from "./StaffTicketDetailModal";
 import { StaffToolsPanel } from "./StaffToolsPanel";
@@ -29,7 +34,12 @@ export function StaffModerationPage() {
   const [reports, setReports] = useState<SupportTicketWithReporter[]>([]);
   const [suggestions, setSuggestions] = useState<SupportTicketWithReporter[]>([]);
   const [support, setSupport] = useState<SupportTicketWithReporter[]>([]);
+  const [clubRecommendations, setClubRecommendations] = useState<ClubRecommendationWithReporter[]>(
+    []
+  );
   const [selected, setSelected] = useState<SupportTicketWithReporter | null>(null);
+  const [selectedClubRecommend, setSelectedClubRecommend] =
+    useState<ClubRecommendationWithReporter | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,6 +48,7 @@ export function StaffModerationPage() {
   const showReports = canAccessTicketBox(staffRole, "report");
   const showSuggestions = canAccessTicketBox(staffRole, "suggestion");
   const showSupport = canAccessTicketBox(staffRole, "help");
+  const showClubRecommendations = canAccessClubRecommendations(staffRole);
 
   const load = useCallback(async () => {
     if (!staffRole) return;
@@ -54,12 +65,15 @@ export function StaffModerationPage() {
       if (showSupport) {
         tasks.push(loadStaffTickets(supabase, "help").then(setSupport));
       }
+      if (showClubRecommendations) {
+        tasks.push(loadStaffClubRecommendations(supabase).then(setClubRecommendations));
+      }
       await Promise.all(tasks);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao carregar painel.");
     }
     setLoading(false);
-  }, [showReports, showSuggestions, showSupport, staffRole, supabase]);
+  }, [showClubRecommendations, showReports, showSuggestions, showSupport, staffRole, supabase]);
 
   useEffect(() => {
     load();
@@ -76,7 +90,18 @@ export function StaffModerationPage() {
     );
   }
 
-  const boxCount = [showReports, showSuggestions, showSupport].filter(Boolean).length;
+  const boxCount = [showReports, showSuggestions, showSupport, showClubRecommendations].filter(
+    Boolean
+  ).length;
+
+  const gridClass =
+    boxCount >= 4
+      ? "xl:grid-cols-2 2xl:grid-cols-4"
+      : boxCount === 3
+        ? "lg:grid-cols-3"
+        : boxCount === 2
+          ? "md:grid-cols-2"
+          : "";
 
   return (
     <>
@@ -109,11 +134,7 @@ export function StaffModerationPage() {
         {loading ? (
           <p className="text-sm text-[var(--toq-text-muted)]">Carregando filas…</p>
         ) : (
-          <div
-            className={`grid gap-4 ${
-              boxCount >= 3 ? "lg:grid-cols-3" : boxCount === 2 ? "md:grid-cols-2" : ""
-            }`}
-          >
+          <div className={`grid gap-4 ${gridClass}`}>
             {showReports && (
               <StaffTicketBox
                 title="Denúncias"
@@ -141,6 +162,13 @@ export function StaffModerationPage() {
                 emptyLabel="Nenhum pedido de ajuda."
               />
             )}
+            {showClubRecommendations && (
+              <StaffClubRecommendBox
+                recommendations={clubRecommendations}
+                onSelect={setSelectedClubRecommend}
+                emptyLabel="Nenhuma indicação de clube recebida."
+              />
+            )}
           </div>
         )}
 
@@ -161,6 +189,14 @@ export function StaffModerationPage() {
             ticket={selected}
             canModerate={canModerate}
             onClose={() => setSelected(null)}
+            onUpdated={load}
+          />
+        )}
+
+        {selectedClubRecommend && (
+          <StaffClubRecommendDetailModal
+            item={selectedClubRecommend}
+            onClose={() => setSelectedClubRecommend(null)}
             onUpdated={load}
           />
         )}

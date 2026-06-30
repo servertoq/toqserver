@@ -13,7 +13,6 @@ import { CreatePostBox } from "./CreatePostBox";
 import { FeedTopBar } from "./FeedTopBar";
 import { PostCard } from "./PostCard";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
-import { PageHeader } from "@/components/shared/PageHeader";
 import { FloatingMessages } from "@/components/messages/FloatingMessages";
 
 export function FeedPage() {
@@ -159,11 +158,6 @@ export function FeedPage() {
     <>
       <FeedTopBar showOnlineFriends />
       <FeedPageGrid className="py-6" sidebar={<FeedSidebar />} pinSidebar>
-        <PageHeader
-          title="Página inicial"
-          subtitle="Acompanhe jogadores, eventos e novidades da rede."
-        />
-
         {error && (
           <p className="mb-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600" role="alert">
             {error}

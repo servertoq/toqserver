@@ -56,7 +56,7 @@ export const COMMUNITY_GROUP_CONFIG: Record<CommunityGroupKind, CommunityGroupCo
     backLabel: "Clubes",
     notFound: "Clube não encontrado ou você não tem acesso.",
     emptyList: "Você ainda não participa de nenhum clube. Crie um ou aguarde um convite.",
-    searchPlaceholder: "Buscar nos seus clubes…",
+    searchPlaceholder: "Buscar por nome, cidade ou CEP…",
     feedTitle: "Feed do clube",
     memberOnlyFeed: "Conteúdo exclusivo para membros do clube",
     joinPublic: "Solicitar entrada",

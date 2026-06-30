@@ -11,6 +11,8 @@ import { CommentsPanel } from "./CommentsPanel";
 import { PostBody } from "./PostBody";
 import { PostMediaGrid } from "./PostMediaGrid";
 import { ReportButton } from "@/components/report/ReportButton";
+import { PlanBadge } from "@/components/shared/PlanBadge";
+import { canShowPlanBadge } from "@/lib/plans";
 
 type Props = {
   post: FeedPost;
@@ -81,6 +83,10 @@ export function PostCard({
             >
               {post.author.username}
             </Link>
+            <PlanBadge
+              plan={post.author.plan ?? "free"}
+              show={canShowPlanBadge(post.author.plan, post.author.show_plan_badge)}
+            />
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
                 post.post_type === "event"
