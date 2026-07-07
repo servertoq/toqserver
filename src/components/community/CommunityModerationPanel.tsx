@@ -1,8 +1,9 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { UsernameSearchInput } from "@/components/shared/UsernameSearchInput";
 import { canExpelMember, memberRoleLabel, sortMembers } from "@/lib/community";
 import type { CommunityGroupKind, CommunityInvite, CommunityJoinRequest, CommunityMember, CommunityMemberRole } from "@/types/community";
 
@@ -27,6 +28,14 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const { isSubmitting: inviting, guard: guardInvite } = useSingleSubmit();
+
+  const excludedInviteUserIds = useMemo(
+    () => [
+      ...members.map((m) => m.user_id),
+      ...pendingInvites.map((inv) => inv.invitee_id),
+    ],
+    [members, pendingInvites]
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -242,12 +251,15 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
           <form onSubmit={sendInvite} className="flex flex-wrap items-end gap-2">
             <label className="min-w-[200px] flex-1">
               <span className="text-xs font-semibold text-[var(--toq-navy)]">Convidar jogador</span>
-              <input
-                value={inviteUsername}
-                onChange={(e) => setInviteUsername(e.target.value)}
-                placeholder="@usuario"
-                className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
-              />
+              <div className="mt-1">
+                <UsernameSearchInput
+                  value={inviteUsername}
+                  onChange={setInviteUsername}
+                  placeholder="@usuario ou nome"
+                  excludeUserIds={excludedInviteUserIds}
+                  disabled={inviting || actionId === "invite"}
+                />
+              </div>
             </label>
             <button
               type="submit"

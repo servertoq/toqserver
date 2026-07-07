@@ -14,9 +14,16 @@ type Props = {
   onChange: (next: Pick<AddressFields, "zip" | "city" | "state">) => void;
   readOnly?: boolean;
   compact?: boolean;
+  hideLabel?: boolean;
 };
 
-export function ProfileCepField({ value, onChange, readOnly = false, compact = false }: Props) {
+export function ProfileCepField({
+  value,
+  onChange,
+  readOnly = false,
+  compact = false,
+  hideLabel = false,
+}: Props) {
   const [cepLoading, setCepLoading] = useState(false);
   const [cepError, setCepError] = useState<string | null>(null);
 
@@ -65,9 +72,11 @@ export function ProfileCepField({ value, onChange, readOnly = false, compact = f
   return (
     <div className={compact ? "space-y-1.5" : "space-y-3"}>
       <label className="block">
-        <span className="text-[10px] font-bold uppercase tracking-wide text-[var(--toq-profile-muted)]">
-          CEP
-        </span>
+        {!hideLabel && (
+          <span className="text-[10px] font-bold uppercase tracking-wide text-[var(--toq-profile-muted)]">
+            CEP
+          </span>
+        )}
         <input
           value={formatCepDisplay(value.zip)}
           onChange={(e) => {
@@ -78,9 +87,9 @@ export function ProfileCepField({ value, onChange, readOnly = false, compact = f
           inputMode="numeric"
           placeholder="00000-000"
           maxLength={9}
-          className={`mt-1.5 w-full rounded-xl border border-[var(--toq-profile-border)] bg-[var(--toq-surface)] px-3 py-2 text-sm text-[var(--toq-profile-navy)] outline-none focus:border-[var(--toq-profile-accent)] ${
-            compact ? "max-w-[10rem]" : ""
-          }`}
+          className={`profile-cep-input w-full rounded-xl border border-[var(--toq-profile-border)] bg-[var(--toq-surface)] px-3 py-2 text-sm font-normal leading-normal text-[var(--toq-profile-navy)] outline-none focus:border-[var(--toq-profile-accent)] ${
+            hideLabel ? "" : "mt-1.5"
+          } ${compact ? "max-w-[10rem]" : ""}`}
         />
       </label>
 

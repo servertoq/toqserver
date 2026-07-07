@@ -46,7 +46,7 @@ export function FeedHomeLayout({ children, onOpenCreatePost }: Props) {
         <main className="feed-home-main-col">{children}</main>
       </div>
 
-      <aside className="feed-home-rail-col" aria-label="Busca, sugestões e publicidade">
+      <aside className="feed-home-rail-col hidden lg:block" aria-label="Busca, sugestões e publicidade">
         <div className="feed-home-rail-sticky">
           <div className="feed-home-rail-toolbar">
             <FeedPeopleSearch />

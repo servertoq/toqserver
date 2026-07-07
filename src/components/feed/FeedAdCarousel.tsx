@@ -9,7 +9,12 @@ import type { AdvertisingCarouselItem } from "@/types/advertising";
 
 const ROTATE_MS = 6000;
 
-export function FeedAdCarousel() {
+type Props = {
+  variant?: "rail" | "inline";
+  className?: string;
+};
+
+export function FeedAdCarousel({ variant = "rail", className = "" }: Props) {
   const supabase = useMemo(() => createClient(), []);
   const [ads, setAds] = useState<AdvertisingCarouselItem[]>([]);
   const [index, setIndex] = useState(0);
@@ -42,8 +47,12 @@ export function FeedAdCarousel() {
 
   if (ads.length === 0) {
     return (
-      <div>
-        <div className="toq-card-lg flex aspect-square items-center justify-center p-5 text-center">
+      <div className={className}>
+        <div
+          className={`toq-card-lg flex items-center justify-center p-5 text-center ${
+            variant === "inline" ? "feed-inline-ad-placeholder aspect-[4/3]" : "aspect-square"
+          }`}
+        >
           <p className="text-xs text-[var(--toq-text-muted)]">
             Novidades e publicidade em breve.
           </p>
@@ -58,8 +67,16 @@ export function FeedAdCarousel() {
   const ad = ads[index];
 
   return (
-    <div onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-      <div className="relative aspect-square overflow-hidden toq-card-lg">
+    <div
+      className={className}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <div
+        className={`relative overflow-hidden toq-card-lg ${
+          variant === "inline" ? "feed-inline-ad aspect-[4/3]" : "aspect-square"
+        }`}
+      >
         <Link
           href={`/inicio/publicidade/${ad.slug}`}
           className="relative block h-full w-full"

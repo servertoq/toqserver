@@ -10,7 +10,7 @@ import { FeedHomeLayout } from "./FeedHomeLayout";
 import { createPostWithMedia, POST_SELECT } from "@/lib/posts";
 import { type CreatePostSubmitData, toCreatePostInput } from "@/lib/createPost";
 import { CreatePostModal } from "./CreatePostModal";
-import { PostCard } from "./PostCard";
+import { FeedDesktopPostList, FeedMobileTimeline } from "./FeedPostList";
 import { usePostOwnerActions } from "@/lib/usePostOwnerActions";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { FloatingMessages } from "@/components/messages/FloatingMessages";
@@ -172,25 +172,26 @@ export function FeedPage() {
               </p>
             </div>
           ) : (
-            <ul className="feed-post-list space-y-0 md:space-y-4">
-              {posts.map((post) => (
-                <li key={post.id}>
-                  <PostCard
-                    post={post}
-                    currentUserId={profile!.id}
-                    fullBleed
-                    highlightPost={post.id === highlightPostId}
-                    highlightCommentId={
-                      post.id === highlightPostId ? highlightCommentId : null
-                    }
-                    onLikeToggle={handleLikeToggle}
-                    onCommentCountChange={() => {}}
-                    onEditPost={ownerMenuProps.onEditPost}
-                    onDeletePost={ownerMenuProps.onDeletePost}
-                  />
-                </li>
-              ))}
-            </ul>
+            <>
+              <FeedMobileTimeline
+                posts={posts}
+                currentUserId={profile!.id}
+                highlightPostId={highlightPostId}
+                highlightCommentId={highlightCommentId}
+                onLikeToggle={handleLikeToggle}
+                onEditPost={ownerMenuProps.onEditPost}
+                onDeletePost={ownerMenuProps.onDeletePost}
+              />
+              <FeedDesktopPostList
+                posts={posts}
+                currentUserId={profile!.id}
+                highlightPostId={highlightPostId}
+                highlightCommentId={highlightCommentId}
+                onLikeToggle={handleLikeToggle}
+                onEditPost={ownerMenuProps.onEditPost}
+                onDeletePost={ownerMenuProps.onDeletePost}
+              />
+            </>
           )}
         </section>
         </FeedHomeLayout>

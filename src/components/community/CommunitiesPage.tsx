@@ -167,7 +167,10 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
         />
 
         {planUsage && !canCreateGroup && groupKind !== "club" && (
-          <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p
+            className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950"
+            role="status"
+          >
             {planLimitMessage(planUsage, "community")}
           </p>
         )}

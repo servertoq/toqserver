@@ -24,6 +24,7 @@ type Props = {
   className?: string;
   mode?: "create" | "edit";
   initialPost?: FeedPost;
+  inModal?: boolean;
   onSubmit: (data: CreatePostSubmitData | EditPostSubmitData) => Promise<void>;
 };
 
@@ -41,6 +42,7 @@ export function CreatePostBox({
   className = "mb-6",
   mode = "create",
   initialPost,
+  inModal = false,
   onSubmit,
 }: Props) {
   const isEdit = mode === "edit" && !!initialPost;
@@ -182,11 +184,8 @@ export function CreatePostBox({
     });
   }
 
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className={`toq-card-lg p-4 ${className}`}
-    >
+  const formBody = (
+    <>
       <div className="mb-3 flex items-start gap-3">
         <Avatar src={avatarUrl} name={shownName} size="md" />
         <div className="min-w-0 flex-1">
@@ -201,12 +200,6 @@ export function CreatePostBox({
                     : "Novo post"}
               </p>
             </div>
-            <VisibilityToggle
-              className="hidden sm:flex"
-              options={visOptions}
-              value={visibility}
-              onChange={setVisibility}
-            />
           </div>
           {!isEdit && (
           <div className="mt-2 flex flex-wrap gap-2">
@@ -241,8 +234,8 @@ export function CreatePostBox({
             placeholder="Título do evento (opcional)"
             className="w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)] outline-none focus:border-[var(--toq-accent)]"
           />
-          <div className="flex flex-wrap gap-2">
-            <label className="min-w-[140px] flex-1">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <label className="min-w-0">
               <span className="mb-1 block text-[10px] font-semibold text-[var(--toq-text-muted)]">
                 Data (opcional)
               </span>
@@ -250,10 +243,10 @@ export function CreatePostBox({
                 type="date"
                 value={eventDate}
                 onChange={(e) => setEventDate(e.target.value)}
-                className="w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
+                className="create-post-datetime-input w-full min-w-0 rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
               />
             </label>
-            <label className="min-w-[120px] flex-1">
+            <label className="min-w-0">
               <span className="mb-1 block text-[10px] font-semibold text-[var(--toq-text-muted)]">
                 Horário (opcional)
               </span>
@@ -261,7 +254,7 @@ export function CreatePostBox({
                 type="time"
                 value={eventTime}
                 onChange={(e) => setEventTime(e.target.value)}
-                className="w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
+                className="create-post-datetime-input w-full min-w-0 rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
               />
             </label>
           </div>
@@ -430,8 +423,18 @@ export function CreatePostBox({
           {mediaError}
         </p>
       )}
+    </>
+  );
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+  const formActions = (
+    <div
+      className={
+        inModal
+          ? "flex flex-wrap items-center justify-end gap-2"
+          : "mt-3 flex flex-wrap items-center justify-between gap-2"
+      }
+    >
+      {!inModal && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           {postType !== "poll" && (
             <>
@@ -470,28 +473,89 @@ export function CreatePostBox({
             </>
           )}
         </div>
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-          <VisibilityToggle
-            className="sm:hidden"
-            options={visOptions}
-            value={visibility}
-            onChange={setVisibility}
-          />
-          <button
-            type="submit"
-            disabled={loading || isSubmitting || !body.trim()}
-            className="rounded-lg toq-btn-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-[var(--toq-accent-hover)] disabled:opacity-50"
-          >
-            {loading || isSubmitting
-              ? isEdit
-                ? "Salvando…"
-                : "Publicando…"
-              : isEdit
-                ? "Salvar alterações"
-                : "Publicar"}
-          </button>
-        </div>
+      )}
+      <div className={inModal ? "flex w-full justify-end" : "ml-auto flex flex-wrap items-center justify-end gap-2"}>
+        {inModal && postType !== "poll" && (
+          <>
+            <input
+              ref={imageRef}
+              type="file"
+              accept={POST_IMAGE_ACCEPT}
+              multiple
+              className="hidden"
+              onChange={(e) => handleFiles(e.target.files)}
+            />
+            <input
+              ref={videoRef}
+              type="file"
+              accept={POST_VIDEO_ACCEPT}
+              className="hidden"
+              onChange={(e) => handleFiles(e.target.files)}
+            />
+            <button
+              type="button"
+              onClick={() => imageRef.current?.click()}
+              className="mr-auto text-xs font-semibold text-[var(--toq-sky)] hover:underline"
+            >
+              + Fotos
+            </button>
+            <button
+              type="button"
+              onClick={() => videoRef.current?.click()}
+              className="text-xs font-semibold text-[var(--toq-sky)] hover:underline"
+            >
+              + Vídeo
+            </button>
+          </>
+        )}
+        <VisibilityToggle
+          options={visOptions}
+          value={visibility}
+          onChange={setVisibility}
+        />
+        <button
+          type="submit"
+          disabled={loading || isSubmitting || !body.trim()}
+          className={`rounded-lg toq-btn-primary px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--toq-accent-hover)] disabled:opacity-50 ${
+            inModal ? "min-w-[7.5rem]" : ""
+          }`}
+        >
+          {loading || isSubmitting
+            ? isEdit
+              ? "Salvando…"
+              : "Publicando…"
+            : isEdit
+              ? "Salvar alterações"
+              : "Publicar"}
+        </button>
       </div>
+    </div>
+  );
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className={
+        inModal
+          ? `create-post-box--modal toq-card-lg flex max-h-[min(92dvh,calc(100dvh-1rem))] flex-col overflow-hidden p-0 ${className}`
+          : `toq-card-lg p-4 ${className}`
+      }
+    >
+      {inModal ? (
+        <>
+          <div className="create-post-box__body min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
+            {formBody}
+          </div>
+          <div className="create-post-box__footer shrink-0 border-t border-[var(--toq-border)] bg-[var(--toq-card)] p-4">
+            {formActions}
+          </div>
+        </>
+      ) : (
+        <>
+          {formBody}
+          {formActions}
+        </>
+      )}
     </form>
   );
 }
@@ -509,12 +573,12 @@ function VisibilityToggle({
 }) {
   return (
     <div
-      className={`inline-flex items-center gap-1.5 ${className}`}
+      className={`inline-flex flex-wrap items-center gap-2 ${className}`}
       role="group"
       aria-label="Visibilidade do post"
     >
       <span className="text-[10px] font-medium text-[var(--toq-text-muted)]">Visibilidade</span>
-      <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+      <div className="inline-flex rounded-lg border border-[var(--toq-border)] bg-[var(--toq-surface)] p-0.5">
         {options.map((opt) => (
           <button
             key={opt.value}
@@ -523,7 +587,7 @@ function VisibilityToggle({
             onClick={() => onChange(opt.value)}
             className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition ${
               value === opt.value
-                ? "bg-white text-[var(--toq-navy)] shadow-sm"
+                ? "bg-[var(--toq-card)] text-[var(--toq-navy)] shadow-sm"
                 : "text-[var(--toq-text-muted)] hover:text-[var(--toq-navy)]"
             }`}
           >

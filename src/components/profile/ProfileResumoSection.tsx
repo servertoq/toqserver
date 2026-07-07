@@ -203,6 +203,7 @@ export function ProfileResumoSection({
               onChange={setLocation}
               readOnly={!isOwnProfile}
               compact
+              hideLabel
             />
           </dd>
         </div>

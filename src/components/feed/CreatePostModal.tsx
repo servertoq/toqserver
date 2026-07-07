@@ -54,7 +54,7 @@ export function CreatePostModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 pt-[max(1rem,8vh)]"
+      className="create-post-modal-backdrop fixed inset-0 z-[80] flex items-end justify-center bg-black/40 sm:items-start sm:overflow-y-auto sm:p-4 sm:pt-[max(1rem,8vh)]"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !loading) onClose();
@@ -64,7 +64,7 @@ export function CreatePostModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-post-modal-title"
-        className="relative w-full max-w-lg"
+        className="create-post-modal-panel relative w-full max-w-lg sm:my-auto"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <button
@@ -89,7 +89,8 @@ export function CreatePostModal({
           displayName={displayName}
           loading={loading}
           context="global"
-          className="mb-0 shadow-[0_16px_48px_rgba(5,16,36,0.14)]"
+          inModal
+          className="mb-0 rounded-t-2xl shadow-[0_16px_48px_rgba(5,16,36,0.14)] sm:rounded-2xl"
           onSubmit={onSubmit}
         />
       </div>

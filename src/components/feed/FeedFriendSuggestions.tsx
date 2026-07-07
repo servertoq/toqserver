@@ -10,11 +10,18 @@ import { profileDisplayName } from "@/lib/profile";
 import { profilePath } from "@/lib/publicProfile";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
-const PAGE_SIZE = 4;
+const RAIL_PAGE_SIZE = 4;
+const CAROUSEL_SIZE = 8;
 
-export function FeedFriendSuggestions() {
+type Props = {
+  variant?: "rail" | "carousel";
+  className?: string;
+};
+
+export function FeedFriendSuggestions({ variant = "rail", className = "" }: Props) {
   const supabase = createClient();
   const profile = useAppProfile();
+  const pageSize = variant === "carousel" ? CAROUSEL_SIZE : RAIL_PAGE_SIZE;
   const [suggestions, setSuggestions] = useState<FriendSuggestion[]>([]);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -27,7 +34,7 @@ export function FeedFriendSuggestions() {
       setLoading(true);
       setError(null);
       const { data, error: loadErr } = await fetchFriendSuggestions(supabase, {
-        limit: PAGE_SIZE,
+        limit: pageSize,
         offset: nextOffset,
       });
       setLoading(false);
@@ -43,7 +50,7 @@ export function FeedFriendSuggestions() {
       setSuggestions(data);
       setOffset(nextOffset);
     },
-    [supabase]
+    [pageSize, supabase]
   );
 
   useEffect(() => {
@@ -51,7 +58,7 @@ export function FeedFriendSuggestions() {
   }, [load]);
 
   function refresh() {
-    void load(offset + PAGE_SIZE);
+    void load(offset + pageSize);
   }
 
   async function sendRequest(targetId: string) {
@@ -68,8 +75,13 @@ export function FeedFriendSuggestions() {
     });
   }
 
+  const rootClass =
+    variant === "carousel"
+      ? `feed-inline-suggestions ${className}`.trim()
+      : `feed-friend-suggestions ${className}`.trim();
+
   return (
-    <section className="feed-friend-suggestions">
+    <section className={rootClass}>
       <div className="feed-friend-suggestions-header">
         <h2 className="feed-friend-suggestions-title">Sugestões para você</h2>
         <button
@@ -101,6 +113,36 @@ export function FeedFriendSuggestions() {
             ? "Nenhuma sugestão no momento. Adicione mais amigos para descobrir pessoas em comum."
             : "Faça login para ver sugestões."}
         </p>
+      ) : variant === "carousel" ? (
+        <div className="feed-suggestions-carousel-track" role="list">
+          {suggestions.map((item) => {
+            const name = profileDisplayName(item);
+            const sent = sentIds.has(item.profile_id);
+            return (
+              <article key={item.profile_id} className="feed-suggestions-carousel-card" role="listitem">
+                <Link href={profilePath(item.username)} className="feed-suggestions-carousel-profile">
+                  <SuggestionAvatar src={item.avatar_url} name={name} size="lg" />
+                  <p className="mt-2 truncate text-center text-xs font-semibold text-[var(--toq-navy)]">
+                    {name}
+                  </p>
+                  <p className="mt-0.5 truncate text-center text-[10px] text-[var(--toq-text-muted)]">
+                    {item.mutual_count === 1
+                      ? "1 amigo em comum"
+                      : `${item.mutual_count} amigos em comum`}
+                  </p>
+                </Link>
+                <button
+                  type="button"
+                  disabled={acting || sent}
+                  onClick={() => void sendRequest(item.profile_id)}
+                  className="feed-suggestions-carousel-add"
+                >
+                  {sent ? "Enviado" : "Adicionar"}
+                </button>
+              </article>
+            );
+          })}
+        </div>
       ) : (
         <ul className="feed-friend-suggestions-list">
           {suggestions.map((item) => {
@@ -136,15 +178,26 @@ export function FeedFriendSuggestions() {
   );
 }
 
-function SuggestionAvatar({ src, name }: { src: string | null; name: string }) {
+function SuggestionAvatar({
+  src,
+  name,
+  size = "sm",
+}: {
+  src: string | null;
+  name: string;
+  size?: "sm" | "lg";
+}) {
+  const dim = size === "lg" ? "h-14 w-14 text-base" : "h-9 w-9 text-xs";
   if (src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
+      <img src={src} alt="" className={`${dim} shrink-0 rounded-full object-cover`} />
     );
   }
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--toq-sky)] text-xs font-bold text-white">
+    <div
+      className={`${dim} flex shrink-0 items-center justify-center rounded-full bg-[var(--toq-sky)] font-bold text-white`}
+    >
       {name.charAt(0).toUpperCase()}
     </div>
   );
