@@ -1,6 +1,5 @@
 "use client";
 
-import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { SearchBar } from "@/components/feed/SearchBar";
 import { appContentClass } from "@/lib/layout";
 
