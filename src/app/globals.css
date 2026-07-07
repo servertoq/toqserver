@@ -235,6 +235,19 @@ body {
   max-height: none;
 }
 
+/* Modais de post (portal no body) */
+.create-post-modal-backdrop {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.create-post-modal-panel {
+  max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 0.5rem));
+}
+
+.create-post-box--modal .create-post-box__footer {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
+
 @media (max-width: 767px) {
   .feed-page-mobile {
     background: #ffffff;
@@ -365,14 +378,6 @@ body {
   .feed-suggestions-carousel-add:disabled {
     background: var(--toq-border);
     color: var(--toq-text-muted);
-  }
-
-  .create-post-modal-backdrop {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
-  .create-post-box--modal .create-post-box__footer {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   }
 
   .username-search-results {

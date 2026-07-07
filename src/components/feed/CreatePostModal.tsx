@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { CreatePostBox } from "@/components/feed/CreatePostBox";
 import type { PostType, PostVisibility } from "@/types/feed";
 
@@ -33,6 +34,12 @@ export function CreatePostModal({
   onClose,
   onSubmit,
 }: Props) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
 
@@ -50,11 +57,11 @@ export function CreatePostModal({
     };
   }, [open, loading, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
-      className="create-post-modal-backdrop fixed inset-0 z-[80] flex items-end justify-center bg-black/40 sm:items-start sm:overflow-y-auto sm:p-4 sm:pt-[max(1rem,8vh)]"
+      className="create-post-modal-backdrop fixed inset-0 z-[90] flex items-end justify-center bg-black/40 sm:items-start sm:overflow-y-auto sm:p-4 sm:pt-[max(1rem,8vh)]"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !loading) onClose();
@@ -64,7 +71,7 @@ export function CreatePostModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-post-modal-title"
-        className="create-post-modal-panel relative w-full max-w-lg sm:my-auto"
+        className="create-post-modal-panel relative flex w-full max-w-lg flex-col overflow-hidden sm:my-auto"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <button
@@ -94,6 +101,7 @@ export function CreatePostModal({
           onSubmit={onSubmit}
         />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

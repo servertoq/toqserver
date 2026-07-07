@@ -537,7 +537,7 @@ export function CreatePostBox({
       onSubmit={handleSubmit}
       className={
         inModal
-          ? `create-post-box--modal toq-card-lg flex max-h-[min(92dvh,calc(100dvh-1rem))] flex-col overflow-hidden p-0 ${className}`
+          ? `create-post-box--modal toq-card-lg flex min-h-0 w-full max-h-full flex-1 flex-col overflow-hidden p-0 ${className}`
           : `toq-card-lg p-4 ${className}`
       }
     >
