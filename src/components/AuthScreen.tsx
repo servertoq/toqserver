@@ -7,6 +7,8 @@ import { AuthFormPage } from "@/components/auth/AuthFormPage";
 import { AuthSplash } from "@/components/auth/AuthSplash";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { AvatarCropModal } from "@/components/profile/AvatarCropModal";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 
 type View = "login" | "register" | "forgot" | "reset";
 type Screen = "splash" | "auth";
@@ -62,6 +64,7 @@ export function AuthScreen() {
   const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState<Gender>("masculino");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
 
   // Esqueci senha
   const [forgotEmail, setForgotEmail] = useState("");
@@ -158,10 +161,24 @@ export function AuthScreen() {
     setScreen("splash");
   }, [resetMessages, view, router]);
 
-  function handleAvatarChange(file: File | null) {
-    setAvatarFile(file);
+  function handleAvatarPick(file: File | null) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    setCropSrc(URL.createObjectURL(file));
+  }
+
+  function handleCropCancel() {
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+  }
+
+  function handleCropConfirm(file: File, previewUrl: string) {
     if (avatarPreview) URL.revokeObjectURL(avatarPreview);
-    setAvatarPreview(file ? URL.createObjectURL(file) : null);
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+    setAvatarFile(file);
+    setAvatarPreview(previewUrl);
   }
 
   async function resolveEmailForLogin(id: string): Promise<string | null> {
@@ -401,6 +418,7 @@ export function AuthScreen() {
   const isDesktop = useIsDesktop();
 
   const formCard = (
+    <>
     <section
       className={`auth-form-card pointer-events-auto w-full max-w-md rounded-2xl ${
         view === "register"
@@ -587,25 +605,19 @@ export function AuthScreen() {
                   Foto de perfil <span className="text-slate-400">(opcional)</span>
                 </span>
                 <div className="flex items-center gap-3">
-                  <div className="auth-avatar-preview flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white md:h-11 md:w-11">
-                    {avatarPreview ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={avatarPreview}
-                        alt="Prévia da foto"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-[10px] text-[var(--toq-text-muted)]">Sem foto</span>
-                    )}
-                  </div>
+                  <ProfileAvatar
+                    src={avatarPreview}
+                    name={username || "?"}
+                    size="sm"
+                    className="border border-slate-200 bg-white"
+                  />
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
                     <input
                       ref={avatarInputRef}
                       id="avatar"
                       type="file"
                       accept="image/jpeg,image/png,image/webp,image/gif"
-                      onChange={(e) => handleAvatarChange(e.target.files?.[0] ?? null)}
+                      onChange={(e) => handleAvatarPick(e.target.files?.[0] ?? null)}
                       className="sr-only"
                     />
                     <button
@@ -709,6 +721,15 @@ export function AuthScreen() {
             </div>
           )}
         </section>
+      {cropSrc && (
+        <AvatarCropModal
+          open
+          imageSrc={cropSrc}
+          onConfirm={handleCropConfirm}
+          onCancel={handleCropCancel}
+        />
+      )}
+    </>
   );
 
   if (isDesktop === null) {

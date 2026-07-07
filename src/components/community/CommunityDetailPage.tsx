@@ -13,7 +13,8 @@ import {
 } from "@/lib/community";
 import { COMMUNITY_GROUP_CONFIG } from "@/lib/communityGroup";
 import type { Community, CommunityGroupKind, CommunityMemberRole } from "@/types/community";
-import type { FeedPost, PostType, PostVisibility } from "@/types/feed";
+import type { FeedPost } from "@/types/feed";
+import { type CreatePostSubmitData, toCreatePostInput } from "@/lib/createPost";
 import { useAppProfile } from "@/components/app/AppShell";
 import { appContentClass } from "@/lib/layout";
 import { createPostWithMedia, POST_SELECT } from "@/lib/posts";
@@ -25,6 +26,7 @@ import { ClubMemberArea } from "@/components/club/ClubMemberArea";
 import { ReportButton } from "@/components/report/ReportButton";
 import { CommunityModerationPanel } from "./CommunityModerationPanel";
 import { CommunitySettingsForm } from "./CommunitySettingsForm";
+import { usePostOwnerActions } from "@/lib/usePostOwnerActions";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { addressFromRow, formatAddressLines, hasAddress } from "@/lib/address";
 import { formatOperatingHoursSummary, parseOperatingHours } from "@/lib/operatingHours";
@@ -167,6 +169,17 @@ export function CommunityDetailPage({
     setLoading(false);
   }, [config.notFound, groupKind, supabase, slug]);
 
+  const { ownerMenuProps, ownerActionUi } = usePostOwnerActions({
+    authorId: profile.id,
+    context: "community",
+    onRefresh: load,
+    onRemove: (postId) => setPosts((items) => items.filter((p) => p.id !== postId)),
+    onError: setError,
+    avatarUrl: profile.avatar_url,
+    username: profile.username,
+    displayName: profile.display_name,
+  });
+
   useEffect(() => {
     load();
   }, [load]);
@@ -221,30 +234,15 @@ export function CommunityDetailPage({
     router.push(config.basePath);
   }
 
-  async function handleCreatePost(data: {
-    body: string;
-    postType: PostType;
-    title: string | null;
-    visibility: PostVisibility;
-    eventDate: string | null;
-    eventTime: string | null;
-    files: File[];
-  }) {
+  async function handleCreatePost(data: CreatePostSubmitData) {
     if (!community || !isMember || posting) return;
 
     await guardPost(async () => {
       setError(null);
-      const { error: createErr } = await createPostWithMedia(supabase, {
-        authorId: profile.id,
-        body: data.body,
-        postType: data.postType,
-        title: data.title,
-        visibility: data.visibility,
-        communityId: community.id,
-        eventDate: data.eventDate,
-        eventTime: data.eventTime,
-        files: data.files,
-      });
+      const { error: createErr } = await createPostWithMedia(
+        supabase,
+        toCreatePostInput(profile.id, community.id, data)
+      );
 
       if (createErr) {
         setError(createErr);
@@ -474,6 +472,8 @@ export function CommunityDetailPage({
                 highlightCommentId={highlightCommentId}
                 onSubmitPost={handleCreatePost}
                 onLikeToggle={handleLikeToggle}
+                onEditPost={ownerMenuProps.onEditPost}
+                onDeletePost={ownerMenuProps.onDeletePost}
               />
             </Suspense>
           ) : (
@@ -482,6 +482,7 @@ export function CommunityDetailPage({
                 <CreatePostBox
                   avatarUrl={profile.avatar_url}
                   username={profile.username}
+                  displayName={profile.display_name}
                   loading={posting}
                   context="community"
                   onSubmit={handleCreatePost}
@@ -510,6 +511,8 @@ export function CommunityDetailPage({
                           }
                           onLikeToggle={handleLikeToggle}
                           onCommentCountChange={() => {}}
+                          onEditPost={ownerMenuProps.onEditPost}
+                          onDeletePost={ownerMenuProps.onDeletePost}
                         />
                       </li>
                     ))}
@@ -543,6 +546,8 @@ export function CommunityDetailPage({
           onClose={() => setShowSettings(false)}
         />
       )}
+
+      {ownerActionUi}
     </>
   );
 }

@@ -145,7 +145,7 @@ export function MentionTextarea({
       />
       {mentionQuery !== null && (suggestions.length > 0 || loading) && (
         <ul
-          className="absolute left-0 right-0 top-full z-10 mt-1 max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+          className="absolute left-0 right-0 top-full z-10 mt-1 max-h-40 overflow-y-auto rounded-lg border border-[var(--toq-border)] bg-[var(--toq-card)] py-1 shadow-lg"
           role="listbox"
         >
           {loading && suggestions.length === 0 ? (
@@ -155,8 +155,8 @@ export function MentionTextarea({
               <li key={s.id} role="option" aria-selected={i === activeIndex}>
                 <button
                   type="button"
-                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50 ${
-                    i === activeIndex ? "bg-slate-50" : ""
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-[var(--toq-surface)] ${
+                    i === activeIndex ? "bg-[var(--toq-surface)]" : ""
                   }`}
                   onMouseDown={(e) => {
                     e.preventDefault();

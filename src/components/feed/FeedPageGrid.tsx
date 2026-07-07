@@ -5,8 +5,7 @@ type Props = {
   sidebar?: React.ReactNode;
   className?: string;
   alignSidebar?: boolean;
-  /** Mantém a coluna de publicidade fixa ao rolar (só na home) */
-  pinSidebar?: boolean;
+  sidebarSticky?: boolean;
 };
 
 export function FeedPageGrid({
@@ -14,25 +13,19 @@ export function FeedPageGrid({
   sidebar,
   className = "",
   alignSidebar = true,
-  pinSidebar = false,
+  sidebarSticky = true,
 }: Props) {
   return (
     <div className={`${feedPageContainerClass} ${className}`.trim()}>
       <div className={feedPageGridClass}>
         <div className="min-w-0">{children}</div>
         {alignSidebar ? (
-          <aside
-            className={
-              pinSidebar
-                ? "w-full lg:w-[280px] lg:shrink-0"
-                : "lg:sticky lg:top-28 lg:self-start"
-            }
-          >
+          <aside className="feed-sidebar-aside w-full lg:w-[280px] lg:shrink-0">
             {sidebar ? (
-              pinSidebar ? (
-                <div className="feed-ad-sidebar-slot">{sidebar}</div>
+              sidebarSticky ? (
+                <div className="feed-sidebar-sticky">{sidebar}</div>
               ) : (
-                sidebar
+                <div className="feed-sidebar-inline">{sidebar}</div>
               )
             ) : (
               <span className="block" aria-hidden />

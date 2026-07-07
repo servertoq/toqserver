@@ -3,11 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
-import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { appContentClass } from "@/lib/layout";
-import type { GenderType } from "@/lib/profile";
+import type { GenderType, PlayerLevelType } from "@/lib/profile";
 import { FriendsPanel } from "@/components/profile/FriendsPanel";
-import { ProfileEditForm, type EditableProfile } from "@/components/profile/ProfileEditForm";
+import type { EditableProfile } from "@/components/profile/ProfileEditForm";
 import { ProfileSupportForm } from "@/components/profile/ProfileSupportForm";
 import { PlayerProfileDashboard } from "@/components/profile/PlayerProfileDashboard";
 import { addressFromRow } from "@/lib/address";
@@ -21,6 +20,7 @@ export default function PerfilPage() {
   const [profile, setProfile] = useState<EditableProfile | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [friendCount, setFriendCount] = useState(0);
+  const [clubCount, setClubCount] = useState(0);
   const [postCount, setPostCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -28,7 +28,7 @@ export default function PerfilPage() {
     const { data } = await supabase
       .from("profiles")
       .select(
-        "id, username, email, avatar_url, birth_date, gender, bio, created_at, plan, show_plan_badge, address_zip, address_street, address_number, address_neighborhood, address_complement, address_city, address_state"
+        "id, username, display_name, email, avatar_url, birth_date, gender, bio, player_level, created_at, plan, show_plan_badge, address_zip, address_street, address_number, address_neighborhood, address_complement, address_city, address_state"
       )
       .eq("id", appProfile.id)
       .single();
@@ -39,6 +39,8 @@ export default function PerfilPage() {
         id: data.id ?? appProfile.id,
         gender: data.gender as GenderType,
         bio: data.bio ?? "",
+        player_level: (data.player_level as PlayerLevelType) ?? "iniciante",
+        display_name: data.display_name ?? null,
         plan: (data.plan as EditableProfile["plan"]) ?? "free",
         show_plan_badge: data.show_plan_badge ?? true,
         address: addressFromRow(data),
@@ -52,6 +54,7 @@ export default function PerfilPage() {
     });
     const stat = Array.isArray(stats) ? stats[0] : stats;
     setFriendCount(Number(stat?.friend_count ?? 0));
+    setClubCount(Number(stat?.club_count ?? 0));
     setPostCount(Number(stat?.post_count ?? 0));
 
     const { data: rawPosts } = await supabase
@@ -109,11 +112,6 @@ export default function PerfilPage() {
     load();
   }, [load]);
 
-  function handleSaved() {
-    load();
-    window.location.reload();
-  }
-
   async function handleLikeToggle(postId: string, liked: boolean) {
     if (liked) {
       await supabase.from("post_likes").insert({ post_id: postId, user_id: appProfile.id });
@@ -129,28 +127,35 @@ export default function PerfilPage() {
 
   return (
     <>
-      <FeedTopBar />
       <main className={appContentClass}>
         {loading ? (
           <p className="text-sm text-[var(--toq-text-muted)]">Carregando perfil…</p>
         ) : profile ? (
           <PlayerProfileDashboard
+            profileId={profile.id}
             username={profile.username}
+            displayName={profile.display_name}
             avatarUrl={profile.avatar_url}
             bio={profile.bio}
             birthDate={profile.birth_date}
             gender={profile.gender}
+            playerLevel={profile.player_level}
             createdAt={profile.created_at}
             postCount={postCount}
             friendCount={friendCount}
+            clubCount={clubCount}
             address={profile.address}
+            plan={profile.plan}
             posts={posts}
             currentUserId={appProfile.id}
             isOwnProfile
             onLikeToggle={handleLikeToggle}
             friendsPanel={<FriendsPanel userId={appProfile.id} embedded />}
             supportForm={<ProfileSupportForm userId={appProfile.id} />}
-            editForm={<ProfileEditForm initial={profile} onSaved={handleSaved} />}
+            onResumoSaved={load}
+            onAvatarUpdated={(url) =>
+              setProfile((current) => (current ? { ...current, avatar_url: url } : current))
+            }
           />
         ) : (
           <p className="text-sm text-red-600">

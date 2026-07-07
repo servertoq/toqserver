@@ -11,7 +11,6 @@ import {
 } from "@/lib/advertising";
 import { canManageAdvertising } from "@/lib/staff";
 import { useAppProfile } from "@/components/app/AppShell";
-import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { appContentClass } from "@/lib/layout";
 import type { AdvertisingArticle } from "@/types/advertising";
@@ -31,6 +30,7 @@ export function AdvertisingPage() {
   const [editing, setEditing] = useState<AdvertisingArticle | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [search, setSearch] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -63,20 +63,40 @@ export function AdvertisingPage() {
     await load();
   }
 
-  const visibleArticles = canManage
-    ? articles
-    : articles.filter((a) => a.is_published);
+  const publishedCount = canManage
+    ? articles.length
+    : articles.filter((a) => a.is_published).length;
+
+  const visibleArticles = useMemo(() => {
+    const base = canManage ? articles : articles.filter((a) => a.is_published);
+    const q = search.trim().toLowerCase();
+    if (!q) return base;
+
+    return base.filter((article) => {
+      const title = article.title.toLowerCase();
+      const excerpt = article.card_excerpt.toLowerCase();
+      const slug = article.slug.toLowerCase();
+      const published = article.published_at
+        ? new Date(article.published_at).toLocaleDateString("pt-BR").toLowerCase()
+        : "";
+      const created = new Date(article.created_at).toLocaleDateString("pt-BR").toLowerCase();
+
+      return (
+        title.includes(q) ||
+        excerpt.includes(q) ||
+        slug.includes(q) ||
+        published.includes(q) ||
+        created.includes(q)
+      );
+    });
+  }, [articles, canManage, search]);
 
   return (
     <>
-      <FeedTopBar />
       <main className={appContentClass}>
         <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--toq-text-muted)]">
-              Toq Tennis
-            </p>
-            <h1 className="mt-1 text-xl font-bold text-[var(--toq-navy)]">Publicidade</h1>
+            <h1 className="text-xl font-bold text-[var(--toq-navy)]">Publicidade</h1>
             <p className="mt-1 text-sm text-[var(--toq-text-muted)]">
               Notícias, novidades e conteúdos oficiais da plataforma.
             </p>
@@ -134,11 +154,19 @@ export function AdvertisingPage() {
 
         {view === "list" && (
           <>
+            <input
+              type="search"
+              placeholder="Buscar por título, data ou conteúdo…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="toq-input mb-6 w-full px-4 py-2.5 text-sm"
+            />
+
             {loading ? (
               <p className="text-sm text-[var(--toq-text-muted)]">Carregando…</p>
             ) : visibleArticles.length === 0 ? (
               <p className="text-sm text-[var(--toq-text-muted)]">
-                Nenhuma notícia publicada ainda.
+                {publishedCount === 0 ? "Nenhuma notícia publicada ainda." : "Nenhum resultado na busca."}
               </p>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

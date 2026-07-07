@@ -3,12 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { StaffRole } from "@/types/staff";
+import { NotificationsBell } from "@/components/feed/NotificationsBell";
 
 export type AppProfile = {
   id: string;
   username: string;
+  display_name: string | null;
   avatar_url: string | null;
   staffRole: StaffRole | null;
   isBanned: boolean;
@@ -82,6 +84,21 @@ function IconProfile({ active }: { active: boolean }) {
       <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} aria-hidden>
         <circle cx="12" cy="8" r="4" fill={active ? "currentColor" : "none"} />
         <path strokeLinecap="round" d="M5 20c0-3.3 2.7-6 7-6s7 2.7 7 6" fill={active ? "currentColor" : "none"} />
+      </svg>
+    </NavIcon>
+  );
+}
+
+function IconSettings({ active }: { active: boolean }) {
+  return (
+    <NavIcon>
+      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} aria-hidden>
+        <circle cx="12" cy="12" r="3" fill={active ? "currentColor" : "none"} />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"
+        />
       </svg>
     </NavIcon>
   );
@@ -222,6 +239,12 @@ const NAV_ITEMS: NavItem[] = [
     icon: (active) => <IconProfile active={active} />,
     match: (path) => path.startsWith("/inicio/perfil") && !path.startsWith("/inicio/jogador"),
   },
+  {
+    href: "/inicio/configuracoes",
+    label: "Configurações",
+    icon: (active) => <IconSettings active={active} />,
+    match: (path) => path.startsWith("/inicio/configuracoes"),
+  },
 ];
 
 function ToqLogo({ className = "" }: { className?: string }) {
@@ -256,7 +279,7 @@ function NavLink({
     <Link
       href={item.href}
       onClick={onNavigate}
-      className={`flex items-center gap-4 rounded-xl px-3 py-3 transition ${
+      className={`sidebar-nav-link flex items-center gap-4 rounded-xl px-3 py-2.5 transition ${
         active
           ? "sidebar-nav-active font-bold"
           : "font-normal text-white/85 hover:bg-white/12 hover:text-white"
@@ -274,7 +297,7 @@ function NavLink({
       ) : (
         item.icon(active)
       )}
-      <span className="text-[15px]">{item.label}</span>
+      <span className="sidebar-nav-label text-[15px]">{item.label}</span>
     </Link>
   );
 }
@@ -289,27 +312,25 @@ function LogoutButton({ onLogout }: { onLogout?: () => void }) {
     <button
       type="button"
       onClick={handleLogout}
-      className="flex w-full items-center gap-4 rounded-lg px-3 py-3 font-normal text-white/80 transition hover:bg-white/10 hover:text-white"
+      className="sidebar-nav-link flex w-full items-center gap-4 rounded-lg px-3 py-2.5 font-normal text-white/80 transition hover:bg-white/10 hover:text-white"
     >
       <IconLogout />
-      <span className="text-[15px]">Sair</span>
+      <span className="sidebar-nav-label text-[15px]">Sair</span>
     </button>
   );
 }
 
-function HamburgerButton({ open, onClick }: { open: boolean; onClick: () => void }) {
+function PlusMenuButton({ open, onClick }: { open: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
-      className={`app-hamburger ${open ? "app-hamburger--open" : ""}`}
+      className={`app-plus-menu-btn ${open ? "app-plus-menu-btn--open" : ""}`}
       onClick={onClick}
-      aria-label={open ? "Fechar menu" : "Abrir menu"}
+      aria-label={open ? "Fechar menu" : "Abrir menu completo"}
       aria-expanded={open}
       aria-controls="app-mobile-drawer"
     >
-      <span className="app-hamburger-line" />
-      <span className="app-hamburger-line" />
-      <span className="app-hamburger-line" />
+      <span className="app-plus-menu-icon" aria-hidden />
     </button>
   );
 }
@@ -323,20 +344,29 @@ function MobileHeader({
 }) {
   return (
     <header className="app-mobile-header md:hidden">
-      <HamburgerButton open={open} onClick={onToggle} />
+      <PlusMenuButton open={open} onClick={onToggle} />
       <div className="app-mobile-header-brand">
         <Link href="/inicio" className="app-mobile-header-logo" aria-label="Toq Tennis — início">
-          <Image
-            src="/imagens_publicas/logo_sidebar.png"
-            alt="Toq Tennis"
-            width={359}
-            height={122}
-            priority
-            className="h-7 w-auto object-contain"
+          <span
+            className="app-mobile-header-logo-mark"
+            style={{
+              maskImage: "url(/imagens_publicas/logo_transp.png)",
+              WebkitMaskImage: "url(/imagens_publicas/logo_transp.png)",
+              maskSize: "contain",
+              WebkitMaskSize: "contain",
+              maskRepeat: "no-repeat",
+              WebkitMaskRepeat: "no-repeat",
+              maskPosition: "center",
+              WebkitMaskPosition: "center",
+            }}
+            role="img"
+            aria-hidden
           />
         </Link>
       </div>
-      <div className="app-mobile-header-spacer" aria-hidden />
+      <div className="app-mobile-header-actions">
+        <NotificationsBell />
+      </div>
     </header>
   );
 }
@@ -396,6 +426,30 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const sidebarLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openSidebar = useCallback(() => {
+    if (sidebarLeaveTimer.current) {
+      clearTimeout(sidebarLeaveTimer.current);
+      sidebarLeaveTimer.current = null;
+    }
+    setSidebarExpanded(true);
+  }, []);
+
+  const closeSidebar = useCallback(() => {
+    if (sidebarLeaveTimer.current) clearTimeout(sidebarLeaveTimer.current);
+    sidebarLeaveTimer.current = setTimeout(() => {
+      setSidebarExpanded(false);
+      sidebarLeaveTimer.current = null;
+    }, 120);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (sidebarLeaveTimer.current) clearTimeout(sidebarLeaveTimer.current);
+    };
+  }, []);
 
   const navItems = useMemo(() => {
     const items = [...NAV_ITEMS];
@@ -453,9 +507,18 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
 
   return (
     <>
-      <aside className="app-sidebar hidden md:flex md:w-[244px] md:shrink-0 md:flex-col md:px-3 md:py-8 lg:w-[260px]">
-        <ToqLogo className="mb-8" />
-        <nav className="flex flex-col gap-1">
+      <aside
+        className={`app-sidebar hidden md:flex md:shrink-0 md:flex-col ${
+          sidebarExpanded ? "app-sidebar--expanded" : "app-sidebar--collapsed"
+        }`}
+        onMouseEnter={openSidebar}
+        onMouseLeave={closeSidebar}
+        aria-expanded={sidebarExpanded}
+      >
+        <div className="app-sidebar-logo-wrap">
+          <ToqLogo />
+        </div>
+        <nav className="app-sidebar-nav flex flex-col gap-0.5">
           {navItems.map((item) => (
             <NavLink
               key={item.href}
@@ -464,7 +527,9 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
               active={item.match ? item.match(pathname) : pathname === item.href}
             />
           ))}
-          <LogoutButton />
+          <div className="sidebar-nav-footer mt-1 border-t border-white/15 pt-1">
+            <LogoutButton />
+          </div>
         </nav>
       </aside>
 

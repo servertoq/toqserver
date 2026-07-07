@@ -43,6 +43,15 @@ export async function insertPostMentions(
   );
 }
 
+export async function syncPostMentions(
+  supabase: SupabaseClient,
+  postId: string,
+  userIds: string[]
+) {
+  await supabase.from("post_mentions").delete().eq("post_id", postId);
+  await insertPostMentions(supabase, postId, userIds);
+}
+
 export async function insertCommentMentions(
   supabase: SupabaseClient,
   commentId: string,

@@ -15,7 +15,6 @@ import {
 import { fetchPlanUsage, planLabel } from "@/lib/plans";
 import type { PlanUsage } from "@/types/plans";
 import type { UserPlan } from "@/types/plans";
-import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { appContentClass } from "@/lib/layout";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
@@ -154,20 +153,12 @@ export function PlansPage() {
 
   return (
     <>
-      <FeedTopBar />
       <main className={appContentClass}>
         <PageHeader
+          kicker=""
           title="Planos"
           subtitle="Escolha o plano ideal. Upgrades cobram apenas a diferença mensal; downgrades são imediatos quando permitido."
         />
-
-        {!stripeReady && (
-          <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            Pagamentos online em configuração. Upgrades ficarão disponíveis quando{" "}
-            <code className="text-xs">STRIPE_SECRET_KEY</code> estiver no servidor. Downgrades
-            gratuitos já funcionam.
-          </p>
-        )}
 
         {message && (
           <p className="mb-4 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800" role="status">

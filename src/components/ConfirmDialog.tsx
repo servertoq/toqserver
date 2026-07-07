@@ -49,7 +49,7 @@ export function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
         aria-describedby="confirm-dialog-message"
-        className="w-full max-w-sm rounded-2xl border border-[var(--toq-border)] bg-white p-5 shadow-[0_16px_48px_rgba(5,16,36,0.14)]"
+        className="w-full max-w-sm rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-5 shadow-[0_16px_48px_rgba(5,16,36,0.14)]"
       >
         <h3 id="confirm-dialog-title" className="text-base font-bold text-[var(--toq-navy)]">
           {title}

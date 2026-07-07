@@ -6,10 +6,9 @@ import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { deleteCoachListing, fetchCoachListings, fetchMyCoachListing } from "@/lib/coachListings";
-import { fetchPlanUsage, hasPaidPlan, planLimitMessage } from "@/lib/plans";
+import { fetchPlanUsage } from "@/lib/plans";
 import type { PlanUsage } from "@/types/plans";
 import type { CoachListingWithProfile } from "@/types/coachListings";
-import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { appContentClass } from "@/lib/layout";
 import { CoachListingCard } from "./CoachListingCard";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -92,9 +91,9 @@ export function CoachListingsPage() {
 
   return (
     <>
-      <FeedTopBar />
       <main className={appContentClass}>
         <PageHeader
+          kicker=""
           title="Aprenda à Jogar"
           subtitle="Encontre professores de tênis ou divulgue suas aulas para a comunidade."
           action={
@@ -105,12 +104,6 @@ export function CoachListingsPage() {
             ) : undefined
           }
         />
-
-        {planUsage && !hasPaidPlan(planUsage.plan) && !myListing && (
-          <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            {planLimitMessage(planUsage, "coach")} O plano Professor inclui essa função (R$ 20/mês).
-          </p>
-        )}
 
         <input
           type="search"

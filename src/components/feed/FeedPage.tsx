@@ -4,14 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { mapPostRow } from "@/lib/feed";
-import type { FeedPost, PostType, PostVisibility } from "@/types/feed";
+import type { FeedPost } from "@/types/feed";
 import { useAppProfile } from "@/components/app/AppShell";
-import { FeedPageGrid } from "./FeedPageGrid";
-import { FeedSidebar } from "./FeedSidebar";
+import { FeedHomeLayout } from "./FeedHomeLayout";
 import { createPostWithMedia, POST_SELECT } from "@/lib/posts";
-import { CreatePostBox } from "./CreatePostBox";
-import { FeedTopBar } from "./FeedTopBar";
+import { type CreatePostSubmitData, toCreatePostInput } from "@/lib/createPost";
+import { CreatePostModal } from "./CreatePostModal";
 import { PostCard } from "./PostCard";
+import { usePostOwnerActions } from "@/lib/usePostOwnerActions";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { FloatingMessages } from "@/components/messages/FloatingMessages";
 
@@ -25,6 +25,7 @@ export function FeedPage() {
   const [loading, setLoading] = useState(true);
   const { isSubmitting: posting, guard: guardPost } = useSingleSubmit();
   const [error, setError] = useState<string | null>(null);
+  const [postModalOpen, setPostModalOpen] = useState(false);
 
   const loadFeed = useCallback(async () => {
     setError(null);
@@ -91,34 +92,30 @@ export function FeedPage() {
     setLoading(false);
   }, [supabase]);
 
+  const { ownerMenuProps, ownerActionUi } = usePostOwnerActions({
+    authorId: profile?.id ?? "",
+    context: "global",
+    onRefresh: loadFeed,
+    onRemove: (postId) => setPosts((items) => items.filter((p) => p.id !== postId)),
+    onError: setError,
+    avatarUrl: profile?.avatar_url ?? null,
+    username: profile?.username ?? "",
+    displayName: profile?.display_name,
+  });
+
   useEffect(() => {
     loadFeed();
   }, [loadFeed]);
 
-  async function handleCreatePost(data: {
-    body: string;
-    postType: PostType;
-    title: string | null;
-    visibility: PostVisibility;
-    eventDate: string | null;
-    eventTime: string | null;
-    files: File[];
-  }) {
+  async function handleCreatePost(data: CreatePostSubmitData) {
     if (!profile || posting) return;
 
     await guardPost(async () => {
       setError(null);
-      const { error: createErr } = await createPostWithMedia(supabase, {
-        authorId: profile.id,
-        body: data.body,
-        postType: data.postType,
-        title: data.title,
-        visibility: data.visibility,
-        communityId: null,
-        eventDate: data.eventDate,
-        eventTime: data.eventTime,
-        files: data.files,
-      });
+      const { error: createErr } = await createPostWithMedia(
+        supabase,
+        toCreatePostInput(profile.id, null, data)
+      );
 
       if (createErr) {
         setError(createErr);
@@ -126,6 +123,7 @@ export function FeedPage() {
       }
 
       await loadFeed();
+      setPostModalOpen(false);
     });
   }
 
@@ -156,24 +154,16 @@ export function FeedPage() {
 
   return (
     <>
-      <FeedTopBar showOnlineFriends />
-      <FeedPageGrid className="py-6" sidebar={<FeedSidebar />} pinSidebar>
+      <div className="feed-page-mobile md:contents">
+        <FeedHomeLayout onOpenCreatePost={() => setPostModalOpen(true)}>
         {error && (
           <p className="mb-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600" role="alert">
             {error}
           </p>
         )}
 
-        <CreatePostBox
-          avatarUrl={profile.avatar_url}
-          username={profile.username}
-          loading={posting}
-          context="global"
-          onSubmit={handleCreatePost}
-        />
-
         <section>
-          <h2 className="toq-section-label mb-3">Feed geral</h2>
+          <h2 className="toq-section-label mb-3 hidden md:block">Feed geral</h2>
           {posts.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
               <p className="text-sm font-semibold text-[var(--toq-navy)]">Nenhum post ainda</p>
@@ -182,26 +172,45 @@ export function FeedPage() {
               </p>
             </div>
           ) : (
-            <ul className="space-y-4">
+            <ul className="feed-post-list space-y-0 md:space-y-4">
               {posts.map((post) => (
                 <li key={post.id}>
                   <PostCard
                     post={post}
                     currentUserId={profile!.id}
+                    fullBleed
                     highlightPost={post.id === highlightPostId}
                     highlightCommentId={
                       post.id === highlightPostId ? highlightCommentId : null
                     }
                     onLikeToggle={handleLikeToggle}
                     onCommentCountChange={() => {}}
+                    onEditPost={ownerMenuProps.onEditPost}
+                    onDeletePost={ownerMenuProps.onDeletePost}
                   />
                 </li>
               ))}
             </ul>
           )}
         </section>
-      </FeedPageGrid>
-      <FloatingMessages />
+        </FeedHomeLayout>
+      </div>
+
+      <CreatePostModal
+        open={postModalOpen}
+        avatarUrl={profile.avatar_url}
+        username={profile.username}
+        displayName={profile.display_name}
+        loading={posting}
+        onClose={() => !posting && setPostModalOpen(false)}
+        onSubmit={handleCreatePost}
+      />
+
+      {ownerActionUi}
+
+      <div className="hidden md:contents">
+        <FloatingMessages />
+      </div>
     </>
   );
 }

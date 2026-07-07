@@ -6,7 +6,7 @@ type RawPostRow = {
   id: string;
   body: string;
   title: string | null;
-  post_type: "player" | "event";
+  post_type: "player" | "event" | "poll";
   created_at: string;
   community_id: string | null;
   visibility?: "public" | "private";
@@ -16,6 +16,7 @@ type RawPostRow = {
     | {
         id: string;
         username: string;
+        display_name?: string | null;
         avatar_url: string | null;
         plan?: UserPlan;
         show_plan_badge?: boolean;
@@ -23,6 +24,7 @@ type RawPostRow = {
     | {
         id: string;
         username: string;
+        display_name?: string | null;
         avatar_url: string | null;
         plan?: UserPlan;
         show_plan_badge?: boolean;
@@ -30,6 +32,17 @@ type RawPostRow = {
   images: { url: string; sort_order: number; media_type?: "image" | "video" }[] | null;
   communities: { name: string; slug: string; accent_color: string } | { name: string; slug: string; accent_color: string }[] | null;
   mentions?: { mentioned_user: FeedProfile | FeedProfile[] | null }[] | null;
+  poll?:
+    | {
+        allow_multiple: boolean;
+        show_results_to_all: boolean;
+      }
+    | {
+        allow_multiple: boolean;
+        show_results_to_all: boolean;
+      }[]
+    | null;
+  poll_options?: { id: string; label: string; sort_order: number }[] | null;
 };
 
 function one<T>(value: T | T[] | null | undefined): T | null {
@@ -45,6 +58,8 @@ export function mapPostRow(
 ): FeedPost {
   const author = one(row.author);
   const community = one(row.communities);
+  const pollRow = one(row.poll);
+  const pollOptions = (row.poll_options ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
 
   return {
     id: row.id,
@@ -70,6 +85,13 @@ export function mapPostRow(
     likes_count: likesCount,
     comments_count: commentsCount,
     liked_by_me: likedByMe,
+    poll: pollRow
+      ? {
+          allow_multiple: pollRow.allow_multiple,
+          show_results_to_all: pollRow.show_results_to_all,
+          options: pollOptions,
+        }
+      : null,
   };
 }
 
@@ -87,6 +109,7 @@ export function formatTimeAgo(iso: string) {
 
 export function postTypeLabel(type: FeedPost["post_type"]) {
   if (type === "event") return "Evento";
+  if (type === "poll") return "Enquete";
   return "Post";
 }
 

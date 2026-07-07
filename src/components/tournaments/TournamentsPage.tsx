@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { fetchAllTournaments } from "@/lib/tournaments";
 import type { ClubTournament } from "@/types/clubFeatures";
-import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { appContentClass } from "@/lib/layout";
 import { TournamentCard } from "./TournamentCard";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -52,9 +51,9 @@ export function TournamentsPage() {
 
   return (
     <>
-      <FeedTopBar />
       <main className={appContentClass}>
         <PageHeader
+          kicker=""
           title="Torneios"
           subtitle="Torneios cadastrados pelos clubes. Inscreva-se pelo WhatsApp do organizador."
         />

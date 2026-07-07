@@ -6,14 +6,14 @@ import { createClient } from "@/lib/supabase/client";
 import { mapPostRow } from "@/lib/feed";
 import { addressFromRow } from "@/lib/address";
 import { POST_SELECT } from "@/lib/posts";
-import type { GenderType } from "@/lib/profile";
+import type { GenderType, PlayerLevelType } from "@/lib/profile";
+import type { UserPlan } from "@/types/plans";
 import type { FeedPost } from "@/types/feed";
 import type { PublicProfile } from "@/types/profile";
 import { useAppProfile } from "@/components/app/AppShell";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { PlayerProfileDashboard } from "@/components/profile/PlayerProfileDashboard";
 import { PublicProfileFriendActions } from "@/components/profile/PublicProfileFriendActions";
-import { ReportButton } from "@/components/report/ReportButton";
 import { appContentClass } from "@/lib/layout";
 
 type Props = { username: string };
@@ -53,13 +53,17 @@ export function PublicProfileView({ username }: Props) {
     setProfile({
       id: row.id,
       username: row.username,
+      display_name: row.display_name ?? null,
       avatar_url: row.avatar_url,
       bio: row.bio ?? "",
       birth_date: row.birth_date,
       gender: row.gender as GenderType,
+      player_level: (row.player_level as PlayerLevelType) ?? "iniciante",
+      plan: (row.plan as UserPlan) ?? "free",
       created_at: row.created_at,
       post_count: Number(stat?.post_count ?? 0),
       friend_count: Number(stat?.friend_count ?? 0),
+      club_count: Number(stat?.club_count ?? 0),
       last_seen_at: row.last_seen_at ?? null,
       address: addressFromRow(row),
     });
@@ -149,16 +153,21 @@ export function PublicProfileView({ username }: Props) {
           </div>
         ) : (
           <PlayerProfileDashboard
+            profileId={profile.id}
             username={profile.username}
+            displayName={profile.display_name}
             avatarUrl={profile.avatar_url}
             bio={profile.bio}
             birthDate={profile.birth_date}
             gender={profile.gender}
+            playerLevel={profile.player_level}
             createdAt={profile.created_at}
             postCount={profile.post_count}
             friendCount={profile.friend_count}
+            clubCount={profile.club_count}
             lastSeenAt={profile.last_seen_at}
             address={profile.address}
+            plan={profile.plan}
             posts={posts}
             currentUserId={viewer.id}
             isOwnProfile={isOwnProfile}
@@ -172,22 +181,16 @@ export function PublicProfileView({ username }: Props) {
                   Editar perfil
                 </Link>
               ) : (
-                <div className="flex w-full flex-col gap-2">
-                  <PublicProfileFriendActions
-                    viewerId={viewer.id}
-                    profileId={profile.id}
-                    profileUsername={profile.username}
-                  />
-                  <ReportButton
-                    userId={viewer.id}
-                    target={{
-                      type: "profile",
-                      id: profile.id,
-                      label: `perfil @${profile.username}`,
-                    }}
-                    className="w-full justify-center rounded-xl border border-slate-200 py-2 text-xs font-semibold text-[var(--toq-text-muted)] hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                  />
-                </div>
+                <PublicProfileFriendActions
+                  viewerId={viewer.id}
+                  profileId={profile.id}
+                  profileUsername={profile.username}
+                  reportTarget={{
+                    type: "profile",
+                    id: profile.id,
+                    label: `perfil @${profile.username}`,
+                  }}
+                />
               )
             }
           />

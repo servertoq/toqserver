@@ -11,7 +11,6 @@ import { COMMUNITY_GROUP_CONFIG } from "@/lib/communityGroup";
 import type { Community, CommunityGroupKind, CommunityMemberRole } from "@/types/community";
 import { useAppProfile } from "@/components/app/AppShell";
 import { ClubRecommendDialog } from "@/components/club/ClubRecommendDialog";
-import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { appContentClass } from "@/lib/layout";
 import { CommunityCard } from "./CommunityCard";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -139,9 +138,9 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
 
   return (
     <>
-      <FeedTopBar />
       <main className={appContentClass}>
         <PageHeader
+          kicker=""
           title={config.listTitle}
           subtitle={config.listSubtitle}
           action={
@@ -167,7 +166,7 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
           }
         />
 
-        {planUsage && !canCreateGroup && (
+        {planUsage && !canCreateGroup && groupKind !== "club" && (
           <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
             {planLimitMessage(planUsage, groupKind === "club" ? "club" : "community")}
           </p>

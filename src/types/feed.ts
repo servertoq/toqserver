@@ -1,10 +1,23 @@
-export type PostType = "player" | "event";
+export type PostType = "player" | "event" | "poll";
 
 export type PostVisibility = "public" | "private";
+
+export type PostPollOption = {
+  id: string;
+  label: string;
+  sort_order: number;
+};
+
+export type PostPollMeta = {
+  allow_multiple: boolean;
+  show_results_to_all: boolean;
+  options: PostPollOption[];
+};
 
 export type FeedProfile = {
   id: string;
   username: string;
+  display_name?: string | null;
   avatar_url: string | null;
   plan?: "free" | "professor" | "empresario";
   show_plan_badge?: boolean;
@@ -42,6 +55,7 @@ export type FeedPost = {
   likes_count: number;
   comments_count: number;
   liked_by_me: boolean;
+  poll: PostPollMeta | null;
 };
 
 export type FeedComment = {

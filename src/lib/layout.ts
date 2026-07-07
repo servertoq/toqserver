@@ -5,10 +5,9 @@ export const appContentClass =
 export const appTopBarClass =
   "mx-auto w-full max-w-6xl px-4 py-3 sm:px-6 lg:max-w-7xl lg:px-8";
 
-/** Feed — coluna principal mais estreita + faixa de anúncios à direita */
-export const feedPageContainerClass =
-  "mx-auto w-full max-w-[1040px] px-4 sm:px-6 lg:px-8";
+/** Feed — coluna principal + barra lateral à direita, alinhado à esquerda (estilo Instagram) */
+export const feedPageContainerClass = "feed-page-container w-full px-4 sm:px-6";
 
 export const feedPageGridClass =
-  "grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start";
+  "grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start lg:gap-8";
 

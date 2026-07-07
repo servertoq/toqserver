@@ -1,5 +1,6 @@
 "use client";
 
+import { useAppProfile } from "@/components/app/AppShell";
 import { CreatePostBox } from "@/components/feed/CreatePostBox";
 import { PostCard } from "@/components/feed/PostCard";
 import type { FeedPost, PostType, PostVisibility } from "@/types/feed";
@@ -22,6 +23,8 @@ type Props = {
     files: File[];
   }) => void | Promise<void>;
   onLikeToggle: (postId: string, liked: boolean) => void | Promise<void>;
+  onEditPost?: (post: FeedPost) => void;
+  onDeletePost?: (post: FeedPost) => void;
 };
 
 export function ClubFeedPanel({
@@ -34,12 +37,17 @@ export function ClubFeedPanel({
   highlightCommentId,
   onSubmitPost,
   onLikeToggle,
+  onEditPost,
+  onDeletePost,
 }: Props) {
+  const { display_name } = useAppProfile();
+
   return (
     <div className="mt-4 space-y-4">
       <CreatePostBox
         avatarUrl={avatarUrl}
         username={username}
+        displayName={display_name}
         loading={posting}
         context="community"
         onSubmit={async (data) => {
@@ -69,6 +77,8 @@ export function ClubFeedPanel({
                     await onLikeToggle(postId, liked);
                   }}
                   onCommentCountChange={() => {}}
+                  onEditPost={onEditPost}
+                  onDeletePost={onDeletePost}
                 />
               </li>
             ))}

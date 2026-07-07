@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { formatTimeAgo, postTypeLabel } from "@/lib/feed";
+import { profileDisplayName } from "@/lib/profile";
 import { profilePath } from "@/lib/publicProfile";
 import { formatEventSchedule } from "@/lib/posts";
 import { visibilityBadgeLabel } from "@/lib/postVisibility";
@@ -10,6 +11,8 @@ import type { FeedPost } from "@/types/feed";
 import { CommentsPanel } from "./CommentsPanel";
 import { PostBody } from "./PostBody";
 import { PostMediaGrid } from "./PostMediaGrid";
+import { PollBlock } from "./PollBlock";
+import { PostOwnerMenu } from "./PostOwnerMenu";
 import { ReportButton } from "@/components/report/ReportButton";
 import { PlanBadge } from "@/components/shared/PlanBadge";
 import { canShowPlanBadge } from "@/lib/plans";
@@ -21,6 +24,9 @@ type Props = {
   onCommentCountChange: (postId: string, delta: number) => void;
   highlightPost?: boolean;
   highlightCommentId?: string | null;
+  fullBleed?: boolean;
+  onEditPost?: (post: FeedPost) => void;
+  onDeletePost?: (post: FeedPost) => void;
 };
 
 export function PostCard({
@@ -30,6 +36,9 @@ export function PostCard({
   onCommentCountChange,
   highlightPost = false,
   highlightCommentId = null,
+  fullBleed = false,
+  onEditPost,
+  onDeletePost,
 }: Props) {
   const articleRef = useRef<HTMLElement>(null);
   const [liked, setLiked] = useState(post.liked_by_me);
@@ -38,6 +47,8 @@ export function PostCard({
   const [showComments, setShowComments] = useState(!!highlightCommentId);
   const [likeLoading, setLikeLoading] = useState(false);
   const visBadge = visibilityBadgeLabel(post.visibility, !!post.community_id);
+  const isAuthor = post.author.id === currentUserId;
+  const canManage = isAuthor && onEditPost && onDeletePost;
 
   useEffect(() => {
     if (highlightPost && articleRef.current) {
@@ -67,13 +78,25 @@ export function PostCard({
     <article
       ref={articleRef}
       id={`post-${post.id}`}
-      className={`rounded-2xl border bg-white p-4 shadow-sm ${
-        highlightPost
-          ? "border-[var(--toq-accent)] ring-2 ring-[var(--toq-accent-soft)]"
-          : "border-slate-200"
-      }`}
+      className={
+        fullBleed
+          ? `post-card post-card--bleed bg-white border-b border-slate-200 md:rounded-2xl md:border md:p-4 md:shadow-sm ${
+              highlightPost
+                ? "ring-2 ring-inset ring-[var(--toq-accent-soft)] md:ring-[var(--toq-accent-soft)]"
+                : "md:border-slate-200"
+            }`
+          : `rounded-2xl border bg-white p-4 shadow-sm ${
+              highlightPost
+                ? "border-[var(--toq-accent)] ring-2 ring-[var(--toq-accent-soft)]"
+                : "border-slate-200"
+            }`
+      }
     >
-      <header className="mb-3 flex items-start gap-3">
+      <header
+        className={`flex items-start gap-3 ${
+          fullBleed ? "post-card__header mb-0 px-4 py-3 md:mb-3 md:px-0 md:py-0" : "mb-3"
+        }`}
+      >
         <PostAvatar src={post.author.avatar_url} name={post.author.username} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -81,7 +104,7 @@ export function PostCard({
               href={profilePath(post.author.username)}
               className="font-bold text-[var(--toq-navy)] hover:text-[var(--toq-sky)]"
             >
-              {post.author.username}
+              {profileDisplayName(post.author)}
             </Link>
             <PlanBadge
               plan={post.author.plan ?? "free"}
@@ -91,7 +114,9 @@ export function PostCard({
               className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
                 post.post_type === "event"
                   ? "bg-[var(--toq-sky)]/15 text-[var(--toq-sky)]"
-                  : "bg-slate-100 text-[var(--toq-text-muted)]"
+                  : post.post_type === "poll"
+                    ? "bg-violet-100 text-violet-700"
+                    : "bg-slate-100 text-[var(--toq-text-muted)]"
               }`}
             >
               {postTypeLabel(post.post_type)}
@@ -111,7 +136,12 @@ export function PostCard({
             </p>
           )}
         </div>
-        {post.author.id !== currentUserId && (
+        {canManage ? (
+          <PostOwnerMenu
+            onEdit={() => onEditPost(post)}
+            onDelete={() => onDeletePost(post)}
+          />
+        ) : !isAuthor ? (
           <ReportButton
             userId={currentUserId}
             target={{
@@ -121,9 +151,10 @@ export function PostCard({
             }}
             compact
           />
-        )}
+        ) : null}
       </header>
 
+      <div className={fullBleed ? "post-card__body px-4 pb-3 md:px-0 md:pb-0" : undefined}>
       {post.title && (
         <h3 className="mb-2 text-base font-bold text-[var(--toq-navy)]">{post.title}</h3>
       )}
@@ -132,7 +163,14 @@ export function PostCard({
           📅 {formatEventSchedule(post.event_date, post.event_time)}
         </p>
       )}
-      <PostBody body={post.body} />
+      {post.post_type === "poll" ? (
+        <p className="mb-1 text-base font-bold text-[var(--toq-navy)]">{post.body}</p>
+      ) : (
+        <PostBody body={post.body} />
+      )}
+      {post.post_type === "poll" && (
+        <PollBlock postId={post.id} isAuthor={post.author.id === currentUserId} />
+      )}
       {post.mentions.length > 0 && (
         <p className="mt-2 text-[10px] text-[var(--toq-text-muted)]">
           Mencionados:{" "}
@@ -149,10 +187,17 @@ export function PostCard({
           ))}
         </p>
       )}
+      </div>
 
-      <PostMediaGrid items={post.images} />
+      <PostMediaGrid items={post.images} fullBleed={fullBleed} />
 
-      <div className="mt-3 flex items-center gap-4 border-t border-slate-100 pt-3">
+      <div
+        className={`flex items-center gap-4 ${
+          fullBleed
+            ? "post-card__actions border-t border-slate-100 px-4 py-3 md:mt-3 md:px-0 md:py-0 md:pt-3"
+            : "mt-3 border-t border-slate-100 pt-3"
+        }`}
+      >
         <button
           type="button"
           disabled={likeLoading}
@@ -177,16 +222,18 @@ export function PostCard({
       </div>
 
       {showComments && (
-        <CommentsPanel
-          postId={post.id}
-          currentUserId={currentUserId}
-          highlightCommentId={highlightCommentId}
-          defaultOpen={!!highlightCommentId}
-          onCommentAdded={() => {
-            setCommentsCount((c) => c + 1);
-            onCommentCountChange(post.id, 1);
-          }}
-        />
+        <div className={fullBleed ? "px-4 pb-3 md:px-0 md:pb-0" : undefined}>
+          <CommentsPanel
+            postId={post.id}
+            currentUserId={currentUserId}
+            highlightCommentId={highlightCommentId}
+            defaultOpen={!!highlightCommentId}
+            onCommentAdded={() => {
+              setCommentsCount((c) => c + 1);
+              onCommentCountChange(post.id, 1);
+            }}
+          />
+        </div>
       )}
     </article>
   );

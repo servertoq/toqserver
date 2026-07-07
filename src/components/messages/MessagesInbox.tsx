@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAppProfile } from "@/components/app/AppShell";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { createClient } from "@/lib/supabase/client";
 import {
   conversationAvatar,
@@ -68,6 +69,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
   const [loadingChat, setLoadingChat] = useState(false);
   const { isSubmitting: sending, guard: guardSend } = useSingleSubmit();
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<MessageSearchProfile[]>([]);
@@ -345,12 +347,15 @@ export function MessagesInbox(props: MessagesInboxProps) {
     });
   }
 
-  async function handleDelete() {
+  function requestDelete() {
     if (!activeId || deleting) return;
     if (!activeConversation || !isDirectConversation(activeConversation)) return;
+    setDeleteConfirmOpen(true);
+  }
 
-    const name = activeConversation.other_user.username;
-    if (!window.confirm(`Excluir a conversa com @${name}? Todas as mensagens serão removidas.`)) return;
+  async function confirmDelete() {
+    if (!activeId || deleting) return;
+    if (!activeConversation || !isDirectConversation(activeConversation)) return;
 
     setDeleting(true);
     setError(null);
@@ -360,6 +365,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
       setDeleting(false);
       return;
     }
+    setDeleteConfirmOpen(false);
     setActiveId(null);
     setMessages([]);
     setView("list");
@@ -461,7 +467,7 @@ export function MessagesInbox(props: MessagesInboxProps) {
                 isPage={isPage}
                 conversation={activeConversation}
                 onBack={handleBackToList}
-                onDelete={handleDelete}
+                onDelete={requestDelete}
                 deleting={deleting}
                 showDelete={
                   isPage &&
@@ -523,6 +529,21 @@ export function MessagesInbox(props: MessagesInboxProps) {
           {error}
         </p>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        title="Excluir conversa?"
+        message={
+          activeConversation && isDirectConversation(activeConversation)
+            ? `Todas as mensagens com @${activeConversation.other_user.username} serão removidas permanentemente. Esta ação não pode ser desfeita.`
+            : "Todas as mensagens desta conversa serão removidas permanentemente."
+        }
+        confirmLabel="Excluir"
+        variant="danger"
+        loading={deleting}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => !deleting && setDeleteConfirmOpen(false)}
+      />
     </div>
   );
 }
@@ -551,12 +572,12 @@ function InboxHeader({
       {!isPage && (
         <div className="flex items-center gap-1">
           {onExpand && (
-            <button type="button" onClick={onExpand} className="rounded-lg p-2 text-[var(--toq-text-muted)] hover:bg-slate-100 hover:text-[var(--toq-navy)]" aria-label="Expandir mensagens">
+            <button type="button" onClick={onExpand} className="messages-icon-btn rounded-lg p-2 text-[var(--toq-text-muted)]" aria-label="Expandir mensagens">
               <ExpandIcon />
             </button>
           )}
           {onClose && (
-            <button type="button" onClick={onClose} className="rounded-lg p-2 text-[var(--toq-text-muted)] hover:bg-slate-100 hover:text-[var(--toq-navy)]" aria-label="Fechar">
+            <button type="button" onClick={onClose} className="messages-icon-btn rounded-lg p-2 text-[var(--toq-text-muted)]" aria-label="Fechar">
               <CloseIcon />
             </button>
           )}
@@ -620,12 +641,12 @@ function ChatHeaderBar({
           </button>
         )}
         {!isPage && onExpand && (
-            <button type="button" onClick={onExpand} className="rounded-lg p-2 text-[var(--toq-text-muted)] hover:bg-slate-100 hover:text-[var(--toq-navy)]" aria-label="Expandir mensagens">
+            <button type="button" onClick={onExpand} className="messages-icon-btn rounded-lg p-2 text-[var(--toq-text-muted)]" aria-label="Expandir mensagens">
             <ExpandIcon />
           </button>
         )}
         {!isPage && onClose && (
-            <button type="button" onClick={onClose} className="rounded-lg p-2 text-[var(--toq-text-muted)] hover:bg-slate-100 hover:text-[var(--toq-navy)]" aria-label="Fechar">
+            <button type="button" onClick={onClose} className="messages-icon-btn rounded-lg p-2 text-[var(--toq-text-muted)]" aria-label="Fechar">
             <CloseIcon />
           </button>
         )}
@@ -664,8 +685,8 @@ function InboxSearchBar({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="shrink-0 border-b border-[var(--toq-border)] bg-white px-3 py-2.5">
-      <div className="flex items-center gap-2 rounded-full border border-[var(--toq-border)] bg-[var(--toq-surface)] px-3 py-1.5 transition focus-within:border-[var(--toq-accent)] focus-within:bg-white">
+    <div className="shrink-0 border-b border-[var(--toq-border)] bg-[var(--toq-card)] px-3 py-2.5">
+      <div className="messages-compose-field flex items-center gap-2 rounded-full border border-[var(--toq-border)] bg-[var(--toq-input-bg)] px-3 py-1.5 transition focus-within:border-[var(--toq-accent)]">
         <SearchIcon className="text-[var(--toq-text-muted)]" />
         <input
           type="search"
@@ -674,7 +695,7 @@ function InboxSearchBar({
           placeholder="Buscar conversas ou jogadores…"
           aria-label="Buscar conversas ou jogadores"
           autoComplete="off"
-          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm leading-normal text-[var(--toq-navy)] shadow-none outline-none ring-0 placeholder:text-[var(--toq-text-muted)] focus:ring-0"
+          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm leading-normal text-[var(--toq-text)] shadow-none outline-none ring-0 placeholder:text-[var(--toq-text-muted)] focus:ring-0"
         />
         {value && (
           <button
@@ -955,15 +976,15 @@ function MessageComposer({
   sending: boolean;
 }) {
   return (
-    <form onSubmit={onSubmit} className="shrink-0 border-t border-[var(--toq-border)] bg-white px-3 py-3">
-      <div className="flex items-center gap-2 rounded-full border border-[var(--toq-border)] bg-[var(--toq-surface)] px-3 py-2 transition focus-within:border-[var(--toq-accent)] focus-within:bg-white">
+    <form onSubmit={onSubmit} className="messages-compose shrink-0 border-t border-[var(--toq-border)] bg-[var(--toq-card)] px-3 py-3">
+      <div className="messages-compose-field flex items-center gap-2 rounded-full border border-[var(--toq-border)] bg-[var(--toq-input-bg)] px-3 py-2 transition focus-within:border-[var(--toq-accent)]">
         <input
           type="text"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Mensagem…"
           maxLength={4000}
-          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[15px] leading-normal text-[var(--toq-navy)] shadow-none outline-none ring-0 placeholder:text-[var(--toq-text-muted)] focus:ring-0"
+          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[15px] leading-normal text-[var(--toq-text)] shadow-none outline-none ring-0 placeholder:text-[var(--toq-text-muted)] focus:ring-0"
         />
         <button type="submit" disabled={sending || !draft.trim()} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--toq-accent)] disabled:opacity-40" aria-label="Enviar">
           <SendIcon />
@@ -987,15 +1008,22 @@ function TabButton({ active, onClick, label, count }: { active: boolean; onClick
 }
 
 function ChatAvatar({ src, name, size = "md" }: { src: string | null; name: string; size?: "md" | "lg" }) {
-  const dim = size === "lg" ? "h-14 w-14 text-base" : "h-9 w-9 text-xs";
+  const frameSize = size === "lg" ? "chat-avatar-frame--lg" : "chat-avatar-frame--md";
+  const textSize = size === "lg" ? "text-base" : "text-xs";
+
   if (src) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt="" className={`${dim} shrink-0 rounded-full object-cover`} />
+      <span className={`chat-avatar-frame ${frameSize}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt="" className="chat-avatar-img" />
+      </span>
     );
   }
+
   return (
-    <span className={`${dim} flex shrink-0 items-center justify-center rounded-full bg-[var(--toq-sky)] font-bold text-white`}>
+    <span
+      className={`chat-avatar-frame ${frameSize} flex items-center justify-center bg-[var(--toq-sky)] font-bold text-white ${textSize}`}
+    >
       {name.charAt(0).toUpperCase()}
     </span>
   );

@@ -3,6 +3,7 @@
 import { createContext, useContext } from "react";
 import type { AppProfile } from "./AppSidebar";
 import { AppSidebar } from "./AppSidebar";
+import { MobileBottomNav } from "./MobileBottomNav";
 import { PresenceHeartbeat } from "@/components/feed/PresenceHeartbeat";
 import { mobileMainOffsetClass } from "@/lib/responsive";
 
@@ -30,6 +31,7 @@ export function AppShell({
           {children}
         </div>
       </div>
+      <MobileBottomNav />
     </ProfileContext.Provider>
   );
 }

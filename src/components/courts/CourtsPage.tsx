@@ -5,10 +5,9 @@ import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { mapCourtRow } from "@/lib/courts";
 import { matchesLocationSearch, LOCATION_SEARCH_PLACEHOLDER } from "@/lib/locationSearch";
-import { fetchPlanUsage, planLimitMessage } from "@/lib/plans";
+import { fetchPlanUsage } from "@/lib/plans";
 import type { PlanUsage } from "@/types/plans";
 import type { CourtWithOwner } from "@/types/courts";
-import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { appContentClass } from "@/lib/layout";
 import { CourtCard } from "./CourtCard";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -67,11 +66,11 @@ export function CourtsPage() {
 
   return (
     <>
-      <FeedTopBar />
       <main className={appContentClass}>
         <PageHeader
+          kicker=""
           title="Quadras"
-          subtitle="Encontre quadras cadastradas ou anuncie a sua para outros jogadores."
+          subtitle="Encontre a melhor quadra perto de você e agende para treinos, jogos ou torneios!"
           action={
             planUsage?.can_create_court ? (
               <Link
@@ -83,12 +82,6 @@ export function CourtsPage() {
             ) : undefined
           }
         />
-
-        {planUsage && !planUsage.can_create_court && (
-          <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            {planLimitMessage(planUsage, "court")}
-          </p>
-        )}
 
         <input
           type="search"

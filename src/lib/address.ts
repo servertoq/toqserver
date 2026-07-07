@@ -83,6 +83,56 @@ export function addressToDbPayload(addr: AddressFields) {
   };
 }
 
+/** Perfil do jogador: apenas CEP, cidade e UF (sem logradouro). */
+export function profileLocationToDbPayload(addr: Pick<AddressFields, "zip" | "city" | "state">) {
+  const zip = normalizeCep(addr.zip);
+  const city = addr.city.trim();
+  const state = addr.state.trim().toUpperCase().slice(0, 2);
+
+  if (!zip && !city && !state) {
+    return {
+      address_zip: null,
+      address_city: null,
+      address_state: null,
+      address_street: null,
+      address_number: null,
+      address_neighborhood: null,
+      address_complement: null,
+    };
+  }
+
+  return {
+    address_zip: zip || null,
+    address_city: city || null,
+    address_state: state || null,
+    address_street: null,
+    address_number: null,
+    address_neighborhood: null,
+    address_complement: null,
+  };
+}
+
+export function hasProfileLocation(addr: Pick<AddressFields, "zip" | "city" | "state">): boolean {
+  return Boolean(normalizeCep(addr.zip) || addr.city.trim() || addr.state.trim());
+}
+
+export function formatProfileLocation(addr: Pick<AddressFields, "zip" | "city" | "state">): string | null {
+  if (!hasProfileLocation(addr)) return null;
+
+  const zip = normalizeCep(addr.zip);
+  const city = addr.city.trim();
+  const state = addr.state.trim().toUpperCase();
+  const parts: string[] = [];
+
+  if (city && state) parts.push(`${city} — ${state}`);
+  else if (city) parts.push(city);
+  else if (state) parts.push(state);
+
+  if (zip) parts.push(`CEP ${formatCepDisplay(zip)}`);
+
+  return parts.join(" · ");
+}
+
 export function hasAddress(addr: AddressFields): boolean {
   return Boolean(
     normalizeCep(addr.zip) ||

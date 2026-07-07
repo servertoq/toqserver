@@ -79,14 +79,14 @@ export function SearchBar() {
         }}
         onFocus={() => setOpen(true)}
         placeholder="Buscar jogadores…"
-        className="w-full rounded-full border border-slate-200 bg-white py-1.5 pl-8 pr-3 text-xs text-[var(--toq-text)] shadow-sm outline-none ring-[var(--toq-sky)] focus:ring-2 placeholder:text-[var(--toq-text-muted)]"
+        className="w-full rounded-full toq-input border-[var(--toq-border)] py-1.5 pl-8 pr-3 text-xs text-[var(--toq-text)] shadow-none outline-none ring-[var(--toq-sky)] focus:ring-2 placeholder:text-[var(--toq-text-muted)]"
         aria-label="Buscar jogadores"
         aria-expanded={open}
         autoComplete="off"
       />
 
       {open && query.trim().length >= 2 && (
-        <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+        <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border border-[var(--toq-border)] bg-[var(--toq-card)] py-1 shadow-lg">
           {loading && results.length === 0 ? (
             <li className="px-3 py-2 text-xs text-[var(--toq-text-muted)]">Buscando…</li>
           ) : results.length === 0 ? (
@@ -100,7 +100,7 @@ export function SearchBar() {
                     setOpen(false);
                     setQuery("");
                   }}
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50"
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-[var(--toq-surface)]"
                 >
                   <SearchAvatar src={r.avatar_url} name={r.username} />
                   <div className="min-w-0">

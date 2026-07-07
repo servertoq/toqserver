@@ -32,6 +32,8 @@ type Props = {
     files: File[];
   }) => void;
   onLikeToggle: (postId: string, liked: boolean) => void;
+  onEditPost?: (post: FeedPost) => void;
+  onDeletePost?: (post: FeedPost) => void;
 };
 
 export function ClubMemberArea({
@@ -46,6 +48,8 @@ export function ClubMemberArea({
   highlightCommentId,
   onSubmitPost,
   onLikeToggle,
+  onEditPost,
+  onDeletePost,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -94,6 +98,8 @@ export function ClubMemberArea({
             highlightCommentId={highlightCommentId}
             onSubmitPost={onSubmitPost}
             onLikeToggle={onLikeToggle}
+            onEditPost={onEditPost}
+            onDeletePost={onDeletePost}
           />
         )}
         {tab === "shop" && shopEnabled && (

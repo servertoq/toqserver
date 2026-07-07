@@ -91,7 +91,7 @@ export function FloatingMessagesInner() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`${floatingMessagesDockClass} flex items-center gap-2 rounded-full bg-[var(--toq-navy)] py-2 pl-2 pr-3 text-white shadow-[0_8px_32px_rgba(5,16,36,0.28)] transition hover:bg-[var(--toq-navy-mid)]`}
+        className={`${floatingMessagesDockClass} floating-messages-dock flex items-center gap-2 rounded-full bg-[var(--toq-navy)] py-2 pl-2 pr-3 text-white shadow-[0_8px_32px_rgba(5,16,36,0.28)] transition hover:bg-[var(--toq-navy-mid)]`}
         aria-expanded={open}
         aria-label="Mensagens"
       >
@@ -109,11 +109,11 @@ export function FloatingMessagesInner() {
             {previewAvatars.map((item) => (
               <span
                 key={item.id}
-                className="inline-flex h-7 w-7 overflow-hidden rounded-full ring-2 ring-[var(--toq-navy)]"
+                className="chat-avatar-frame chat-avatar-frame--sm inline-flex overflow-hidden rounded-full ring-2 ring-[var(--toq-navy)]"
               >
                 {item.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.avatar_url} alt="" className="h-full w-full object-cover" />
+                  <img src={item.avatar_url} alt="" className="chat-avatar-img" />
                 ) : (
                   <span className="flex h-full w-full items-center justify-center bg-[var(--toq-sky)] text-[10px] font-bold">
                     {item.title.charAt(0).toUpperCase()}

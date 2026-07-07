@@ -28,7 +28,7 @@ export const COMMUNITY_GROUP_CONFIG: Record<CommunityGroupKind, CommunityGroupCo
     kind: "community",
     basePath: "/inicio/comunidade",
     listTitle: "Comunidades",
-    listSubtitle: "Descubra grupos, entre nas públicas ou solicite acesso às privadas.",
+    listSubtitle: "Descubra grupo de amigos e jogadores que fazem parte do TOQ!",
     createHref: "/inicio/comunidade/criar",
     createTitle: "Nova comunidade",
     createButton: "Criar comunidade",
@@ -49,7 +49,7 @@ export const COMMUNITY_GROUP_CONFIG: Record<CommunityGroupKind, CommunityGroupCo
     basePath: "/inicio/clubes",
     listTitle: "Clubes",
     listSubtitle:
-      "Grupos privados: só membros veem posts e eventos. Entrada com aprovação ou convite.",
+      "Clubes Privados: ache seu clube e peça participação para ficar por dentro das novidades!",
     createHref: "/inicio/clubes/criar",
     createTitle: "Novo clube",
     createButton: "Criar clube",
