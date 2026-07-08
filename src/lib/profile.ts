@@ -1,6 +1,10 @@
 export type GenderType = "masculino" | "feminino" | "outro";
 
-export type PlayerLevelType = "iniciante" | "profissional";
+export type PlayerLevelType =
+  | "iniciante"
+  | "intermediario"
+  | "avancado"
+  | "profissional";
 
 export const PROFILE_BIO_MAX_LENGTH = 280;
 
@@ -12,11 +16,13 @@ export const GENDER_OPTIONS: { value: GenderType; label: string }[] = [
 
 export const PLAYER_LEVEL_OPTIONS: { value: PlayerLevelType; label: string }[] = [
   { value: "iniciante", label: "Iniciante" },
+  { value: "intermediario", label: "Intermediário" },
+  { value: "avancado", label: "Avançado" },
   { value: "profissional", label: "Profissional" },
 ];
 
 export function playerLevelLabel(level: PlayerLevelType) {
-  return level === "profissional" ? "Profissional" : "Iniciante";
+  return PLAYER_LEVEL_OPTIONS.find((opt) => opt.value === level)?.label ?? "Iniciante";
 }
 
 export function normalizeUsername(value: string) {
