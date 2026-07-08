@@ -171,9 +171,6 @@ export function MentionTextarea({
           )}
         </ul>
       )}
-      <p className="mt-1 text-[10px] text-[var(--toq-text-muted)]">
-        Digite <span className="font-semibold">@usuario</span> para mencionar alguém
-      </p>
     </div>
   );
 }

@@ -267,7 +267,7 @@ export function CreatePostBox({
         placeholder={
           postType === "poll"
             ? "Qual é a sua pergunta?"
-            : "O que você quer compartilhar? Use @usuario para mencionar 🎾"
+            : "O que você quer compartilhar? 🎾"
         }
         required
       />
@@ -430,7 +430,7 @@ export function CreatePostBox({
     <div
       className={
         inModal
-          ? "flex flex-wrap items-center justify-end gap-2"
+          ? "flex flex-col gap-3"
           : "mt-3 flex flex-wrap items-center justify-between gap-2"
       }
     >
@@ -474,40 +474,40 @@ export function CreatePostBox({
           )}
         </div>
       )}
-      <div className={inModal ? "flex w-full justify-end" : "ml-auto flex flex-wrap items-center justify-end gap-2"}>
-        {inModal && postType !== "poll" && (
-          <>
-            <input
-              ref={imageRef}
-              type="file"
-              accept={POST_IMAGE_ACCEPT}
-              multiple
-              className="hidden"
-              onChange={(e) => handleFiles(e.target.files)}
-            />
-            <input
-              ref={videoRef}
-              type="file"
-              accept={POST_VIDEO_ACCEPT}
-              className="hidden"
-              onChange={(e) => handleFiles(e.target.files)}
-            />
-            <button
-              type="button"
-              onClick={() => imageRef.current?.click()}
-              className="mr-auto text-xs font-semibold text-[var(--toq-sky)] hover:underline"
-            >
-              + Fotos
-            </button>
-            <button
-              type="button"
-              onClick={() => videoRef.current?.click()}
-              className="text-xs font-semibold text-[var(--toq-sky)] hover:underline"
-            >
-              + Vídeo
-            </button>
-          </>
-        )}
+      {inModal && postType !== "poll" && (
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            ref={imageRef}
+            type="file"
+            accept={POST_IMAGE_ACCEPT}
+            multiple
+            className="hidden"
+            onChange={(e) => handleFiles(e.target.files)}
+          />
+          <input
+            ref={videoRef}
+            type="file"
+            accept={POST_VIDEO_ACCEPT}
+            className="hidden"
+            onChange={(e) => handleFiles(e.target.files)}
+          />
+          <button
+            type="button"
+            onClick={() => imageRef.current?.click()}
+            className="shrink-0 rounded-lg border border-[var(--toq-border)] px-3 py-2 text-xs font-semibold text-[var(--toq-sky)] transition hover:bg-[var(--toq-surface)]"
+          >
+            + Fotos
+          </button>
+          <button
+            type="button"
+            onClick={() => videoRef.current?.click()}
+            className="shrink-0 rounded-lg border border-[var(--toq-border)] px-3 py-2 text-xs font-semibold text-[var(--toq-sky)] transition hover:bg-[var(--toq-surface)]"
+          >
+            + Vídeo
+          </button>
+        </div>
+      )}
+      <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
         <VisibilityToggle
           options={visOptions}
           value={visibility}
