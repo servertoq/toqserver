@@ -1,6 +1,6 @@
 export type SupportTopic = "report" | "suggestion" | "help";
 
-export type ReportTargetType = "post" | "profile" | "community";
+export type ReportTargetType = "post" | "profile" | "community" | "comment";
 
 export type ReportTarget = {
   type: ReportTargetType;

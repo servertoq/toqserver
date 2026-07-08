@@ -58,5 +58,7 @@ export function reportTargetHeading(type: ReportTargetType) {
       return "Denunciar perfil";
     case "community":
       return "Denunciar comunidade";
+    case "comment":
+      return "Denunciar comentário";
   }
 }

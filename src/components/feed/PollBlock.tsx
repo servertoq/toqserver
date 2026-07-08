@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { parsePollState, type PostPollState } from "@/lib/postPolls";
+import { profileDisplayName } from "@/lib/profile";
+import { profilePath } from "@/lib/publicProfile";
+import { parsePollState, type PollVoter, type PostPollState } from "@/lib/postPolls";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
 type Props = {
@@ -16,6 +19,7 @@ export function PollBlock({ postId, isAuthor }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<string[]>([]);
+  const [expandedOptionId, setExpandedOptionId] = useState<string | null>(null);
   const { isSubmitting: voting, guard } = useSingleSubmit();
 
   const load = useCallback(async () => {
@@ -93,53 +97,85 @@ export function PollBlock({ postId, isAuthor }: Props) {
           state.can_see_results && totalVotes > 0
             ? Math.round((count / totalVotes) * 100)
             : null;
+        const expanded = expandedOptionId === option.id;
+        const canExpandVoters = state.can_see_results && count > 0;
 
         return (
-          <button
-            key={option.id}
-            type="button"
-            disabled={voting}
-            onClick={() => togglePending(option.id)}
-            className={`relative w-full overflow-hidden rounded-xl border px-3 py-2.5 text-left transition disabled:opacity-60 ${
-              selected
-                ? "border-[var(--toq-accent)] bg-[var(--toq-accent-soft)]"
-                : "border-[var(--toq-border)] bg-[var(--toq-surface)] hover:border-[var(--toq-accent)]"
-            }`}
-          >
-            {state.can_see_results && percent !== null && (
-              <span
-                className="absolute inset-y-0 left-0 bg-[var(--toq-accent-soft)]/60"
-                style={{ width: `${percent}%` }}
-                aria-hidden
-              />
-            )}
-            <span className="relative flex items-center justify-between gap-3">
-              <span className="flex min-w-0 items-center gap-2">
-                <span
-                  className={`flex h-4 w-4 shrink-0 items-center justify-center border ${
-                    state.allow_multiple ? "rounded" : "rounded-full"
-                  } ${
-                    selected
-                      ? "border-[var(--toq-accent)] bg-[var(--toq-accent)] text-white"
-                      : "border-[var(--toq-border)] bg-[var(--toq-card)]"
-                  }`}
-                  aria-hidden
-                >
-                  {selected ? (
-                    <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                      <path strokeLinecap="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : null}
-                </span>
-                <span className="text-sm font-semibold text-[var(--toq-navy)]">{option.label}</span>
-              </span>
+          <div key={option.id} className="space-y-1.5">
+            <button
+              type="button"
+              disabled={voting}
+              onClick={() => togglePending(option.id)}
+              className={`relative w-full overflow-hidden rounded-xl border px-3 py-2.5 text-left transition disabled:opacity-60 ${
+                selected
+                  ? "border-[var(--toq-accent)] bg-[var(--toq-accent-soft)]"
+                  : "border-[var(--toq-border)] bg-[var(--toq-surface)] hover:border-[var(--toq-accent)]"
+              }`}
+            >
               {state.can_see_results && percent !== null && (
-                <span className="shrink-0 text-xs font-bold text-[var(--toq-text-muted)]">
-                  {percent}% · {count}
-                </span>
+                <span
+                  className="absolute inset-y-0 left-0 bg-[var(--toq-accent-soft)]/60"
+                  style={{ width: `${percent}%` }}
+                  aria-hidden
+                />
               )}
-            </span>
-          </button>
+              <span className="relative flex items-center justify-between gap-3">
+                <span className="flex min-w-0 items-center gap-2">
+                  <span
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center border ${
+                      state.allow_multiple ? "rounded" : "rounded-full"
+                    } ${
+                      selected
+                        ? "border-[var(--toq-accent)] bg-[var(--toq-accent)] text-white"
+                        : "border-[var(--toq-border)] bg-[var(--toq-card)]"
+                    }`}
+                    aria-hidden
+                  >
+                    {selected ? (
+                      <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <path strokeLinecap="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : null}
+                  </span>
+                  <span className="text-sm font-semibold text-[var(--toq-navy)]">{option.label}</span>
+                </span>
+                {state.can_see_results && percent !== null && (
+                  <span className="shrink-0 text-xs font-bold text-[var(--toq-text-muted)]">
+                    {percent}% · {count}
+                  </span>
+                )}
+              </span>
+            </button>
+
+            {canExpandVoters && (
+              <div className="px-1">
+                <button
+                  type="button"
+                  onClick={() => setExpandedOptionId(expanded ? null : option.id)}
+                  className="text-[10px] font-semibold text-[var(--toq-sky)] hover:underline"
+                >
+                  {expanded
+                    ? "Ocultar quem votou"
+                    : `Ver quem votou (${count})`}
+                </button>
+                {expanded && (
+                  <ul className="mt-1.5 space-y-1.5 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-2">
+                    {option.voters.length === 0 ? (
+                      <li className="px-1 py-0.5 text-[11px] text-[var(--toq-text-muted)]">
+                        Nenhum voto nesta opção.
+                      </li>
+                    ) : (
+                      option.voters.map((voter) => (
+                        <li key={voter.id}>
+                          <VoterRow voter={voter} />
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
         );
       })}
 
@@ -170,6 +206,36 @@ export function PollBlock({ postId, isAuthor }: Props) {
           {error}
         </p>
       )}
+    </div>
+  );
+}
+
+function VoterRow({ voter }: { voter: PollVoter }) {
+  const name = profileDisplayName(voter);
+  return (
+    <Link
+      href={profilePath(voter.username)}
+      className="flex items-center gap-2 rounded-lg px-1 py-0.5 transition hover:bg-[var(--toq-surface)]"
+    >
+      <VoterAvatar src={voter.avatar_url} name={name} />
+      <span className="min-w-0">
+        <span className="block truncate text-xs font-semibold text-[var(--toq-navy)]">{name}</span>
+        <span className="block truncate text-[10px] text-[var(--toq-text-muted)]">@{voter.username}</span>
+      </span>
+    </Link>
+  );
+}
+
+function VoterAvatar({ src, name }: { src: string | null; name: string }) {
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={src} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
+    );
+  }
+  return (
+    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--toq-sky)] text-[10px] font-bold text-white">
+      {name.charAt(0).toUpperCase()}
     </div>
   );
 }

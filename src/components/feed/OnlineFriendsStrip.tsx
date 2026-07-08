@@ -133,8 +133,9 @@ export function OnlineFriendsStrip({
   const selfName = profileDisplayName(profile);
   const stripItems = [
     {
-      key: "me",
+      key: "me" as const,
       href: "/inicio/perfil",
+      username: profile.username,
       name: selfName,
       avatar_url: profile.avatar_url,
       online: true,
@@ -142,6 +143,7 @@ export function OnlineFriendsStrip({
     ...otherFriends.map((friend) => ({
       key: friend.friend_id,
       href: profilePath(friend.username),
+      username: friend.username,
       name: profileDisplayName(friend),
       avatar_url: friend.avatar_url,
       online: isUserOnline(friend.last_seen_at),
@@ -170,7 +172,7 @@ export function OnlineFriendsStrip({
               avatarUrl={item.avatar_url}
               onOpenCreatePost={onOpenCreatePost}
             />
-          ) : (
+          ) : item.key === "me" ? (
             <Link
               key={item.key}
               href={item.href}
@@ -181,17 +183,24 @@ export function OnlineFriendsStrip({
                   <FriendAvatar src={item.avatar_url} name={item.name} />
                 </span>
                 <span
-                  className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-[var(--toq-surface)] ${
-                    item.online ? "bg-green-500" : "bg-[var(--toq-border)]"
-                  }`}
-                  title={item.online ? "Online" : "Offline"}
+                  className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-[var(--toq-surface)] bg-green-500"
+                  title="Online"
                   aria-hidden
                 />
               </span>
               <span className="online-friend-name" title={item.name}>
-                {item.key === "me" ? "Você" : item.name}
+                Você
               </span>
             </Link>
+          ) : (
+            <FriendStoryItem
+              key={item.key}
+              name={item.name}
+              username={item.username}
+              profileHref={item.href}
+              avatarUrl={item.avatar_url}
+              online={item.online}
+            />
           )
         )}
       </div>
@@ -214,15 +223,7 @@ export function OnlineFriendsStrip({
   );
 }
 
-function SelfStoryItem({
-  name,
-  avatarUrl,
-  onOpenCreatePost,
-}: {
-  name: string;
-  avatarUrl: string | null;
-  onOpenCreatePost: () => void;
-}) {
+function useStoryMenu() {
   const [menuOpen, setMenuOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -261,47 +262,54 @@ function SelfStoryItem({
     };
   }, [menuOpen, updateMenuPos]);
 
-  const menu =
-    menuOpen &&
-    typeof document !== "undefined" &&
-    createPortal(
-      <div
-        ref={menuRef}
-        style={{ top: menuPos.top, left: menuPos.left }}
-        className="online-friend-self-menu fixed z-[120] w-44 -translate-x-1/2 overflow-hidden rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] py-1.5 shadow-[0_16px_48px_rgba(5,16,36,0.2)]"
-        role="menu"
-      >
-        <Link
-          href="/inicio/perfil"
-          role="menuitem"
-          onClick={() => setMenuOpen(false)}
-          className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-semibold text-[var(--toq-navy)] transition hover:bg-[var(--toq-profile-accent-soft)]"
-        >
-          <svg className="h-4 w-4 shrink-0 text-[var(--toq-profile-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-            <circle cx="12" cy="8" r="3" />
-            <path d="M4 20c0-3.5 3-6 8-6s8 2.5 8 6" />
-          </svg>
-          Ver perfil
-        </Link>
-        <div className="mx-3 border-t border-[var(--toq-border)]" aria-hidden />
-        <button
-          type="button"
-          role="menuitem"
-          onClick={() => {
-            setMenuOpen(false);
-            onOpenCreatePost();
-          }}
-          className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-semibold text-[var(--toq-navy)] transition hover:bg-[var(--toq-profile-accent-soft)]"
-        >
-          <svg className="h-4 w-4 shrink-0 text-[var(--toq-profile-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-            <rect x="4" y="4" width="16" height="16" rx="2" />
-            <path d="M8 10h8M8 14h5" />
-          </svg>
-          Postar
-        </button>
-      </div>,
-      document.body
-    );
+  function toggleMenu() {
+    setMenuOpen((open) => {
+      if (!open) updateMenuPos();
+      return !open;
+    });
+  }
+
+  return { menuOpen, setMenuOpen, buttonRef, menuRef, menuPos, toggleMenu };
+}
+
+function StoryMenuShell({
+  menuRef,
+  menuPos,
+  children,
+}: {
+  menuRef: React.RefObject<HTMLDivElement | null>;
+  menuPos: { top: number; left: number };
+  children: React.ReactNode;
+}) {
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      ref={menuRef}
+      style={{ top: menuPos.top, left: menuPos.left }}
+      className="online-friend-self-menu fixed z-[120] w-44 -translate-x-1/2 overflow-hidden rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] py-1.5 shadow-[0_16px_48px_rgba(5,16,36,0.2)]"
+      role="menu"
+    >
+      {children}
+    </div>,
+    document.body
+  );
+}
+
+function menuItemClassName() {
+  return "flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-semibold text-[var(--toq-navy)] transition hover:bg-[var(--toq-profile-accent-soft)]";
+}
+
+function SelfStoryItem({
+  name,
+  avatarUrl,
+  onOpenCreatePost,
+}: {
+  name: string;
+  avatarUrl: string | null;
+  onOpenCreatePost: () => void;
+}) {
+  const { menuOpen, setMenuOpen, buttonRef, menuRef, menuPos, toggleMenu } = useStoryMenu();
 
   return (
     <>
@@ -309,12 +317,7 @@ function SelfStoryItem({
         <button
           ref={buttonRef}
           type="button"
-          onClick={() => {
-            setMenuOpen((open) => {
-              if (!open) updateMenuPos();
-              return !open;
-            });
-          }}
+          onClick={toggleMenu}
           className="flex w-full flex-col items-center gap-2"
           aria-expanded={menuOpen}
           aria-haspopup="menu"
@@ -337,7 +340,114 @@ function SelfStoryItem({
           </span>
         </button>
       </div>
-      {menu}
+      {menuOpen && (
+        <StoryMenuShell menuRef={menuRef} menuPos={menuPos}>
+          <Link
+            href="/inicio/perfil"
+            role="menuitem"
+            onClick={() => setMenuOpen(false)}
+            className={menuItemClassName()}
+          >
+            <svg className="h-4 w-4 shrink-0 text-[var(--toq-profile-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <circle cx="12" cy="8" r="3" />
+              <path d="M4 20c0-3.5 3-6 8-6s8 2.5 8 6" />
+            </svg>
+            Ver perfil
+          </Link>
+          <div className="mx-3 border-t border-[var(--toq-border)]" aria-hidden />
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setMenuOpen(false);
+              onOpenCreatePost();
+            }}
+            className={menuItemClassName()}
+          >
+            <svg className="h-4 w-4 shrink-0 text-[var(--toq-profile-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <rect x="4" y="4" width="16" height="16" rx="2" />
+              <path d="M8 10h8M8 14h5" />
+            </svg>
+            Postar
+          </button>
+        </StoryMenuShell>
+      )}
+    </>
+  );
+}
+
+function FriendStoryItem({
+  name,
+  username,
+  profileHref,
+  avatarUrl,
+  online,
+}: {
+  name: string;
+  username: string;
+  profileHref: string;
+  avatarUrl: string | null;
+  online: boolean;
+}) {
+  const { menuOpen, setMenuOpen, buttonRef, menuRef, menuPos, toggleMenu } = useStoryMenu();
+
+  return (
+    <>
+      <div className="online-friend-item relative flex w-[92px] shrink-0 flex-col items-center gap-2">
+        <button
+          ref={buttonRef}
+          type="button"
+          onClick={toggleMenu}
+          className="flex w-full flex-col items-center gap-2"
+          aria-expanded={menuOpen}
+          aria-haspopup="menu"
+          aria-label={`Opções de ${name}`}
+        >
+          <span className="relative mx-auto inline-flex">
+            <span className={`online-friend-ring block ${menuOpen ? "ring-[var(--toq-profile-accent)]" : ""}`}>
+              <FriendAvatar src={avatarUrl} name={name} />
+            </span>
+            <span
+              className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-[var(--toq-surface)] ${
+                online ? "bg-green-500" : "bg-[var(--toq-border)]"
+              }`}
+              title={online ? "Online" : "Offline"}
+              aria-hidden
+            />
+          </span>
+          <span className="online-friend-name" title={name}>
+            {name}
+          </span>
+        </button>
+      </div>
+      {menuOpen && (
+        <StoryMenuShell menuRef={menuRef} menuPos={menuPos}>
+          <Link
+            href={profileHref}
+            role="menuitem"
+            onClick={() => setMenuOpen(false)}
+            className={menuItemClassName()}
+          >
+            <svg className="h-4 w-4 shrink-0 text-[var(--toq-profile-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <circle cx="12" cy="8" r="3" />
+              <path d="M4 20c0-3.5 3-6 8-6s8 2.5 8 6" />
+            </svg>
+            Ver perfil
+          </Link>
+          <div className="mx-3 border-t border-[var(--toq-border)]" aria-hidden />
+          <Link
+            href={`/inicio/mensagens?chat=${encodeURIComponent(username)}`}
+            role="menuitem"
+            onClick={() => setMenuOpen(false)}
+            className={menuItemClassName()}
+          >
+            <svg className="h-4 w-4 shrink-0 text-[var(--toq-profile-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M21 15a2 2 0 01-2 2H8l-4 4V5a2 2 0 012-2h13a2 2 0 012 2z" />
+            </svg>
+            Conversar
+          </Link>
+        </StoryMenuShell>
+      )}
     </>
   );
 }

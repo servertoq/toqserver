@@ -6,14 +6,17 @@ import { createClient } from "@/lib/supabase/client";
 import {
   countAllComments,
   createComment,
+  deleteOwnComment,
   fetchPostComments,
   toggleCommentLike,
 } from "@/lib/comments";
 import { formatTimeAgo } from "@/lib/feed";
 import { profilePath } from "@/lib/publicProfile";
 import type { FeedComment } from "@/types/feed";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MentionTextarea } from "./MentionTextarea";
 import { PostBody } from "./PostBody";
+import { ReportButton } from "@/components/report/ReportButton";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
 type Props = {
@@ -39,6 +42,9 @@ export function CommentsPanel({
   const [expanded, setExpanded] = useState(defaultOpen || !!highlightCommentId);
   const [replyTo, setReplyTo] = useState<FeedComment | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<FeedComment | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const totalCount = countAllComments(comments);
 
@@ -92,6 +98,27 @@ export function CommentsPanel({
     });
   }
 
+  function requestDelete(comment: FeedComment) {
+    setActionError(null);
+    setPendingDelete(comment);
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete || deleting) return;
+    setDeleting(true);
+    setActionError(null);
+    const { error } = await deleteOwnComment(supabase, pendingDelete.id, currentUserId);
+    setDeleting(false);
+    if (error) {
+      setActionError(error.message || "Não foi possível excluir.");
+      setPendingDelete(null);
+      return;
+    }
+    setPendingDelete(null);
+    await loadComments();
+    onCommentAdded();
+  }
+
   function cancelReply() {
     setReplyTo(null);
     setBody("");
@@ -111,6 +138,11 @@ export function CommentsPanel({
 
   return (
     <div className="mt-3 border-t border-slate-100 pt-3">
+      {actionError && (
+        <p className="mb-2 text-xs text-red-600" role="alert">
+          {actionError}
+        </p>
+      )}
       {loading ? (
         <p className="text-xs text-[var(--toq-text-muted)]">Carregando comentários…</p>
       ) : comments.length === 0 ? (
@@ -122,11 +154,13 @@ export function CommentsPanel({
               key={c.id}
               comment={c}
               depth={0}
+              currentUserId={currentUserId}
               highlightCommentId={highlightCommentId}
               onReply={(target) => {
                 setReplyTo(target);
                 setBody(`@${target.author.username} `);
               }}
+              onDelete={requestDelete}
               onLikeToggle={async (commentId, liked) => {
                 await toggleCommentLike(supabase, commentId, currentUserId, liked);
                 await loadComments();
@@ -185,6 +219,24 @@ export function CommentsPanel({
           </button>
         </div>
       </form>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title={pendingDelete?.parent_id ? "Excluir resposta" : "Excluir comentário"}
+        message={
+          pendingDelete?.parent_id
+            ? "Tem certeza que deseja excluir esta resposta? Essa ação não pode ser desfeita."
+            : "Tem certeza que deseja excluir este comentário? As respostas nele também serão removidas."
+        }
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        variant="danger"
+        loading={deleting}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => {
+          if (!deleting) setPendingDelete(null);
+        }}
+      />
     </div>
   );
 }
@@ -192,19 +244,26 @@ export function CommentsPanel({
 function CommentThread({
   comment,
   depth,
+  currentUserId,
   highlightCommentId,
   onReply,
+  onDelete,
   onLikeToggle,
 }: {
   comment: FeedComment;
   depth: number;
+  currentUserId: string;
   highlightCommentId?: string | null;
   onReply: (c: FeedComment) => void;
+  onDelete: (c: FeedComment) => void | Promise<void>;
   onLikeToggle: (commentId: string, liked: boolean) => Promise<void>;
 }) {
   const [liked, setLiked] = useState(comment.liked_by_me);
   const [likesCount, setLikesCount] = useState(comment.likes_count);
   const [likeLoading, setLikeLoading] = useState(false);
+
+  const isOwn = comment.author.id === currentUserId;
+  const isReply = Boolean(comment.parent_id);
 
   async function handleLike() {
     setLikeLoading(true);
@@ -282,6 +341,26 @@ function CommentThread({
             >
               Responder
             </button>
+            {isOwn ? (
+              <button
+                type="button"
+                onClick={() => void onDelete(comment)}
+                className="font-semibold text-red-600 hover:underline"
+              >
+                Excluir
+              </button>
+            ) : (
+              <ReportButton
+                userId={currentUserId}
+                target={{
+                  type: "comment",
+                  id: comment.id,
+                  label: `${isReply ? "resposta" : "comentário"} de @${comment.author.username}`,
+                }}
+                compact
+                className="inline-flex items-center gap-1 font-semibold text-[var(--toq-text-muted)] transition hover:text-red-600"
+              />
+            )}
           </div>
         </div>
       </div>
@@ -293,8 +372,10 @@ function CommentThread({
               key={reply.id}
               comment={reply}
               depth={depth + 1}
+              currentUserId={currentUserId}
               highlightCommentId={highlightCommentId}
               onReply={onReply}
+              onDelete={onDelete}
               onLikeToggle={onLikeToggle}
             />
           ))}

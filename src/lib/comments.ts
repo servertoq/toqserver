@@ -143,6 +143,21 @@ export async function toggleCommentLike(
   }
 }
 
+export async function deleteOwnComment(
+  supabase: SupabaseClient,
+  commentId: string,
+  authorId: string
+): Promise<{ error: Error | null }> {
+  const { error } = await supabase
+    .from("post_comments")
+    .delete()
+    .eq("id", commentId)
+    .eq("author_id", authorId);
+
+  if (error) return { error: new Error(error.message) };
+  return { error: null };
+}
+
 export function countAllComments(comments: FeedComment[]): number {
   let n = 0;
   function walk(list: FeedComment[]) {

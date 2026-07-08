@@ -94,6 +94,25 @@ export async function resolveReportTargetHref(
     return `${base}?post=${data.id}`;
   }
 
+  if (targetType === "comment") {
+    const { data } = await supabase
+      .from("post_comments")
+      .select("id, post_id, posts(id, community_id, communities(slug, kind))")
+      .eq("id", targetId)
+      .maybeSingle();
+    if (!data?.post_id) return "/inicio";
+    const post = Array.isArray(data.posts) ? data.posts[0] : data.posts;
+    const comm = post
+      ? Array.isArray(post.communities)
+        ? post.communities[0]
+        : post.communities
+      : null;
+    const base = comm?.slug
+      ? groupDetailHref(comm.kind ?? "community", comm.slug)
+      : "/inicio";
+    return `${base}?post=${data.post_id}&comment=${data.id}`;
+  }
+
   return null;
 }
 

@@ -149,6 +149,20 @@ export function StaffTicketDetailModal({ ticket, canModerate, onClose, onUpdated
                       Excluir publicação denunciada
                     </button>
                   )}
+                  {ticket.target_type === "comment" && ticket.target_id && (
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={() =>
+                        runAction(() =>
+                          supabase.rpc("staff_delete_comment", { p_comment_id: ticket.target_id })
+                        )
+                      }
+                      className="w-full rounded-xl border border-red-200 py-2.5 text-sm font-semibold text-red-600"
+                    >
+                      Excluir comentário denunciado
+                    </button>
+                  )}
                   {ticket.target_type === "community" && ticket.target_id && (
                     <button
                       type="button"

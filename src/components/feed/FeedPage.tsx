@@ -5,6 +5,12 @@ import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { mapPostRow } from "@/lib/feed";
 import type { FeedPost } from "@/types/feed";
+import type { AgendaEvent } from "@/types/agenda";
+import {
+  addDaysISO,
+  hasSeenAgendaReminderToday,
+  toLocalDateISO,
+} from "@/lib/agenda";
 import { useAppProfile } from "@/components/app/AppShell";
 import { FeedHomeLayout } from "./FeedHomeLayout";
 import { createPostWithMedia, POST_SELECT } from "@/lib/posts";
@@ -14,6 +20,7 @@ import { FeedDesktopPostList, FeedMobileTimeline } from "./FeedPostList";
 import { usePostOwnerActions } from "@/lib/usePostOwnerActions";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { FloatingMessages } from "@/components/messages/FloatingMessages";
+import { AgendaReminderDialog } from "@/components/agenda/AgendaReminderDialog";
 
 export function FeedPage() {
   const supabase = createClient();
@@ -26,6 +33,8 @@ export function FeedPage() {
   const { isSubmitting: posting, guard: guardPost } = useSingleSubmit();
   const [error, setError] = useState<string | null>(null);
   const [postModalOpen, setPostModalOpen] = useState(false);
+  const [reminderOpen, setReminderOpen] = useState(false);
+  const [reminderEvents, setReminderEvents] = useState<AgendaEvent[]>([]);
 
   const loadFeed = useCallback(async () => {
     setError(null);
@@ -106,6 +115,35 @@ export function FeedPage() {
   useEffect(() => {
     loadFeed();
   }, [loadFeed]);
+
+  useEffect(() => {
+    if (loading || !profile?.id) return;
+    if (hasSeenAgendaReminderToday(profile.id)) return;
+
+    let cancelled = false;
+    const today = toLocalDateISO();
+    const tomorrow = addDaysISO(today, 1);
+
+    void (async () => {
+      const { data, error: agendaErr } = await supabase
+        .from("user_agenda_events")
+        .select("*")
+        .eq("user_id", profile.id)
+        .in("event_date", [today, tomorrow])
+        .order("event_date", { ascending: true })
+        .order("event_time", { ascending: true });
+
+      if (cancelled || agendaErr) return;
+      const rows = (data as AgendaEvent[]) ?? [];
+      if (rows.length === 0) return;
+      setReminderEvents(rows);
+      setReminderOpen(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, profile?.id, supabase]);
 
   async function handleCreatePost(data: CreatePostSubmitData) {
     if (!profile || posting) return;
@@ -205,6 +243,13 @@ export function FeedPage() {
         loading={posting}
         onClose={() => !posting && setPostModalOpen(false)}
         onSubmit={handleCreatePost}
+      />
+
+      <AgendaReminderDialog
+        open={reminderOpen}
+        userId={profile.id}
+        events={reminderEvents}
+        onClose={() => setReminderOpen(false)}
       />
 
       {ownerActionUi}

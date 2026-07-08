@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { appContentClass } from "@/lib/layout";
@@ -8,13 +9,23 @@ import type { GenderType, PlayerLevelType } from "@/lib/profile";
 import { FriendsPanel } from "@/components/profile/FriendsPanel";
 import type { EditableProfile } from "@/components/profile/ProfileEditForm";
 import { ProfileSupportForm } from "@/components/profile/ProfileSupportForm";
-import { PlayerProfileDashboard } from "@/components/profile/PlayerProfileDashboard";
+import {
+  PlayerProfileDashboard,
+  type ProfileTab,
+} from "@/components/profile/PlayerProfileDashboard";
 import { addressFromRow } from "@/lib/address";
 import { mapPostRow } from "@/lib/feed";
 import { POST_SELECT } from "@/lib/posts";
 import type { FeedPost } from "@/types/feed";
 
-export default function PerfilPage() {
+function resolveInitialTab(tab: string | null): ProfileTab | undefined {
+  if (tab === "agenda") return "agenda";
+  return undefined;
+}
+
+function PerfilPageContent() {
+  const searchParams = useSearchParams();
+  const initialTab = resolveInitialTab(searchParams.get("tab"));
   const appProfile = useAppProfile();
   const supabase = createClient();
   const [profile, setProfile] = useState<EditableProfile | null>(null);
@@ -149,6 +160,7 @@ export default function PerfilPage() {
             posts={posts}
             currentUserId={appProfile.id}
             isOwnProfile
+            initialTab={initialTab}
             onLikeToggle={handleLikeToggle}
             friendsPanel={<FriendsPanel userId={appProfile.id} embedded />}
             supportForm={<ProfileSupportForm userId={appProfile.id} />}
@@ -165,5 +177,19 @@ export default function PerfilPage() {
         )}
       </main>
     </>
+  );
+}
+
+export default function PerfilPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className={appContentClass}>
+          <p className="text-sm text-[var(--toq-text-muted)]">Carregando perfil…</p>
+        </main>
+      }
+    >
+      <PerfilPageContent />
+    </Suspense>
   );
 }

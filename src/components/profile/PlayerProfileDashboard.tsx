@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { GenderType, PlayerLevelType } from "@/lib/profile";
 import { profileDisplayName } from "@/lib/profile";
 import { profilePath } from "@/lib/publicProfile";
@@ -14,9 +14,11 @@ import { ProfileSidebarAvatar } from "./ProfileSidebarAvatar";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { ProfilePlayerLevelBadge } from "./ProfilePlayerLevelBadge";
 import { PostCard } from "@/components/feed/PostCard";
+import { AgendaPage } from "@/components/agenda/AgendaPage";
 
 export type ProfileTab =
   | "resumo"
+  | "agenda"
   | "partidas"
   | "publicacoes"
   | "amigos"
@@ -48,15 +50,16 @@ type Props = {
   supportForm?: ReactNode;
   onResumoSaved?: () => void;
   onAvatarUpdated?: (avatarUrl: string | null) => void;
+  initialTab?: ProfileTab;
 };
 
-const TABS: { id: ProfileTab; label: string; icon: "grid" | "trophy" | "posts" | "users" | "support" }[] = [
+const TABS: { id: ProfileTab; label: string; icon: "grid" | "calendar" | "trophy" | "posts" | "users" | "support" }[] = [
   { id: "resumo", label: "Resumo", icon: "grid" },
   { id: "partidas", label: "Partidas", icon: "trophy" },
   { id: "publicacoes", label: "Publicações", icon: "posts" },
 ];
 
-function TabIcon({ type }: { type: (typeof TABS)[number]["icon"] }) {
+function TabIcon({ type }: { type: (typeof TABS)[number]["icon"] | "calendar" }) {
   const cls = "h-4 w-4 shrink-0";
   switch (type) {
     case "grid":
@@ -66,6 +69,13 @@ function TabIcon({ type }: { type: (typeof TABS)[number]["icon"] }) {
           <rect x="14" y="3" width="7" height="7" rx="1" />
           <rect x="3" y="14" width="7" height="7" rx="1" />
           <rect x="14" y="14" width="7" height="7" rx="1" />
+        </svg>
+      );
+    case "calendar":
+      return (
+        <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="3" y="4" width="18" height="17" rx="2" />
+          <path strokeLinecap="round" d="M8 2v4M16 2v4M3 10h18" />
         </svg>
       );
     case "trophy":
@@ -149,16 +159,24 @@ export function PlayerProfileDashboard({
   supportForm,
   onResumoSaved,
   onAvatarUpdated,
+  initialTab,
 }: Props) {
-  const [tab, setTab] = useState<ProfileTab>("resumo");
+  const [tab, setTab] = useState<ProfileTab>(initialTab ?? "resumo");
+
+  useEffect(() => {
+    if (initialTab) setTab(initialTab);
+  }, [initialTab]);
 
   const shownName = profileDisplayName({ display_name: displayName, username });
 
   const navTabs = useMemo(() => {
-    const items = [...TABS];
+    const items: { id: ProfileTab; label: string; icon: "grid" | "calendar" | "trophy" | "posts" | "users" | "support" }[] = [
+      ...TABS,
+    ];
     if (isOwnProfile) {
-      items.push({ id: "amigos" as const, label: "Amigos", icon: "users" as const });
-      items.push({ id: "suporte" as const, label: "Suporte", icon: "support" as const });
+      items.splice(1, 0, { id: "agenda", label: "Agenda", icon: "calendar" });
+      items.push({ id: "amigos", label: "Amigos", icon: "users" });
+      items.push({ id: "suporte", label: "Suporte", icon: "support" });
     }
     return items;
   }, [isOwnProfile]);
@@ -336,6 +354,8 @@ export function PlayerProfileDashboard({
                 </section>
               </div>
             )}
+
+            {tab === "agenda" && isOwnProfile && <AgendaPage embedded />}
 
             {tab === "partidas" && (
               <div className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--toq-profile-border)] bg-slate-50/80 px-6 text-center">

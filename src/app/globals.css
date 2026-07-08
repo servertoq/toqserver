@@ -1060,8 +1060,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3rem;
-  height: 3rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 0.875rem;
   color: rgba(255, 255, 255, 0.72);
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -1209,6 +1209,34 @@ body {
   background: var(--toq-navy-deep);
   color: var(--toq-white);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Agenda — desktop sem scroll da página */
+@media (min-width: 768px) {
+  .feed-layout-main:has(.agenda-page) {
+    overflow: hidden;
+  }
+
+  .agenda-page {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+  }
+
+  .agenda-page-grid {
+    flex: 1 1 auto;
+    align-content: start;
+  }
+}
+
+.agenda-embedded .agenda-page-grid {
+  min-height: 28rem;
+}
+
+@media (min-width: 768px) {
+  .agenda-embedded .agenda-page-grid {
+    min-height: 32rem;
+  }
 }
 
 /* Auth — desktop: panorama 50/50 | mobile: 3 telas em scroll */
