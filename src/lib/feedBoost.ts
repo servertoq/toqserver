@@ -3,6 +3,7 @@ import { fetchCoachListingsForPosts, mapPostRow } from "@/lib/feed";
 import { normalizePlan } from "@/lib/billing/plans";
 import { feedBoostIntervalHours, planHasFeedBoost } from "@/lib/plans";
 import { POST_SELECT } from "@/lib/posts";
+import { enrichPostsWithStaffRoles } from "@/lib/staff";
 import type { FeedPost } from "@/types/feed";
 import type { UserPlan } from "@/types/plans";
 
@@ -86,7 +87,7 @@ export async function loadBoostedFeedPosts(
 
   const coachListingsByPostId = await fetchCoachListingsForPosts(supabase, dueIds);
 
-  return due.map((row) => ({
+  const mapped = due.map((row) => ({
     ...mapPostRow(
       row as Parameters<typeof mapPostRow>[0],
       likesByPost[row.id as string] ?? 0,
@@ -97,6 +98,8 @@ export async function loadBoostedFeedPosts(
     ),
     is_boosted: true,
   }));
+
+  return enrichPostsWithStaffRoles(supabase, mapped);
 }
 
 export function mergeBoostedIntoFeed(regular: FeedPost[], boosted: FeedPost[]): FeedPost[] {

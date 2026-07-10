@@ -19,6 +19,7 @@ import { PollBlock } from "./PollBlock";
 import { PostOwnerMenu } from "./PostOwnerMenu";
 import { ReportButton } from "@/components/report/ReportButton";
 import { PlanBadge } from "@/components/shared/PlanBadge";
+import { StaffBadge } from "@/components/shared/StaffBadge";
 import { canShowPlanBadge } from "@/lib/plans";
 
 type Props = {
@@ -141,6 +142,7 @@ export function PostCard({
             >
               {profileDisplayName(post.author)}
             </Link>
+            <StaffBadge role={post.author.staff_role} />
             <PlanBadge
               plan={post.author.plan ?? "free"}
               show={!isCoachPost && canShowPlanBadge(post.author.plan, post.author.show_plan_badge)}

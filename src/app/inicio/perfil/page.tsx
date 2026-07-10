@@ -16,6 +16,7 @@ import {
 import { addressFromRow } from "@/lib/address";
 import { fetchCoachListingsForPosts, mapPostRow } from "@/lib/feed";
 import { POST_SELECT } from "@/lib/posts";
+import { enrichPostsWithStaffRoles } from "@/lib/staff";
 import type { FeedPost } from "@/types/feed";
 
 function resolveInitialTab(tab: string | null): ProfileTab | undefined {
@@ -105,14 +106,17 @@ function PerfilPageContent() {
       const coachListingsByPostId = await fetchCoachListingsForPosts(supabase, postIds);
 
       setPosts(
-        rawPosts.map((p) =>
-          mapPostRow(
-            p,
-            likesByPost[p.id] ?? 0,
-            commentsByPost[p.id] ?? 0,
-            likedSet.has(p.id),
-            new Set(coachListingsByPostId.keys()),
-            coachListingsByPostId
+        await enrichPostsWithStaffRoles(
+          supabase,
+          rawPosts.map((p) =>
+            mapPostRow(
+              p,
+              likesByPost[p.id] ?? 0,
+              commentsByPost[p.id] ?? 0,
+              likedSet.has(p.id),
+              new Set(coachListingsByPostId.keys()),
+              coachListingsByPostId
+            )
           )
         )
       );
@@ -161,6 +165,7 @@ function PerfilPageContent() {
             clubCount={clubCount}
             address={profile.address}
             plan={profile.plan}
+            staffRole={appProfile.staffRole}
             posts={posts}
             currentUserId={appProfile.id}
             isOwnProfile

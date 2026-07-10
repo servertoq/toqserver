@@ -16,6 +16,8 @@ export type PostPollMeta = {
   options: PostPollOption[];
 };
 
+import type { StaffRole } from "@/types/staff";
+
 export type FeedProfile = {
   id: string;
   username: string;
@@ -23,6 +25,7 @@ export type FeedProfile = {
   avatar_url: string | null;
   plan?: "free" | "professor" | "proprietario" | "proprietario_plus" | "empresario";
   show_plan_badge?: boolean;
+  staff_role?: StaffRole | null;
 };
 
 export type FeedCommunity = {

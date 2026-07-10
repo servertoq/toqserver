@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { fetchCoachListingsForPosts, mapPostRow } from "@/lib/feed";
+import { enrichPostsWithStaffRoles } from "@/lib/staff";
 import { addressFromRow } from "@/lib/address";
 import { POST_SELECT } from "@/lib/posts";
 import type { GenderType, PlayerLevelType } from "@/lib/profile";
 import type { UserPlan } from "@/types/plans";
+import type { StaffRole } from "@/types/staff";
 import type { FeedPost } from "@/types/feed";
 import type { PublicProfile } from "@/types/profile";
 import { useAppProfile } from "@/components/app/AppShell";
@@ -48,6 +50,10 @@ export function PublicProfileView({ username }: Props) {
       p_profile_id: row.id,
     });
 
+    const { data: staffRole } = await supabase.rpc("get_staff_role", {
+      p_user_id: row.id,
+    });
+
     const stat = Array.isArray(stats) ? stats[0] : stats;
 
     setProfile({
@@ -60,6 +66,7 @@ export function PublicProfileView({ username }: Props) {
       gender: row.gender as GenderType,
       player_level: (row.player_level as PlayerLevelType) ?? "iniciante",
       plan: (row.plan as UserPlan) ?? "free",
+      staff_role: (staffRole as StaffRole | null) ?? null,
       created_at: row.created_at,
       post_count: Number(stat?.post_count ?? 0),
       friend_count: Number(stat?.friend_count ?? 0),
@@ -105,14 +112,17 @@ export function PublicProfileView({ username }: Props) {
       const coachListingsByPostId = await fetchCoachListingsForPosts(supabase, postIds);
 
       setPosts(
-        rawPosts.map((p) =>
-          mapPostRow(
-            p,
-            likesByPost[p.id] ?? 0,
-            commentsByPost[p.id] ?? 0,
-            likedSet.has(p.id),
-            new Set(coachListingsByPostId.keys()),
-            coachListingsByPostId
+        await enrichPostsWithStaffRoles(
+          supabase,
+          rawPosts.map((p) =>
+            mapPostRow(
+              p,
+              likesByPost[p.id] ?? 0,
+              commentsByPost[p.id] ?? 0,
+              likedSet.has(p.id),
+              new Set(coachListingsByPostId.keys()),
+              coachListingsByPostId
+            )
           )
         )
       );
@@ -172,6 +182,7 @@ export function PublicProfileView({ username }: Props) {
             lastSeenAt={profile.last_seen_at}
             address={profile.address}
             plan={profile.plan}
+            staffRole={profile.staff_role}
             posts={posts}
             currentUserId={viewer.id}
             isOwnProfile={isOwnProfile}

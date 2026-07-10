@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { mapPostRow } from "@/lib/feed";
+import { enrichPostsWithStaffRoles } from "@/lib/staff";
 import {
   canModerate,
   groupVisibilityLabel,
@@ -151,12 +152,15 @@ export function CommunityDetailPage({
         }
 
         setPosts(
-          rawPosts.map((row) =>
-            mapPostRow(
-              row,
-              likesByPost[row.id] ?? 0,
-              commentsByPost[row.id] ?? 0,
-              likedSet.has(row.id)
+          await enrichPostsWithStaffRoles(
+            supabase,
+            rawPosts.map((row) =>
+              mapPostRow(
+                row,
+                likesByPost[row.id] ?? 0,
+                commentsByPost[row.id] ?? 0,
+                likedSet.has(row.id)
+              )
             )
           )
         );

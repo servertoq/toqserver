@@ -1,6 +1,7 @@
 import type { AddressFields } from "@/lib/address";
 import type { GenderType, PlayerLevelType } from "@/lib/profile";
 import type { UserPlan } from "@/types/plans";
+import type { StaffRole } from "@/types/staff";
 
 export type PublicProfile = {
   id: string;
@@ -12,6 +13,7 @@ export type PublicProfile = {
   gender: GenderType;
   player_level: PlayerLevelType;
   plan: UserPlan;
+  staff_role: StaffRole | null;
   created_at: string;
   post_count: number;
   friend_count: number;

@@ -60,7 +60,7 @@ function SearchDropdown({ show, loading, results, onPick }: SearchDropdownProps)
 
   return (
     <ul
-      className="absolute left-0 right-0 top-full z-[200] mt-1 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+      className="absolute left-0 right-0 top-full z-[200] mt-1 max-h-56 overflow-y-auto rounded-xl border border-[var(--toq-border)] bg-[var(--toq-card)] py-1 shadow-lg"
       role="listbox"
     >
       {loading && results.length === 0 ? (
@@ -76,7 +76,7 @@ function SearchDropdown({ show, loading, results, onPick }: SearchDropdownProps)
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onPick(user)}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-slate-50"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[var(--toq-accent-soft)]"
             >
               <UserAvatar src={user.avatar_url} name={user.username} />
               <span className="truncate text-sm font-semibold text-[var(--toq-navy)]">
@@ -202,7 +202,7 @@ export function StaffUsernameSearch({
               placeholder={placeholder}
               autoComplete="off"
               aria-expanded={showMenu}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              className="toq-input w-full px-3 py-2 text-sm"
             />
             <SearchDropdown
               show={showMenu}
@@ -281,7 +281,7 @@ export function StaffResourceIdSearch({
               placeholder={placeholder}
               autoComplete="off"
               aria-expanded={showMenu}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              className="toq-input w-full px-3 py-2 text-sm"
             />
             <SearchDropdown
               show={showMenu}

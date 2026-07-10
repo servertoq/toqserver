@@ -17,6 +17,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MentionTextarea } from "./MentionTextarea";
 import { PostBody } from "./PostBody";
 import { ReportButton } from "@/components/report/ReportButton";
+import { StaffBadge } from "@/components/shared/StaffBadge";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
 type Props = {
@@ -293,13 +294,14 @@ function CommentThread({
       >
         <CommentAvatar src={comment.author.avatar_url} name={comment.author.username} />
         <div className="min-w-0 flex-1 rounded-lg bg-slate-50 px-3 py-2">
-          <p className="text-xs font-bold text-[var(--toq-navy)]">
+          <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-[var(--toq-navy)]">
             <Link
               href={profilePath(comment.author.username)}
               className="hover:text-[var(--toq-sky)]"
             >
               {comment.author.username}
-            </Link>{" "}
+            </Link>
+            <StaffBadge role={comment.author.staff_role} />
             <span className="font-normal text-[var(--toq-text-muted)]">
               · {formatTimeAgo(comment.created_at)}
             </span>

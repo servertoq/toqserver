@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { mapMentionRows, resolveMentionUserIds, insertCommentMentions } from "@/lib/mentions";
+import { enrichCommentsWithStaffRoles, staffRoleFromEmbed } from "@/lib/staff";
 import type { FeedComment } from "@/types/feed";
+import type { StaffRole } from "@/types/staff";
 
 const COMMENT_SELECT = `
   id,
@@ -13,12 +15,19 @@ const COMMENT_SELECT = `
   )
 `;
 
+type CommentAuthor = {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+  staff_members?: { role: StaffRole } | { role: StaffRole }[] | null;
+};
+
 type CommentRow = {
   id: string;
   body: string;
   created_at: string;
   parent_id: string | null;
-  author: FeedComment["author"] | FeedComment["author"][];
+  author: CommentAuthor | CommentAuthor[];
   mentions: { mentioned_user: FeedComment["mentions"][0] | FeedComment["mentions"][0][] | null }[];
 };
 
@@ -33,7 +42,14 @@ function mapCommentRow(
     body: row.body,
     created_at: row.created_at,
     parent_id: row.parent_id,
-    author: author ?? { id: "", username: "?", avatar_url: null },
+    author: author
+      ? {
+          id: author.id,
+          username: author.username,
+          avatar_url: author.avatar_url,
+          staff_role: staffRoleFromEmbed(author.staff_members),
+        }
+      : { id: "", username: "?", avatar_url: null, staff_role: null },
     mentions: mapMentionRows(row.mentions),
     likes_count: likesByComment[row.id] ?? 0,
     liked_by_me: likedSet.has(row.id),
@@ -86,7 +102,10 @@ export async function fetchPostComments(
     }
   }
 
-  return buildCommentTree(rows.map((r) => mapCommentRow(r, likesByComment, likedSet)));
+  return enrichCommentsWithStaffRoles(
+    supabase,
+    buildCommentTree(rows.map((r) => mapCommentRow(r, likesByComment, likedSet)))
+  );
 }
 
 export async function createComment(

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { fetchClubCourtsForPosts, fetchCoachListingsForPosts, mapPostRow } from "@/lib/feed";
+import { enrichPostsWithStaffRoles } from "@/lib/staff";
 import type { FeedPost } from "@/types/feed";
 import type { AgendaEvent } from "@/types/agenda";
 import {
@@ -108,22 +109,22 @@ export function FeedPage() {
       }
     }
 
-    setPosts(
-      mergeBoostedIntoFeed(
-        (rawPosts ?? []).map((row) =>
-          mapPostRow(
-            row,
-            likesByPost[row.id] ?? 0,
-            commentsByPost[row.id] ?? 0,
-            likedSet.has(row.id),
-            new Set(coachListingsByPostId.keys()),
-            coachListingsByPostId,
-            clubCourtsByPostId
-          )
-        ),
-        await loadBoostedFeedPosts(supabase, user.id, new Set(postIds))
+    const mapped = (rawPosts ?? []).map((row) =>
+      mapPostRow(
+        row,
+        likesByPost[row.id] ?? 0,
+        commentsByPost[row.id] ?? 0,
+        likedSet.has(row.id),
+        new Set(coachListingsByPostId.keys()),
+        coachListingsByPostId,
+        clubCourtsByPostId
       )
     );
+    const [withStaff, boosted] = await Promise.all([
+      enrichPostsWithStaffRoles(supabase, mapped),
+      loadBoostedFeedPosts(supabase, user.id, new Set(postIds)),
+    ]);
+    setPosts(mergeBoostedIntoFeed(withStaff, boosted));
     setLoading(false);
   }, [supabase]);
 

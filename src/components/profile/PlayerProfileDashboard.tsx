@@ -8,11 +8,13 @@ import { profilePath } from "@/lib/publicProfile";
 import type { AddressFields } from "@/lib/address";
 import type { FeedPost } from "@/types/feed";
 import type { UserPlan } from "@/types/plans";
+import type { StaffRole } from "@/types/staff";
 import { ProfileResumoSection } from "./ProfileResumoSection";
 import { ProfilePresenceBadge } from "./ProfilePresenceBadge";
 import { ProfileSidebarAvatar } from "./ProfileSidebarAvatar";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { ProfilePlayerLevelBadge } from "./ProfilePlayerLevelBadge";
+import { StaffBadge } from "@/components/shared/StaffBadge";
 import { PostCard } from "@/components/feed/PostCard";
 import { AgendaPage } from "@/components/agenda/AgendaPage";
 
@@ -41,6 +43,7 @@ type Props = {
   lastSeenAt?: string | null;
   address: AddressFields;
   plan?: UserPlan;
+  staffRole?: StaffRole | null;
   posts: FeedPost[];
   currentUserId: string;
   isOwnProfile: boolean;
@@ -150,6 +153,7 @@ export function PlayerProfileDashboard({
   lastSeenAt,
   address,
   plan = "free",
+  staffRole = null,
   posts,
   currentUserId,
   isOwnProfile,
@@ -219,8 +223,9 @@ export function PlayerProfileDashboard({
 
               <h2 className="mt-4 text-lg font-bold text-[var(--toq-profile-navy)]">{shownName}</h2>
               <p className="mt-1 text-sm text-[var(--toq-text-muted)]">@{username}</p>
-              <div className="mt-2">
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">
                 <ProfilePlayerLevelBadge level={playerLevel} />
+                <StaffBadge role={staffRole} />
               </div>
               {lastSeenAt !== undefined && (
                 <div className="mt-2">

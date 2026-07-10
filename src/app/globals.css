@@ -4502,3 +4502,171 @@ button {
     grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
   }
 }
+
+/* =============================================================================
+   Staff role badges (feed) — efeito brilhante tipo GIF
+   ============================================================================= */
+
+.staff-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  isolation: isolate;
+  white-space: nowrap;
+}
+
+.staff-badge__label {
+  position: relative;
+  z-index: 1;
+}
+
+.staff-badge__shine {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.55) 45%,
+    rgba(255, 255, 255, 0.15) 55%,
+    transparent 75%
+  );
+  background-size: 220% 100%;
+  animation: staff-badge-shine 2.2s ease-in-out infinite;
+}
+
+.staff-badge--ceo {
+  color: #3b2a05;
+  background: linear-gradient(135deg, #f6e27a 0%, #f0c14b 28%, #ffe9a0 50%, #d4a017 72%, #f7d774 100%);
+  background-size: 200% 200%;
+  border-color: rgba(212, 160, 23, 0.85);
+  box-shadow:
+    0 0 0 1px rgba(255, 236, 170, 0.55) inset,
+    0 0 10px rgba(240, 193, 75, 0.75),
+    0 0 18px rgba(212, 160, 23, 0.45);
+  animation: staff-badge-gold-pulse 2s ease-in-out infinite, staff-badge-gradient-shift 3.5s linear infinite;
+}
+
+.staff-badge--cto {
+  color: #fff5f5;
+  background: linear-gradient(135deg, #ff4d4d 0%, #e11d48 30%, #ff7a7a 52%, #be123c 74%, #fb7185 100%);
+  background-size: 200% 200%;
+  border-color: rgba(225, 29, 72, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(255, 180, 180, 0.4) inset,
+    0 0 10px rgba(244, 63, 94, 0.8),
+    0 0 18px rgba(190, 18, 60, 0.5);
+  animation: staff-badge-red-pulse 2s ease-in-out infinite, staff-badge-gradient-shift 3.5s linear infinite;
+}
+
+.staff-badge--moderator {
+  color: #ecfdf5;
+  background: linear-gradient(135deg, #34d399 0%, #059669 30%, #6ee7b7 52%, #047857 74%, #4ade80 100%);
+  background-size: 200% 200%;
+  border-color: rgba(5, 150, 105, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(167, 243, 208, 0.4) inset,
+    0 0 10px rgba(16, 185, 129, 0.75),
+    0 0 18px rgba(4, 120, 87, 0.45);
+  animation: staff-badge-green-pulse 2s ease-in-out infinite, staff-badge-gradient-shift 3.5s linear infinite;
+}
+
+.staff-badge--marketing {
+  color: #faf5ff;
+  background: linear-gradient(135deg, #c084fc 0%, #7c3aed 30%, #e9d5ff 52%, #6d28d9 74%, #a855f7 100%);
+  background-size: 200% 200%;
+  border-color: rgba(124, 58, 237, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(221, 214, 254, 0.4) inset,
+    0 0 10px rgba(168, 85, 247, 0.75),
+    0 0 18px rgba(109, 40, 217, 0.45);
+  animation: staff-badge-purple-pulse 2s ease-in-out infinite, staff-badge-gradient-shift 3.5s linear infinite;
+}
+
+@keyframes staff-badge-shine {
+  0% { background-position: 140% 0; }
+  100% { background-position: -140% 0; }
+}
+
+@keyframes staff-badge-gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes staff-badge-gold-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 236, 170, 0.55) inset,
+      0 0 8px rgba(240, 193, 75, 0.65),
+      0 0 14px rgba(212, 160, 23, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255, 248, 210, 0.85) inset,
+      0 0 14px rgba(255, 215, 0, 0.95),
+      0 0 26px rgba(240, 193, 75, 0.7);
+  }
+}
+
+@keyframes staff-badge-red-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 180, 180, 0.4) inset,
+      0 0 8px rgba(244, 63, 94, 0.7),
+      0 0 14px rgba(190, 18, 60, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(254, 202, 202, 0.7) inset,
+      0 0 14px rgba(255, 70, 100, 0.95),
+      0 0 26px rgba(225, 29, 72, 0.7);
+  }
+}
+
+@keyframes staff-badge-green-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(167, 243, 208, 0.4) inset,
+      0 0 8px rgba(16, 185, 129, 0.65),
+      0 0 14px rgba(4, 120, 87, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(209, 250, 229, 0.7) inset,
+      0 0 14px rgba(52, 211, 153, 0.95),
+      0 0 26px rgba(5, 150, 105, 0.65);
+  }
+}
+
+@keyframes staff-badge-purple-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(221, 214, 254, 0.4) inset,
+      0 0 8px rgba(168, 85, 247, 0.65),
+      0 0 14px rgba(109, 40, 217, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(237, 233, 254, 0.7) inset,
+      0 0 14px rgba(192, 132, 252, 0.95),
+      0 0 26px rgba(124, 58, 237, 0.65);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .staff-badge,
+  .staff-badge__shine {
+    animation: none;
+  }
+}

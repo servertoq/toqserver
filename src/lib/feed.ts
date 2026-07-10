@@ -3,6 +3,20 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FeedComment, FeedCommunity, FeedCoachListing, FeedPost, FeedProfile } from "@/types/feed";
 import type { FeedClubCourt } from "@/types/courtManagement";
 import type { UserPlan } from "@/types/plans";
+import type { StaffRole } from "@/types/staff";
+import { staffRoleFromEmbed } from "@/lib/staff";
+
+type StaffMemberEmbed = { role: StaffRole } | { role: StaffRole }[] | null;
+
+type RawAuthor = {
+  id: string;
+  username: string;
+  display_name?: string | null;
+  avatar_url: string | null;
+  plan?: UserPlan;
+  show_plan_badge?: boolean;
+  staff_members?: StaffMemberEmbed;
+};
 
 type RawPostRow = {
   id: string;
@@ -14,23 +28,7 @@ type RawPostRow = {
   visibility?: "public" | "private";
   event_date?: string | null;
   event_time?: string | null;
-  author:
-    | {
-        id: string;
-        username: string;
-        display_name?: string | null;
-        avatar_url: string | null;
-        plan?: UserPlan;
-        show_plan_badge?: boolean;
-      }
-    | {
-        id: string;
-        username: string;
-        display_name?: string | null;
-        avatar_url: string | null;
-        plan?: UserPlan;
-        show_plan_badge?: boolean;
-      }[];
+  author: RawAuthor | RawAuthor[];
   images: { url: string; sort_order: number; media_type?: "image" | "video" }[] | null;
   communities: { name: string; slug: string; accent_color: string } | { name: string; slug: string; accent_color: string }[] | null;
   mentions?: { mentioned_user: FeedProfile | FeedProfile[] | null }[] | null;
@@ -50,6 +48,21 @@ type RawPostRow = {
 function one<T>(value: T | T[] | null | undefined): T | null {
   if (value == null) return null;
   return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+function mapFeedAuthor(author: RawAuthor | null): FeedProfile {
+  if (!author) {
+    return { id: "", username: "jogador", avatar_url: null, plan: "free", show_plan_badge: true, staff_role: null };
+  }
+  return {
+    id: author.id,
+    username: author.username,
+    display_name: author.display_name,
+    avatar_url: author.avatar_url,
+    plan: author.plan,
+    show_plan_badge: author.show_plan_badge,
+    staff_role: staffRoleFromEmbed(author.staff_members),
+  };
 }
 
 export function mapPostRow(
@@ -82,7 +95,7 @@ export function mapPostRow(
     event_date: row.event_date ?? null,
     event_time: row.event_time ?? null,
     mentions: mapMentionRows(row.mentions),
-    author: author ?? { id: "", username: "jogador", avatar_url: null, plan: "free", show_plan_badge: true },
+    author: mapFeedAuthor(author),
     images: (row.images ?? [])
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((img) => ({

@@ -70,7 +70,7 @@ export function StaffToolsPanel({ onAction }: Props) {
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Motivo do banimento (opcional)"
-            className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+            className="toq-input mt-2 w-full px-3 py-2 text-sm"
           />
           <div className="mt-2 flex flex-wrap gap-2">
             <button
@@ -96,7 +96,7 @@ export function StaffToolsPanel({ onAction }: Props) {
                   supabase.rpc("staff_unban_user", { p_user_id: selectedUser!.id })
                 )
               }
-              className="rounded-lg border border-green-200 px-3 py-1.5 text-xs font-semibold text-green-700 disabled:opacity-50"
+              className="rounded-lg toq-btn-outline px-3 py-1.5 text-xs text-green-600 disabled:opacity-50"
             >
               Desbanir usuário
             </button>
@@ -120,7 +120,7 @@ export function StaffToolsPanel({ onAction }: Props) {
           <select
             value={selectedPlan}
             onChange={(e) => setSelectedPlan(e.target.value as UserPlan)}
-            className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+            className="toq-input mt-2 w-full px-3 py-2 text-sm"
           >
             {STAFF_ASSIGNABLE_PLANS.map((plan) => (
               <option key={plan} value={plan}>
@@ -146,7 +146,7 @@ export function StaffToolsPanel({ onAction }: Props) {
                 false
               );
             }}
-            className="mt-2 rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+            className="mt-2 rounded-lg toq-btn-primary px-3 py-1.5 text-xs text-white disabled:opacity-50"
           >
             Salvar plano
           </button>

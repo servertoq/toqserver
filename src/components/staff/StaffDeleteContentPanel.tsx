@@ -65,10 +65,8 @@ export function StaffDeleteContentPanel({ onAction }: Props) {
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-              tab === t.id
-                ? "bg-[var(--toq-navy)] text-white"
-                : "border border-slate-200 text-[var(--toq-navy)] hover:bg-slate-50"
+            className={`rounded-lg px-3 py-1.5 text-xs transition ${
+              tab === t.id ? "toq-btn-primary text-white" : "toq-btn-outline"
             }`}
           >
             {t.label}
@@ -135,7 +133,7 @@ function DateRangeFilter({
           type="date"
           value={from}
           onChange={(e) => onFromChange(e.target.value)}
-          className="mt-1 block w-full min-w-[140px] rounded-xl border border-slate-200 px-3 py-2 text-sm"
+          className="toq-input mt-1 block w-full min-w-[140px] px-3 py-2 text-sm"
         />
       </label>
       <label className="text-xs text-[var(--toq-text-muted)]">
@@ -144,7 +142,7 @@ function DateRangeFilter({
           type="date"
           value={to}
           onChange={(e) => onToChange(e.target.value)}
-          className="mt-1 block w-full min-w-[140px] rounded-xl border border-slate-200 px-3 py-2 text-sm"
+          className="toq-input mt-1 block w-full min-w-[140px] px-3 py-2 text-sm"
         />
       </label>
     </div>
@@ -221,7 +219,7 @@ function StaffUserPostsDelete({ onAction }: { onAction: () => void }) {
         type="button"
         disabled={!user || loading}
         onClick={() => void load()}
-        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-[var(--toq-navy)] hover:bg-slate-50 disabled:opacity-50"
+        className="rounded-lg toq-btn-outline px-3 py-1.5 text-xs disabled:opacity-50"
       >
         {loading ? "Buscando…" : "Aplicar filtro de data"}
       </button>
@@ -352,7 +350,7 @@ function StaffUserCommentsDelete({ onAction }: { onAction: () => void }) {
         type="button"
         disabled={!user || loading}
         onClick={() => void load()}
-        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-[var(--toq-navy)] hover:bg-slate-50 disabled:opacity-50"
+        className="rounded-lg toq-btn-outline px-3 py-1.5 text-xs disabled:opacity-50"
       >
         {loading ? "Buscando…" : "Aplicar filtro de data"}
       </button>
@@ -531,7 +529,7 @@ function StaffNamedResourceDelete({
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
         autoComplete="off"
-        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+        className="toq-input w-full px-3 py-2 text-sm"
       />
 
       {error && (
