@@ -38,10 +38,14 @@ export function usePostOwnerActions({
   const { isSubmitting: deleting, guard: guardDelete } = useSingleSubmit();
 
   const handleEdit = useCallback((post: FeedPost) => {
+    if (post.coach_listing || post.is_coach_listing) return;
+    if (post.club_court || post.is_club_court) return;
     setEditingPost(post);
   }, []);
 
   const handleDeleteRequest = useCallback((post: FeedPost) => {
+    if (post.coach_listing || post.is_coach_listing) return;
+    if (post.club_court || post.is_club_court) return;
     setDeleteTarget(post);
   }, []);
 

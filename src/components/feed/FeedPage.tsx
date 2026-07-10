@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { mapPostRow } from "@/lib/feed";
+import { fetchClubCourtsForPosts, fetchCoachListingsForPosts, mapPostRow } from "@/lib/feed";
 import type { FeedPost } from "@/types/feed";
 import type { AgendaEvent } from "@/types/agenda";
 import {
@@ -22,6 +22,8 @@ import { loadBoostedFeedPosts, mergeBoostedIntoFeed } from "@/lib/feedBoost";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { FloatingMessages } from "@/components/messages/FloatingMessages";
 import { AgendaReminderDialog } from "@/components/agenda/AgendaReminderDialog";
+import { CoachEnrollDialog } from "@/components/coach/CoachEnrollDialog";
+import type { FeedCoachListing } from "@/types/feed";
 
 export function FeedPage() {
   const supabase = createClient();
@@ -36,6 +38,9 @@ export function FeedPage() {
   const [postModalOpen, setPostModalOpen] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
   const [reminderEvents, setReminderEvents] = useState<AgendaEvent[]>([]);
+  const [enrolledCoachListingIds, setEnrolledCoachListingIds] = useState<Set<string>>(new Set());
+  const [enrollTarget, setEnrollTarget] = useState<FeedCoachListing | null>(null);
+  const [userEmail, setUserEmail] = useState("");
 
   const loadFeed = useCallback(async () => {
     setError(null);
@@ -67,6 +72,20 @@ export function FeedPage() {
     const likesByPost: Record<string, number> = {};
     const commentsByPost: Record<string, number> = {};
     const likedSet = new Set<string>();
+    const coachListingsByPostId = await fetchCoachListingsForPosts(supabase, postIds);
+    const clubCourtsByPostId = await fetchClubCourtsForPosts(supabase, postIds);
+
+    const [{ data: enrollRows }, { data: profileRow }] = await Promise.all([
+      supabase
+        .from("coach_listing_enrollments")
+        .select("coach_listing_id")
+        .eq("student_id", user.id),
+      supabase.from("profiles").select("email").eq("id", user.id).single(),
+    ]);
+    setEnrolledCoachListingIds(
+      new Set((enrollRows ?? []).map((row) => row.coach_listing_id as string))
+    );
+    setUserEmail((profileRow?.email as string) ?? "");
 
     if (postIds.length > 0) {
       const { data: likes } = await supabase
@@ -96,7 +115,10 @@ export function FeedPage() {
             row,
             likesByPost[row.id] ?? 0,
             commentsByPost[row.id] ?? 0,
-            likedSet.has(row.id)
+            likedSet.has(row.id),
+            new Set(coachListingsByPostId.keys()),
+            coachListingsByPostId,
+            clubCourtsByPostId
           )
         ),
         await loadBoostedFeedPosts(supabase, user.id, new Set(postIds))
@@ -223,6 +245,8 @@ export function FeedPage() {
                 onLikeToggle={handleLikeToggle}
                 onEditPost={ownerMenuProps.onEditPost}
                 onDeletePost={ownerMenuProps.onDeletePost}
+                enrolledCoachListingIds={enrolledCoachListingIds}
+                onEnrollCoachListing={setEnrollTarget}
               />
               <FeedDesktopPostList
                 posts={posts}
@@ -232,6 +256,8 @@ export function FeedPage() {
                 onLikeToggle={handleLikeToggle}
                 onEditPost={ownerMenuProps.onEditPost}
                 onDeletePost={ownerMenuProps.onDeletePost}
+                enrolledCoachListingIds={enrolledCoachListingIds}
+                onEnrollCoachListing={setEnrollTarget}
               />
             </>
           )}
@@ -254,6 +280,19 @@ export function FeedPage() {
         userId={profile.id}
         events={reminderEvents}
         onClose={() => setReminderOpen(false)}
+      />
+
+      <CoachEnrollDialog
+        open={!!enrollTarget}
+        listingId={enrollTarget?.id ?? ""}
+        listingTitle={enrollTarget?.title ?? ""}
+        defaultEmail={userEmail}
+        onClose={() => setEnrollTarget(null)}
+        onSuccess={() => {
+          if (enrollTarget) {
+            setEnrolledCoachListingIds((prev) => new Set(prev).add(enrollTarget.id));
+          }
+        }}
       />
 
       {ownerActionUi}

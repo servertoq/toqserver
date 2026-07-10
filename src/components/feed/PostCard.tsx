@@ -9,7 +9,9 @@ import { profileDisplayName } from "@/lib/profile";
 import { profilePath } from "@/lib/publicProfile";
 import { formatEventSchedule } from "@/lib/posts";
 import { visibilityBadgeLabel } from "@/lib/postVisibility";
-import type { FeedPost } from "@/types/feed";
+import type { FeedCoachListing, FeedPost } from "@/types/feed";
+import { CoachListingPostActions } from "@/components/coach/CoachListingPostActions";
+import { CourtListingPostActions } from "@/components/court/CourtListingPostActions";
 import { CommentsPanel } from "./CommentsPanel";
 import { PostBody } from "./PostBody";
 import { PostMediaGrid } from "./PostMediaGrid";
@@ -29,6 +31,8 @@ type Props = {
   fullBleed?: boolean;
   onEditPost?: (post: FeedPost) => void;
   onDeletePost?: (post: FeedPost) => void;
+  enrolledCoachListingIds?: Set<string>;
+  onEnrollCoachListing?: (listing: FeedCoachListing) => void;
 };
 
 export function PostCard({
@@ -41,6 +45,8 @@ export function PostCard({
   fullBleed = false,
   onEditPost,
   onDeletePost,
+  enrolledCoachListingIds,
+  onEnrollCoachListing,
 }: Props) {
   const articleRef = useRef<HTMLElement>(null);
   const [liked, setLiked] = useState(post.liked_by_me);
@@ -48,9 +54,13 @@ export function PostCard({
   const [commentsCount, setCommentsCount] = useState(post.comments_count);
   const [showComments, setShowComments] = useState(!!highlightCommentId);
   const [likeLoading, setLikeLoading] = useState(false);
+  const isCoachPost = post.post_type === "coach" || post.is_coach_listing;
+  const isClubCourtPost = post.post_type === "court" || post.is_club_court;
   const visBadge = visibilityBadgeLabel(post.visibility, !!post.community_id);
   const isAuthor = post.author.id === currentUserId;
-  const canManage = isAuthor && onEditPost && onDeletePost;
+  const isCoachListingPost = !!post.coach_listing || isCoachPost;
+  const isCourtListingPost = !!post.club_court || isClubCourtPost;
+  const canManage = isAuthor && onEditPost && onDeletePost && !isCoachListingPost && !isCourtListingPost;
 
   useEffect(() => {
     if (highlightPost && articleRef.current) {
@@ -133,7 +143,7 @@ export function PostCard({
             </Link>
             <PlanBadge
               plan={post.author.plan ?? "free"}
-              show={canShowPlanBadge(post.author.plan, post.author.show_plan_badge)}
+              show={!isCoachPost && canShowPlanBadge(post.author.plan, post.author.show_plan_badge)}
             />
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
@@ -141,10 +151,14 @@ export function PostCard({
                   ? "bg-[var(--toq-sky)]/15 text-[var(--toq-sky)]"
                   : post.post_type === "poll"
                     ? "bg-violet-100 text-violet-700"
-                    : "bg-slate-100 text-[var(--toq-text-muted)]"
+                    : isCoachPost
+                      ? "bg-emerald-100 text-emerald-800"
+                      : isClubCourtPost
+                        ? "bg-sky-100 text-sky-800"
+                        : "bg-slate-100 text-[var(--toq-text-muted)]"
               }`}
             >
-              {postTypeLabel(post.post_type)}
+              {isCoachPost ? "Professor" : isClubCourtPost ? "Quadra" : postTypeLabel(post.post_type)}
             </span>
             {visBadge && (
               <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
@@ -198,6 +212,15 @@ export function PostCard({
       ) : (
         <PostBody body={post.body} />
       )}
+      {post.coach_listing && (
+        <CoachListingPostActions
+          listing={post.coach_listing}
+          coachUsername={post.author.username}
+          enrolled={enrolledCoachListingIds?.has(post.coach_listing.id)}
+          onEnroll={() => onEnrollCoachListing?.(post.coach_listing!)}
+        />
+      )}
+      {post.club_court && <CourtListingPostActions court={post.club_court} />}
       {post.post_type === "poll" && (
         <PollBlock postId={post.id} isAuthor={post.author.id === currentUserId} />
       )}

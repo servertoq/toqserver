@@ -38,6 +38,8 @@ export function notificationMessage(n: AppNotification): string {
       return `${name} se inscreveu na sua divulgação de aulas`;
     case "coach_lesson_scheduled":
       return `${name} agendou uma aula com você`;
+    case "court_booking_request":
+      return `${name} solicitou agendamento de uma quadra`;
     default:
       return "Nova notificação";
   }
@@ -59,6 +61,10 @@ export function notificationHref(n: AppNotification): string | null {
 
   if (n.type === "coach_lesson_scheduled") {
     return "/inicio/perfil?tab=agenda";
+  }
+
+  if (n.type === "court_booking_request") {
+    return "/inicio/gestao-de-quadras";
   }
 
   if (n.type === "community_invite") {
@@ -114,6 +120,7 @@ export function mapNotificationRow(row: {
   community_invite_id: string | null;
   support_ticket_id: string | null;
   coach_lesson_id: string | null;
+  club_court_booking_id: string | null;
   actor: FeedProfile | FeedProfile[] | null;
   community:
     | { id: string; name: string; slug: string; kind?: "community" | "club" }
@@ -136,6 +143,7 @@ export function mapNotificationRow(row: {
     community_invite_id: row.community_invite_id,
     support_ticket_id: row.support_ticket_id ?? null,
     coach_lesson_id: row.coach_lesson_id ?? null,
+    club_court_booking_id: row.club_court_booking_id ?? null,
     actor: actor ?? { id: "", username: "?", avatar_url: null },
     community: community ?? null,
   };

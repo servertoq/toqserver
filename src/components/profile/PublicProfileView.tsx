@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { mapPostRow } from "@/lib/feed";
+import { fetchCoachListingsForPosts, mapPostRow } from "@/lib/feed";
 import { addressFromRow } from "@/lib/address";
 import { POST_SELECT } from "@/lib/posts";
 import type { GenderType, PlayerLevelType } from "@/lib/profile";
@@ -102,13 +102,17 @@ export function PublicProfileView({ username }: Props) {
         }
       }
 
+      const coachListingsByPostId = await fetchCoachListingsForPosts(supabase, postIds);
+
       setPosts(
         rawPosts.map((p) =>
           mapPostRow(
             p,
             likesByPost[p.id] ?? 0,
             commentsByPost[p.id] ?? 0,
-            likedSet.has(p.id)
+            likedSet.has(p.id),
+            new Set(coachListingsByPostId.keys()),
+            coachListingsByPostId
           )
         )
       );

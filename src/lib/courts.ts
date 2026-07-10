@@ -30,6 +30,51 @@ export function normalizePhoneDigits(phone: string) {
   return digits;
 }
 
+/** Máscara enquanto digita: 0900 → 09:00 */
+export function formatTimeInputAsTyping(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+}
+
+/** Aceita 09:00, 0900 ou 9:00 e retorna minutos desde meia-noite. */
+export function parseTimeInputToMinutes(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  let h: number;
+  let m: number;
+
+  if (trimmed.includes(":")) {
+    const [hs, ms] = trimmed.split(":");
+    if (!hs || ms === undefined) return null;
+    h = parseInt(hs, 10);
+    m = parseInt(ms, 10);
+  } else {
+    const digits = trimmed.replace(/\D/g, "");
+    if (digits.length < 3 || digits.length > 4) return null;
+    h = parseInt(digits.slice(0, digits.length - 2), 10);
+    m = parseInt(digits.slice(-2), 10);
+  }
+
+  if (!Number.isFinite(h) || !Number.isFinite(m) || h < 0 || h > 23 || m < 0 || m > 59) {
+    return null;
+  }
+  return h * 60 + m;
+}
+
+export function formatMinutesAsTimeInput(minutes: number): string {
+  const h = Math.floor(minutes / 60) % 24;
+  const m = minutes % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+export function addMinutesToTimeInput(raw: string, deltaMinutes: number): string {
+  const base = parseTimeInputToMinutes(raw);
+  if (base === null) return raw;
+  return formatMinutesAsTimeInput(base + deltaMinutes);
+}
+
 export function whatsappUrl(phone: string, message?: string) {
   const digits = normalizePhoneDigits(phone);
   const base = `https://wa.me/55${digits}`;

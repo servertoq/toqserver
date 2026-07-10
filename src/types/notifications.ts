@@ -15,7 +15,8 @@ export type NotificationType =
   | "staff_suggestion_ack"
   | "staff_support_resolved"
   | "coach_new_enrollment"
-  | "coach_lesson_scheduled";
+  | "coach_lesson_scheduled"
+  | "court_booking_request";
 
 export type AppNotification = {
   id: string;
@@ -30,6 +31,7 @@ export type AppNotification = {
   community_invite_id: string | null;
   support_ticket_id: string | null;
   coach_lesson_id: string | null;
+  club_court_booking_id: string | null;
   actor: FeedProfile;
   community: { id: string; name: string; slug: string; kind?: "community" | "club" } | null;
 };

@@ -17,6 +17,7 @@ export type AppProfile = {
   plan: "free" | "professor" | "proprietario" | "proprietario_plus" | "empresario";
   showPlanBadge: boolean;
   canAccessCoachManagement: boolean;
+  canAccessCourtManagement: boolean;
 };
 
 type NavItem = {
@@ -472,6 +473,14 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
         match: (path) => path.startsWith("/inicio/gestao-de-aulas"),
       });
     }
+    if (profile.canAccessCourtManagement) {
+      items.splice(profile.canAccessCoachManagement ? 9 : 8, 0, {
+        href: "/inicio/gestao-de-quadras",
+        label: "Gestão de Quadras",
+        icon: (active) => <IconCoachManagement active={active} />,
+        match: (path) => path.startsWith("/inicio/gestao-de-quadras"),
+      });
+    }
     if (profile.staffRole) {
       items.push({
         href: "/inicio/moderacao",
@@ -481,7 +490,7 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
       });
     }
     return items;
-  }, [profile.staffRole, profile.canAccessCoachManagement]);
+  }, [profile.staffRole, profile.canAccessCoachManagement, profile.canAccessCourtManagement]);
 
   useEffect(() => {
     if (profile.isBanned && !pathname.startsWith("/inicio/bloqueado")) {

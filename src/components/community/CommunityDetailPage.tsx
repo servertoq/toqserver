@@ -29,7 +29,8 @@ import { CommunitySettingsForm } from "./CommunitySettingsForm";
 import { usePostOwnerActions } from "@/lib/usePostOwnerActions";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { addressFromRow, formatAddressLines, hasAddress } from "@/lib/address";
-import { formatOperatingHoursSummary, parseOperatingHours } from "@/lib/operatingHours";
+import { parseOperatingHours } from "@/lib/operatingHours";
+import { OperatingHoursSummary } from "@/components/shared/OperatingHoursSummary";
 
 export function CommunityDetailPage({
   slug,
@@ -323,13 +324,13 @@ export function CommunityDetailPage({
                   {myRole && ` · ${memberRoleLabel(myRole)}`}
                 </p>
                 {showClubInfo && (
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     {hasAddress(clubAddress) && (
-                      <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--toq-text-muted)]">
+                      <div className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)]/70 px-3 py-3">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--toq-text-muted)]">
                           Endereço
                         </p>
-                        <address className="mt-1 space-y-0.5 text-xs not-italic text-[var(--toq-navy)]">
+                        <address className="mt-2 space-y-0.5 text-xs not-italic leading-relaxed text-[var(--toq-navy)]">
                           {formatAddressLines(clubAddress).map((line) => (
                             <span key={line} className="block">
                               {line}
@@ -338,16 +339,7 @@ export function CommunityDetailPage({
                         </address>
                       </div>
                     )}
-                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--toq-text-muted)]">
-                          Horários
-                        </p>
-                        <ul className="mt-1 space-y-0.5 text-xs text-[var(--toq-navy)]">
-                          {formatOperatingHoursSummary(clubHours).map((line) => (
-                            <li key={line}>{line}</li>
-                          ))}
-                        </ul>
-                      </div>
+                    <OperatingHoursSummary hours={clubHours} />
                   </div>
                 )}
               </div>
@@ -372,7 +364,7 @@ export function CommunityDetailPage({
                   <button
                     type="button"
                     onClick={() => setShowSettings(true)}
-                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-[var(--toq-navy)]"
+                    className="rounded-lg toq-btn-outline px-3 py-1.5 text-xs font-bold"
                   >
                     Configurações
                   </button>

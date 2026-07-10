@@ -1,4 +1,6 @@
-export type PostType = "player" | "event" | "poll";
+import type { FeedClubCourt } from "@/types/courtManagement";
+
+export type PostType = "player" | "event" | "poll" | "coach" | "court";
 
 export type PostVisibility = "public" | "private";
 
@@ -38,6 +40,14 @@ export type PostImage = {
   media_type?: "image" | "video";
 };
 
+export type FeedCoachListing = {
+  id: string;
+  user_id: string;
+  title: string;
+  price_label: string;
+  contact_whatsapp: string;
+};
+
 export type FeedPost = {
   id: string;
   body: string;
@@ -57,6 +67,10 @@ export type FeedPost = {
   liked_by_me: boolean;
   poll: PostPollMeta | null;
   is_boosted?: boolean;
+  is_coach_listing?: boolean;
+  coach_listing?: FeedCoachListing | null;
+  is_club_court?: boolean;
+  club_court?: FeedClubCourt | null;
 };
 
 export type FeedComment = {

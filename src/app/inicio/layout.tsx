@@ -4,6 +4,7 @@ import type { AppProfile } from "@/components/app/AppSidebar";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { normalizePlan } from "@/lib/plans";
+import { resolveCanAccessCourtManagement } from "@/lib/courtManagementAccess";
 
 export default async function InicioLayout({
   children,
@@ -40,6 +41,13 @@ export default async function InicioLayout({
       supabase.from("coach_listings").select("id").eq("user_id", user.id).maybeSingle(),
     ]);
 
+  const staffRoleValue = (staffRole as AppProfile["staffRole"]) ?? null;
+  const canAccessCourtManagement = await resolveCanAccessCourtManagement(
+    supabase,
+    user.id,
+    staffRoleValue
+  );
+
   const canAccessCoachManagement =
     Boolean(coachManagement) || Boolean(myCoachListing);
 
@@ -50,11 +58,12 @@ export default async function InicioLayout({
         username: profile.username,
         display_name: profile.display_name ?? null,
         avatar_url: profile.avatar_url,
-        staffRole: (staffRole as AppProfile["staffRole"]) ?? null,
+        staffRole: staffRoleValue,
         isBanned: profile.is_banned ?? false,
         plan: normalizePlan((profile.plan as AppProfile["plan"]) ?? "free"),
         showPlanBadge: profile.show_plan_badge ?? true,
         canAccessCoachManagement: Boolean(coachManagement),
+        canAccessCourtManagement,
       }}
     >
       {children}

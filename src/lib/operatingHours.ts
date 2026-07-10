@@ -15,6 +15,56 @@ export const WEEKDAY_LABELS = [
   "Sábado",
 ] as const;
 
+export const WEEKDAY_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
+
+export type OperatingHoursGroup = {
+  label: string;
+  closed: boolean;
+  open: string;
+  close: string;
+};
+
+function formatDayRangeShort(days: number[]): string {
+  if (days.length === 0) return "";
+  if (days.length === 1) return WEEKDAY_SHORT[days[0]!] ?? `Dia ${days[0]}`;
+  const first = WEEKDAY_SHORT[days[0]!] ?? String(days[0]);
+  const last = WEEKDAY_SHORT[days[days.length - 1]!] ?? String(days[days.length - 1]);
+  return `${first}–${last}`;
+}
+
+/** Agrupa dias consecutivos com o mesmo horário (ex.: Seg–Sex 08:00–18:00). */
+export function groupOperatingHours(hours: DayHours[]): OperatingHoursGroup[] {
+  const sorted = [...hours].sort((a, b) => a.day - b.day);
+  const groups: Array<{ days: number[]; closed: boolean; open: string; close: string }> = [];
+
+  for (const h of sorted) {
+    const last = groups[groups.length - 1];
+    if (
+      last &&
+      last.closed === h.closed &&
+      last.open === h.open &&
+      last.close === h.close &&
+      last.days[last.days.length - 1] === h.day - 1
+    ) {
+      last.days.push(h.day);
+    } else {
+      groups.push({
+        days: [h.day],
+        closed: h.closed,
+        open: h.open,
+        close: h.close,
+      });
+    }
+  }
+
+  return groups.map((g) => ({
+    label: formatDayRangeShort(g.days),
+    closed: g.closed,
+    open: g.open,
+    close: g.close,
+  }));
+}
+
 export function defaultOperatingHours(): DayHours[] {
   return Array.from({ length: 7 }, (_, day) => ({
     day,

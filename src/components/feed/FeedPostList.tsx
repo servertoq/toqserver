@@ -4,7 +4,7 @@ import { FeedAdCarousel } from "./FeedAdCarousel";
 import { FeedFriendSuggestions } from "./FeedFriendSuggestions";
 import { PostCard } from "./PostCard";
 import { buildFeedTimeline } from "@/lib/feedTimeline";
-import type { FeedPost } from "@/types/feed";
+import type { FeedCoachListing, FeedPost } from "@/types/feed";
 
 type ListProps = {
   posts: FeedPost[];
@@ -14,6 +14,8 @@ type ListProps = {
   onLikeToggle: (postId: string, liked: boolean) => Promise<void>;
   onEditPost?: (post: FeedPost) => void;
   onDeletePost?: (post: FeedPost) => void;
+  enrolledCoachListingIds?: Set<string>;
+  onEnrollCoachListing?: (listing: FeedCoachListing) => void;
 };
 
 function PostListItem({
@@ -24,6 +26,8 @@ function PostListItem({
   onLikeToggle,
   onEditPost,
   onDeletePost,
+  enrolledCoachListingIds,
+  onEnrollCoachListing,
 }: Omit<ListProps, "posts"> & { post: FeedPost }) {
   return (
     <li>
@@ -37,6 +41,8 @@ function PostListItem({
         onCommentCountChange={() => {}}
         onEditPost={onEditPost}
         onDeletePost={onDeletePost}
+        enrolledCoachListingIds={enrolledCoachListingIds}
+        onEnrollCoachListing={onEnrollCoachListing}
       />
     </li>
   );
@@ -50,6 +56,8 @@ export function FeedDesktopPostList({
   onLikeToggle,
   onEditPost,
   onDeletePost,
+  enrolledCoachListingIds,
+  onEnrollCoachListing,
 }: ListProps) {
   return (
     <ul className="feed-post-list hidden space-y-0 md:block md:space-y-4">
@@ -63,6 +71,8 @@ export function FeedDesktopPostList({
           onLikeToggle={onLikeToggle}
           onEditPost={onEditPost}
           onDeletePost={onDeletePost}
+          enrolledCoachListingIds={enrolledCoachListingIds}
+          onEnrollCoachListing={onEnrollCoachListing}
         />
       ))}
     </ul>
@@ -77,6 +87,8 @@ export function FeedMobileTimeline({
   onLikeToggle,
   onEditPost,
   onDeletePost,
+  enrolledCoachListingIds,
+  onEnrollCoachListing,
 }: ListProps) {
   const timeline = buildFeedTimeline(posts);
 
@@ -94,6 +106,8 @@ export function FeedMobileTimeline({
               onLikeToggle={onLikeToggle}
               onEditPost={onEditPost}
               onDeletePost={onDeletePost}
+              enrolledCoachListingIds={enrolledCoachListingIds}
+              onEnrollCoachListing={onEnrollCoachListing}
             />
           );
         }

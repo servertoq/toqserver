@@ -10,6 +10,7 @@ type Props = {
   cancelLabel?: string;
   variant?: "danger" | "default";
   loading?: boolean;
+  priority?: "normal" | "high";
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -22,6 +23,7 @@ export function ConfirmDialog({
   cancelLabel = "Cancelar",
   variant = "default",
   loading = false,
+  priority = "normal",
   onConfirm,
   onCancel,
 }: Props) {
@@ -38,7 +40,9 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className={`fixed inset-0 flex items-center justify-center bg-black/40 p-4 ${
+        priority === "high" ? "z-[60]" : "z-50"
+      }`}
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !loading) onCancel();

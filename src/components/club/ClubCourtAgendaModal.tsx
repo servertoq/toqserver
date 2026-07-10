@@ -1,11 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useAppProfile } from "@/components/app/AppShell";
+import {
+  addMinutesToTimeInput,
+  formatTimeInputAsTyping,
+  parseTimeInputToMinutes,
+} from "@/lib/courts";
 import type { ClubCourt, ClubCourtBlock, ClubCourtHours } from "@/types/clubFeatures";
 
-const SLOT_STEP = 30;
+const SLOT_STEP = 60;
 
 type AgendaSlot = {
   startMin: number;
@@ -30,12 +36,6 @@ function minutesToHHMM(min: number) {
 
 function overlaps(aStart: number, aEnd: number, bStart: number, bEnd: number) {
   return aStart < bEnd && bStart < aEnd;
-}
-
-function isValidTimeHHMM(value: string) {
-  if (!/^\d{2}:\d{2}$/.test(value)) return false;
-  const [h, m] = value.split(":").map(Number);
-  return h >= 0 && h <= 23 && m >= 0 && m <= 59;
 }
 
 function toISODate(d: Date) {
@@ -75,6 +75,19 @@ function blocksForDay(blocks: ClubCourtBlock[], dateISO: string) {
     const s = new Date(b.start_ts).getTime();
     const e = new Date(b.end_ts).getTime();
     return s < dayEnd && e > dayStart;
+  });
+}
+
+function rangeOverlapsExistingBlocks(
+  blocks: ClubCourtBlock[],
+  dateISO: string,
+  startMin: number,
+  endMin: number
+) {
+  return blocksForDay(blocks, dateISO).some((b) => {
+    const range = blockRangeOnDay(b, dateISO);
+    if (!range) return false;
+    return overlaps(startMin, endMin, range.startMin, range.endMin);
   });
 }
 
@@ -151,13 +164,13 @@ function dayFillLabel(status: DayFillStatus) {
 function dayCardClasses(status: DayFillStatus, isSelected: boolean) {
   const base =
     status === "full"
-      ? "border-red-400 bg-red-100"
+      ? "border-red-400/80 bg-red-500/15"
       : status === "partial"
-        ? "border-amber-400 bg-amber-100"
+        ? "border-amber-400/80 bg-amber-500/15"
         : status === "closed"
-          ? "border-slate-200 bg-slate-100"
-          : "border-emerald-200 bg-emerald-50";
-  const selected = isSelected ? "ring-2 ring-[var(--toq-navy)] ring-offset-1" : "";
+          ? "border-[var(--toq-border)] bg-[var(--toq-surface)]"
+          : "border-emerald-500/40 bg-emerald-500/10";
+  const selected = isSelected ? "ring-2 ring-[var(--toq-accent)] ring-offset-1 ring-offset-[var(--toq-card)]" : "";
   return `${base} ${selected}`;
 }
 
@@ -175,16 +188,56 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
   const todayISO = toISODate(new Date());
   const [weekStart, setWeekStart] = useState(() => startOfWeekMonday(new Date()));
   const [selectedDate, setSelectedDate] = useState(todayISO);
-  const [rangeStartMin, setRangeStartMin] = useState<number | null>(null);
   const [formStart, setFormStart] = useState("08:00");
   const [formEnd, setFormEnd] = useState("10:00");
   const [reason, setReason] = useState("Locado");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<{ id: string; timeLabel: string } | null>(null);
+  const [localBlocks, setLocalBlocks] = useState<ClubCourtBlock[]>(court.blocks ?? []);
+
+  const refreshLocalBlocks = useCallback(async () => {
+    const { data, error: fetchErr } = await supabase
+      .from("club_court_blocks")
+      .select("id, court_id, start_ts, end_ts, reason")
+      .eq("court_id", court.id)
+      .order("start_ts");
+
+    if (!fetchErr) {
+      setLocalBlocks((data ?? []) as ClubCourtBlock[]);
+    }
+  }, [court.id, supabase]);
+
+  useEffect(() => {
+    setLocalBlocks(court.blocks ?? []);
+  }, [court.blocks, court.id]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`club-court-agenda-${court.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "club_court_blocks",
+          filter: `court_id=eq.${court.id}`,
+        },
+        () => {
+          void refreshLocalBlocks();
+          onChanged();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [court.id, onChanged, refreshLocalBlocks, supabase]);
 
   const weekDates = useMemo(() => weekDatesFromStart(weekStart), [weekStart]);
   const hours = court.hours ?? [];
-  const blocks = court.blocks ?? [];
+  const blocks = localBlocks;
 
   const weekSummary = useMemo(() => {
     return weekDates.map((iso) => {
@@ -233,19 +286,21 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
     const next = new Date(weekStart);
     next.setDate(weekStart.getDate() + delta * 7);
     setWeekStart(next);
-    setRangeStartMin(null);
   }
 
   function goToday() {
     setWeekStart(startOfWeekMonday(new Date()));
     setSelectedDate(todayISO);
-    setRangeStartMin(null);
   }
 
   async function createBlock(startMin: number, endMin: number) {
     if (!canManage) return;
     if (endMin <= startMin) {
       setError("O horário final deve ser depois do inicial.");
+      return;
+    }
+    if (rangeOverlapsExistingBlocks(blocks, selectedDate, startMin, endMin)) {
+      setError("Este horário já está reservado neste dia para esta quadra.");
       return;
     }
     setSaving(true);
@@ -261,30 +316,48 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
         created_by: profile.id,
       });
       if (blkErr) {
-        setError(blkErr.message);
+        setError(
+          blkErr.message.includes("Horário já reservado")
+            ? "Este horário já está reservado neste dia para esta quadra."
+            : blkErr.message
+        );
         return;
       }
-      setRangeStartMin(null);
+      await refreshLocalBlocks();
       onChanged();
     } finally {
       setSaving(false);
     }
   }
 
-  async function removeBlock(blockId: string) {
-    if (!canManage) return;
+  async function removeBlock(blockId: string): Promise<boolean> {
+    if (!canManage) return false;
     setSaving(true);
     setError(null);
     try {
       const { error: delErr } = await supabase.from("club_court_blocks").delete().eq("id", blockId);
       if (delErr) {
         setError(delErr.message);
-        return;
+        return false;
       }
+      await refreshLocalBlocks();
       onChanged();
+      return true;
     } finally {
       setSaving(false);
     }
+  }
+
+  function handleFormStartChange(raw: string) {
+    const formatted = formatTimeInputAsTyping(raw);
+    setFormStart(formatted);
+    if (parseTimeInputToMinutes(formatted) !== null) {
+      setFormEnd(addMinutesToTimeInput(formatted, SLOT_STEP));
+    }
+  }
+
+  function handleFormEndChange(raw: string) {
+    setFormEnd(formatTimeInputAsTyping(raw));
   }
 
   function handleSlotClick(slot: AgendaSlot) {
@@ -292,80 +365,67 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
 
     if (slot.status === "blocked" && slot.block) {
       if (!canManage) return;
-      if (confirm("Remover este horário locado/bloqueado?")) {
-        void removeBlock(slot.block.id);
-      }
+      setRemoveTarget({
+        id: slot.block.id,
+        timeLabel: `${slot.label}–${minutesToHHMM(slot.endMin)}`,
+      });
       return;
     }
 
     if (!canManage) return;
 
-    if (rangeStartMin === null) {
-      setRangeStartMin(slot.startMin);
-      return;
-    }
-
-    const start = Math.min(rangeStartMin, slot.startMin);
-    const end = Math.max(rangeStartMin, slot.endMin);
-    void createBlock(start, end);
-  }
-
-  function isSlotInPendingRange(slot: AgendaSlot) {
-    if (rangeStartMin === null) return false;
-    return slot.startMin === rangeStartMin;
+    setFormStart(slot.label);
+    setFormEnd(minutesToHHMM(slot.endMin));
+    void createBlock(slot.startMin, slot.endMin);
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-2 sm:items-center sm:p-4">
-      <div className="flex max-h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
-        <div className="shrink-0 border-b border-slate-200 p-4 sm:p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-bold text-[var(--toq-navy)]">Agenda da quadra</h2>
-              <p className="mt-0.5 text-sm font-semibold text-[var(--toq-navy)]">{court.name}</p>
-              <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
-                {canManage
-                  ? "Marque dia e horário já locados. Na semana: amarelo = parte do dia reservada, vermelho = dia lotado."
-                  : "Na semana: amarelo = algumas horas reservadas, vermelho = dia inteiro lotado. Atualiza em tempo real."}
-              </p>
+    <>
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-2 sm:items-center sm:p-3">
+      <div className="flex max-h-[min(88vh,720px)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] shadow-xl">
+        <div className="shrink-0 border-b border-[var(--toq-border)] p-3 sm:p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h2 className="text-base font-bold text-[var(--toq-navy)]">Agenda da quadra</h2>
+              <p className="truncate text-sm font-semibold text-[var(--toq-navy)]">{court.name}</p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="shrink-0 text-sm font-semibold text-[var(--toq-text-muted)]"
+              className="shrink-0 rounded-lg border border-[var(--toq-border)] px-2.5 py-1 text-xs font-bold text-[var(--toq-navy)]"
             >
               Fechar
             </button>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+          <div className="mt-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => shiftWeek(-1)}
-                className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm font-bold text-[var(--toq-navy)]"
+                className="toq-btn-outline rounded-lg px-2 py-1 text-sm font-bold"
               >
                 ‹
               </button>
               <button
                 type="button"
                 onClick={goToday}
-                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-[var(--toq-navy)]"
+                className="toq-btn-outline rounded-lg px-2.5 py-1 text-[11px] font-bold"
               >
                 Hoje
               </button>
               <button
                 type="button"
                 onClick={() => shiftWeek(1)}
-                className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm font-bold text-[var(--toq-navy)]"
+                className="toq-btn-outline rounded-lg px-2 py-1 text-sm font-bold"
               >
                 ›
               </button>
             </div>
-            <span className="text-xs font-semibold text-[var(--toq-text-muted)]">{weekLabel}</span>
+            <span className="text-[11px] font-semibold text-[var(--toq-text-muted)]">{weekLabel}</span>
           </div>
 
-          <div className="mt-3 grid grid-cols-7 gap-1">
+          <div className="mt-2 grid grid-cols-7 gap-1">
             {weekSummary.map((day) => {
               const isSelected = day.iso === selectedDate;
               const isToday = day.iso === todayISO;
@@ -373,34 +433,23 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
                 <button
                   key={day.iso}
                   type="button"
-                  onClick={() => {
-                    setSelectedDate(day.iso);
-                    setRangeStartMin(null);
-                  }}
-                  className={`rounded-xl border px-1 py-2 text-center transition hover:opacity-90 ${dayCardClasses(day.fill, isSelected)}`}
+                  onClick={() => setSelectedDate(day.iso)}
+                  className={`rounded-lg border px-0.5 py-1.5 text-center transition hover:opacity-90 ${dayCardClasses(day.fill, isSelected)}`}
                 >
-                  <span className="block text-[10px] font-bold text-[var(--toq-navy)]">
+                  <span className="block text-[9px] font-bold text-[var(--toq-navy)]">
                     {weekdayLabel(day.weekday)}
                   </span>
                   <span
-                    className={`mt-0.5 block text-sm font-bold ${
-                      isToday ? "text-[var(--toq-sky)]" : "text-[var(--toq-navy)]"
+                    className={`mt-0.5 block text-xs font-bold ${
+                      isToday ? "text-[var(--toq-accent)]" : "text-[var(--toq-navy)]"
                     }`}
                   >
                     {parseISODate(day.iso).getDate()}
                   </span>
                   {day.fill === "closed" ? (
-                    <span className="mt-1 block text-[9px] text-slate-500">Fechado</span>
+                    <span className="mt-0.5 block text-[8px] text-[var(--toq-text-muted)]">—</span>
                   ) : (
-                    <span
-                      className={`mt-1 block text-[9px] font-semibold ${
-                        day.fill === "full"
-                          ? "text-red-800"
-                          : day.fill === "partial"
-                            ? "text-amber-800"
-                            : "text-emerald-800"
-                      }`}
-                    >
+                    <span className="mt-0.5 block text-[8px] font-semibold text-[var(--toq-text-muted)]">
                       {day.blocked}/{day.total}
                     </span>
                   )}
@@ -409,32 +458,23 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
             })}
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-3 text-[10px] font-semibold">
-            <span className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded border border-emerald-300 bg-emerald-50" />
-              Dia livre
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[9px] font-semibold text-[var(--toq-text-muted)]">
+            <span className="flex items-center gap-1">
+              <span className="h-2.5 w-2.5 rounded border border-emerald-500/50 bg-emerald-500/15" />
+              Livre
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded border border-amber-400 bg-amber-100" />
-              Parte reservada
+            <span className="flex items-center gap-1">
+              <span className="h-2.5 w-2.5 rounded border border-amber-400/80 bg-amber-500/15" />
+              Parcial
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded border border-red-400 bg-red-100" />
-              Dia lotado
+            <span className="flex items-center gap-1">
+              <span className="h-2.5 w-2.5 rounded border border-red-400/80 bg-red-500/15" />
+              Lotado
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded border border-slate-200 bg-slate-100" />
-              Fechado
-            </span>
-            {canManage && rangeStartMin !== null && (
-              <span className="text-[var(--toq-sky)]">
-                Início: {minutesToHHMM(rangeStartMin)} — escolha o fim
-              </span>
-            )}
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+        <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
           {error && (
             <p className="mb-3 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600">{error}</p>
           )}
@@ -442,20 +482,20 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm font-bold text-[var(--toq-navy)]">
               {parseISODate(selectedDate).toLocaleDateString("pt-BR", {
-                weekday: "long",
+                weekday: "short",
                 day: "numeric",
-                month: "long",
+                month: "short",
               })}
             </p>
             <span
-              className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+              className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                 selectedDayFill === "full"
-                  ? "bg-red-200 text-red-900"
+                  ? "bg-red-500/20 text-red-700 dark:text-red-300"
                   : selectedDayFill === "partial"
-                    ? "bg-amber-200 text-amber-900"
+                    ? "bg-amber-500/20 text-amber-800 dark:text-amber-200"
                     : selectedDayFill === "closed"
-                      ? "bg-slate-200 text-slate-700"
-                      : "bg-emerald-100 text-emerald-900"
+                      ? "bg-[var(--toq-surface)] text-[var(--toq-text-muted)]"
+                      : "bg-emerald-500/15 text-emerald-800 dark:text-emerald-200"
               }`}
             >
               {dayFillLabel(selectedDayFill)}
@@ -463,60 +503,58 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
           </div>
 
           {canManage && daySlots.length > 0 && (
-            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-bold text-[var(--toq-navy)]">Marcar locação (dia e horário)</p>
-              <div className="mt-2 grid gap-2 sm:grid-cols-3">
-                <label className="block">
-                  <span className="text-[10px] font-semibold text-[var(--toq-navy)]">Início</span>
+            <div className="mt-3 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-3">
+              <p className="text-[11px] font-bold text-[var(--toq-navy)]">Marcar locação</p>
+              <div className="mt-2 flex flex-wrap items-end gap-2">
+                <label className="min-w-[5.5rem] flex-1">
+                  <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">Início</span>
                   <input
                     value={formStart}
-                    onChange={(e) => setFormStart(e.target.value)}
+                    onChange={(e) => handleFormStartChange(e.target.value)}
+                    inputMode="numeric"
                     placeholder="08:00"
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                    maxLength={5}
+                    className="toq-input mt-0.5 w-full px-2 py-1.5 text-sm"
                   />
                 </label>
-                <label className="block">
-                  <span className="text-[10px] font-semibold text-[var(--toq-navy)]">Fim</span>
+                <label className="min-w-[5.5rem] flex-1">
+                  <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">Fim</span>
                   <input
                     value={formEnd}
-                    onChange={(e) => setFormEnd(e.target.value)}
+                    onChange={(e) => handleFormEndChange(e.target.value)}
+                    inputMode="numeric"
                     placeholder="10:00"
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                    maxLength={5}
+                    className="toq-input mt-0.5 w-full px-2 py-1.5 text-sm"
                   />
                 </label>
-                <div className="flex items-end">
-                  <button
-                    type="button"
-                    disabled={saving}
-                    onClick={() => {
-                      if (!isValidTimeHHMM(formStart) || !isValidTimeHHMM(formEnd)) {
-                        setError("Use horários no formato HH:MM (ex.: 08:00).");
-                        return;
-                      }
-                      const start = toMinutes(`${formStart}:00`);
-                      const end = toMinutes(`${formEnd}:00`);
-                      void createBlock(start, end);
-                    }}
-                    className="w-full rounded-lg bg-[var(--toq-navy)] py-2 text-xs font-bold text-white disabled:opacity-50"
-                  >
-                    Marcar locado
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => {
+                    const start = parseTimeInputToMinutes(formStart);
+                    const end = parseTimeInputToMinutes(formEnd);
+                    if (start === null || end === null) {
+                      setError("Use horários válidos (ex.: 08:00 ou 0800).");
+                      return;
+                    }
+                    void createBlock(start, end);
+                  }}
+                  className="toq-btn-primary shrink-0 rounded-lg px-4 py-1.5 text-xs font-bold disabled:opacity-50"
+                >
+                  Marcar locado
+                </button>
               </div>
-              <p className="mt-2 text-[10px] text-[var(--toq-text-muted)]">
-                Ou clique em dois horários na grade abaixo (início e fim).
-              </p>
             </div>
           )}
 
           {daySlots.length === 0 ? (
-            <p className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-[var(--toq-text-muted)]">
-              Quadra fechada neste dia. Ajuste o funcionamento em Editar quadra.
+            <p className="mt-3 rounded-xl border border-dashed border-[var(--toq-border)] bg-[var(--toq-surface)] p-4 text-center text-sm text-[var(--toq-text-muted)]">
+              Quadra fechada neste dia.
             </p>
           ) : (
-            <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+            <div className="mt-3 grid grid-cols-4 gap-1.5 sm:grid-cols-6 md:grid-cols-7">
               {daySlots.map((slot) => {
-                const pending = isSlotInPendingRange(slot);
                 const blocked = slot.status === "blocked";
                 return (
                   <button
@@ -524,13 +562,11 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
                     type="button"
                     disabled={saving || (!canManage && !blocked)}
                     onClick={() => handleSlotClick(slot)}
-                    className={`rounded-lg border px-2 py-2.5 text-xs font-bold transition disabled:cursor-default ${
+                    className={`rounded-md border px-1 py-1.5 text-[11px] font-bold transition disabled:cursor-default ${
                       blocked
-                        ? "border-red-300 bg-red-100 text-red-800 hover:bg-red-200"
-                        : pending
-                          ? "border-[var(--toq-sky)] bg-[var(--toq-sky)]/10 text-[var(--toq-navy)] ring-2 ring-[var(--toq-sky)]"
-                          : "border-emerald-200 bg-emerald-50 text-emerald-900 hover:border-emerald-400"
-                    } ${!canManage && !blocked ? "opacity-90" : ""}`}
+                        ? "border-red-500/50 bg-red-500/20 text-red-800 dark:text-red-200 hover:bg-red-500/30"
+                        : "border-emerald-500/35 bg-emerald-500/10 text-[var(--toq-navy)] hover:border-emerald-500/60"
+                    }`}
                   >
                     {slot.label}
                   </button>
@@ -540,42 +576,33 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
           )}
 
           {canManage && (
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <label className="flex-1 min-w-[12rem]">
-                <span className="text-xs font-semibold text-[var(--toq-navy)]">Motivo (novos bloqueios)</span>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <label className="min-w-[10rem] flex-1">
+                <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">Motivo</span>
                 <input
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Locado"
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  className="toq-input mt-0.5 w-full px-2 py-1.5 text-sm"
                 />
               </label>
-              {rangeStartMin !== null && (
-                <button
-                  type="button"
-                  onClick={() => setRangeStartMin(null)}
-                  className="mt-5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-[var(--toq-navy)]"
-                >
-                  Cancelar seleção
-                </button>
-              )}
             </div>
           )}
 
-          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-bold text-[var(--toq-navy)]">Locações do dia</p>
+          <div className="mt-3 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-3">
+            <p className="text-xs font-bold text-[var(--toq-navy)]">Locações do dia</p>
             {dayBlocks.length === 0 ? (
-              <p className="mt-2 text-sm text-[var(--toq-text-muted)]">Nenhum horário marcado.</p>
+              <p className="mt-1.5 text-xs text-[var(--toq-text-muted)]">Nenhum horário marcado.</p>
             ) : (
-              <ul className="mt-3 space-y-2">
+              <ul className="mt-2 max-h-28 space-y-1.5 overflow-y-auto">
                 {dayBlocks.map((b) => {
                   const range = blockRangeOnDay(b, selectedDate);
                   return (
                     <li
                       key={b.id}
-                      className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2"
+                      className="flex items-center justify-between gap-2 rounded-lg border border-[var(--toq-border)] bg-[var(--toq-card)] px-2.5 py-1.5"
                     >
-                      <span className="text-xs text-[var(--toq-text-muted)]">
+                      <span className="text-[11px] text-[var(--toq-navy)]">
                         {range
                           ? `${minutesToHHMM(range.startMin)}–${minutesToHHMM(range.endMin)}`
                           : new Date(b.start_ts).toLocaleTimeString("pt-BR", {
@@ -587,9 +614,20 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
                       {canManage && (
                         <button
                           type="button"
-                          onClick={() => void removeBlock(b.id)}
+                          onClick={() =>
+                            setRemoveTarget({
+                              id: b.id,
+                              timeLabel: `${new Date(b.start_ts).toLocaleTimeString("pt-BR", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}–${new Date(b.end_ts).toLocaleTimeString("pt-BR", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}`,
+                            })
+                          }
                           disabled={saving}
-                          className="text-xs font-semibold text-red-600 disabled:opacity-50"
+                          className="text-[11px] font-semibold text-red-600 disabled:opacity-50"
                         >
                           Remover
                         </button>
@@ -602,6 +640,31 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
           </div>
         </div>
       </div>
-    </div>
+      </div>
+
+      <ConfirmDialog
+        open={!!removeTarget}
+        title="Remover locação"
+        message={
+          removeTarget
+            ? `Remover o horário ${removeTarget.timeLabel}? Esta ação libera o slot na agenda.`
+            : ""
+        }
+        confirmLabel="Remover"
+        cancelLabel="Cancelar"
+        variant="danger"
+        loading={saving}
+        priority="high"
+        onConfirm={() => {
+          if (!removeTarget) return;
+          void removeBlock(removeTarget.id).then((ok) => {
+            if (ok) setRemoveTarget(null);
+          });
+        }}
+        onCancel={() => {
+          if (!saving) setRemoveTarget(null);
+        }}
+      />
+    </>
   );
 }

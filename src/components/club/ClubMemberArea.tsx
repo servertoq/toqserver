@@ -116,8 +116,8 @@ export function ClubMemberArea({
           <ClubCourtsPanel
             communityId={community.id}
             clubName={community.name}
+            clubSlug={community.slug}
             myRole={myRole}
-            buyerUsername={username}
           />
         )}
         {tab === "tournaments" && (

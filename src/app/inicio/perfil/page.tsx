@@ -14,7 +14,7 @@ import {
   type ProfileTab,
 } from "@/components/profile/PlayerProfileDashboard";
 import { addressFromRow } from "@/lib/address";
-import { mapPostRow } from "@/lib/feed";
+import { fetchCoachListingsForPosts, mapPostRow } from "@/lib/feed";
 import { POST_SELECT } from "@/lib/posts";
 import type { FeedPost } from "@/types/feed";
 
@@ -102,13 +102,17 @@ function PerfilPageContent() {
         }
       }
 
+      const coachListingsByPostId = await fetchCoachListingsForPosts(supabase, postIds);
+
       setPosts(
         rawPosts.map((p) =>
           mapPostRow(
             p,
             likesByPost[p.id] ?? 0,
             commentsByPost[p.id] ?? 0,
-            likedSet.has(p.id)
+            likedSet.has(p.id),
+            new Set(coachListingsByPostId.keys()),
+            coachListingsByPostId
           )
         )
       );

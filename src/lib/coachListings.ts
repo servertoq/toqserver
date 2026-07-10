@@ -30,17 +30,14 @@ export function mapCoachListingRow(row: Record<string, unknown>): CoachListingWi
 }
 
 export function coachListingFeedTitle(title: string) {
-  return `🎾 Aulas de tênis: ${title.trim()}`;
+  return title.trim();
 }
 
 export function coachListingFeedBody(description: string, priceLabel: string) {
-  return `Estou divulgando aulas de tênis na plataforma Toq Tennis.
-
-${description.trim()}
-
-Valor: ${priceLabel.trim()}
-
-Confira em Aprenda à Jogar.`;
+  const desc = description.trim();
+  const price = priceLabel.trim();
+  if (!price) return desc;
+  return `${desc}\n\nValor: ${price}`;
 }
 
 export function coachContactUrl(whatsapp: string, title: string, coachUsername: string) {
@@ -48,6 +45,17 @@ export function coachContactUrl(whatsapp: string, title: string, coachUsername: 
     whatsapp,
     `Olá! Vi sua divulgação "${title}" no Toq Tennis (@${coachUsername}) e gostaria de saber mais sobre as aulas.`
   );
+}
+
+export function formatCoachWhatsappDisplay(phone: string) {
+  const digits = normalizePhoneDigits(phone);
+  if (digits.length === 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return phone.trim();
 }
 
 export async function fetchCoachListings(supabase: SupabaseClient) {
@@ -83,7 +91,13 @@ export async function fetchCoachListingById(supabase: SupabaseClient, id: string
   return data ? mapCoachListingRow(data as Record<string, unknown>) : null;
 }
 
-async function syncFeedPost(
+function isMissingCoachPostTypeError(message: string | undefined) {
+  if (!message) return false;
+  const lower = message.toLowerCase();
+  return lower.includes("post_type") && lower.includes("coach");
+}
+
+async function writeCoachFeedPost(
   supabase: SupabaseClient,
   input: {
     authorId: string;
@@ -91,12 +105,13 @@ async function syncFeedPost(
     description: string;
     priceLabel: string;
     postId: string | null;
-  }
+  },
+  postType: "coach" | "player"
 ): Promise<{ postId: string | null; error: string | null }> {
   const payload = {
     body: coachListingFeedBody(input.description, input.priceLabel),
     title: coachListingFeedTitle(input.title),
-    post_type: "player" as const,
+    post_type: postType,
     visibility: "public" as const,
     community_id: null,
   };
@@ -123,6 +138,25 @@ async function syncFeedPost(
   }
 
   return { postId: data.id as string, error: null };
+}
+
+async function syncFeedPost(
+  supabase: SupabaseClient,
+  input: {
+    authorId: string;
+    title: string;
+    description: string;
+    priceLabel: string;
+    postId: string | null;
+  }
+): Promise<{ postId: string | null; error: string | null }> {
+  let result = await writeCoachFeedPost(supabase, input, "coach");
+
+  if (result.error && isMissingCoachPostTypeError(result.error)) {
+    result = await writeCoachFeedPost(supabase, input, "player");
+  }
+
+  return result;
 }
 
 export async function createCoachListing(

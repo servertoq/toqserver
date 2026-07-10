@@ -104,6 +104,10 @@ export type ClubCourt = {
   contact_phone: string;
   is_active: boolean;
   sort_order: number;
+  rental_visibility?: "members_only" | "public";
+  rental_available?: boolean;
+  rental_unavailable_note?: string | null;
+  post_id?: string | null;
   images?: ClubCourtImage[];
   plans?: ClubCourtPlan[];
   hours?: ClubCourtHours[];

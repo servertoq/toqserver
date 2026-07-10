@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { mapPostRow } from "@/lib/feed";
+import { fetchCoachListingsForPosts, mapPostRow } from "@/lib/feed";
 import { normalizePlan } from "@/lib/billing/plans";
 import { feedBoostIntervalHours, planHasFeedBoost } from "@/lib/plans";
 import { POST_SELECT } from "@/lib/posts";
@@ -84,12 +84,16 @@ export async function loadBoostedFeedPosts(
     commentsByPost[row.post_id] = (commentsByPost[row.post_id] ?? 0) + 1;
   }
 
+  const coachListingsByPostId = await fetchCoachListingsForPosts(supabase, dueIds);
+
   return due.map((row) => ({
     ...mapPostRow(
       row as Parameters<typeof mapPostRow>[0],
       likesByPost[row.id as string] ?? 0,
       commentsByPost[row.id as string] ?? 0,
-      likedSet.has(row.id as string)
+      likedSet.has(row.id as string),
+      new Set(coachListingsByPostId.keys()),
+      coachListingsByPostId
     ),
     is_boosted: true,
   }));

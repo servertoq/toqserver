@@ -1,9 +1,10 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { canModerate } from "@/lib/community";
-import { courtSizeLabel, normalizePhoneDigits, whatsappUrl } from "@/lib/courts";
+import { courtSizeLabel, normalizePhoneDigits } from "@/lib/courts";
 import { formatClubPrice, parsePriceInput } from "@/lib/clubFeatures";
 import type { CommunityMemberRole } from "@/types/community";
 import type {
@@ -15,12 +16,15 @@ import type {
 } from "@/types/clubFeatures";
 import { useAppProfile } from "@/components/app/AppShell";
 import { ClubCourtAgendaModal } from "./ClubCourtAgendaModal";
+import { CourtBookingDialog } from "@/components/court/CourtBookingDialog";
+import { syncClubCourtFeedPost } from "@/lib/clubCourtListings";
+import type { CourtRentalVisibility } from "@/types/courtManagement";
 
 type Props = {
   communityId: string;
   clubName: string;
+  clubSlug: string;
   myRole: CommunityMemberRole | null;
-  buyerUsername: string;
 };
 
 function weekdayLabel(d: number) {
@@ -79,6 +83,7 @@ type CourtDraft = {
   size_label: string;
   description: string;
   contact_phone: string;
+  rental_visibility: CourtRentalVisibility;
   plans: Array<{
     key: string;
     kind: PlanKind;
@@ -144,6 +149,7 @@ function fromCourt(court?: ClubCourt | null): CourtDraft {
     size_label: court?.size_label ?? "dupla",
     description: court?.description ?? "",
     contact_phone: court?.contact_phone ?? "",
+    rental_visibility: court?.rental_visibility ?? "members_only",
     plans,
     hours,
   };
@@ -153,40 +159,17 @@ function isValidTimeHHMM(value: string) {
   return /^\d{2}:\d{2}$/.test(value);
 }
 
-function buildBookingMessage(params: {
-  clubName: string;
-  courtName: string;
-  buyerUsername: string;
-  dateISO: string;
-  startHHMM: string;
-  endHHMM: string;
-  planLabel: string;
-  quantity: number;
-  unitLabel: string;
-  unitPrice: number;
-  totalPrice: number;
-}) {
-  const lines = [
-    `Olá! Quero alugar uma quadra no clube *${params.clubName}*:`,
-    ``,
-    `Quadra: *${params.courtName}*`,
-    `Data: ${formatDateBR(params.dateISO)}`,
-    `Horário: ${params.startHHMM}–${params.endHHMM}`,
-    `Plano: ${params.planLabel} (${params.quantity} ${params.unitLabel}${params.quantity === 1 ? "" : "s"})`,
-    `Valor: ${formatClubPrice(params.totalPrice)} (${formatClubPrice(params.unitPrice)} por ${params.unitLabel})`,
-    ``,
-    `Solicitante: @${params.buyerUsername}`,
-  ];
-  return lines.join("\n");
-}
-
 function ClubCourtForm({
   communityId,
+  clubName,
+  clubSlug,
   court,
   onSaved,
   onClose,
 }: {
   communityId: string;
+  clubName: string;
+  clubSlug: string;
   court?: ClubCourt | null;
   onSaved: (courtId: string) => void;
   onClose: () => void;
@@ -235,8 +218,12 @@ function ClubCourtForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const phoneDigits = normalizePhoneDigits(draft.contact_phone);
-    if (!draft.name.trim() || !draft.description.trim() || phoneDigits.length < 10) {
-      setError("Preencha nome, descrição e um WhatsApp válido (DDD + número).");
+    if (!draft.name.trim() || phoneDigits.length < 10) {
+      setError("Preencha o nome e um WhatsApp válido (DDD + número).");
+      return;
+    }
+    if (draft.description.trim().length < 10) {
+      setError("A descrição precisa ter pelo menos 10 caracteres.");
       return;
     }
 
@@ -277,6 +264,7 @@ function ClubCourtForm({
             size_label: draft.size_label,
             description: draft.description.trim(),
             contact_phone: draft.contact_phone.trim(),
+            rental_visibility: draft.rental_visibility,
           })
           .eq("id", courtId);
         if (updErr) throw new Error(updErr.message);
@@ -289,6 +277,7 @@ function ClubCourtForm({
             size_label: draft.size_label,
             description: draft.description.trim(),
             contact_phone: draft.contact_phone.trim(),
+            rental_visibility: draft.rental_visibility,
           })
           .select("id")
           .single();
@@ -355,11 +344,49 @@ function ClubCourtForm({
         });
       }
 
+      const { data: savedRow, error: fetchErr } = await supabase
+        .from("club_courts")
+        .select(
+          `
+          *,
+          plans:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order),
+          hours:club_court_hours(id, court_id, weekday, start_time, end_time)
+        `
+        )
+        .eq("id", courtId)
+        .single();
+
+      if (fetchErr || !savedRow) throw new Error(fetchErr?.message ?? "Erro ao carregar quadra salva.");
+
+      const savedCourt: ClubCourt = {
+        ...(savedRow as ClubCourt),
+        plans: Array.isArray(savedRow.plans) ? savedRow.plans : savedRow.plans ? [savedRow.plans] : [],
+        hours: Array.isArray(savedRow.hours) ? savedRow.hours : savedRow.hours ? [savedRow.hours] : [],
+      };
+
+      const { postId, error: feedErr } = await syncClubCourtFeedPost(
+        supabase,
+        savedCourt,
+        { id: communityId, name: clubName, slug: clubSlug },
+        profile.id
+      );
+
+      if (feedErr) throw new Error(feedErr);
+
+      if (postId && postId !== savedCourt.post_id) {
+        await supabase.from("club_courts").update({ post_id: postId }).eq("id", courtId);
+      }
+
       if (!courtId) throw new Error("Erro ao identificar a quadra.");
       onSaved(courtId);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar.");
+      const msg = err instanceof Error ? err.message : "Erro ao salvar.";
+      if (msg.includes("club_courts_desc_len")) {
+        setError("A descrição precisa ter pelo menos 10 caracteres.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -423,11 +450,50 @@ function ClubCourtForm({
               value={draft.description}
               onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
               required
+              minLength={10}
               rows={3}
               maxLength={2000}
+              placeholder="Ex.: Quadra de saibro coberta, iluminação noturna, vestiário no local."
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
             />
+            <p className="mt-1 text-[11px] text-[var(--toq-text-muted)]">Mínimo de 10 caracteres.</p>
           </label>
+
+          <fieldset className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <legend className="px-1 text-sm font-bold text-[var(--toq-navy)]">Quem pode alugar?</legend>
+            <div className="mt-2 space-y-2">
+              <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 bg-white p-3">
+                <input
+                  type="radio"
+                  name="rental_visibility"
+                  checked={draft.rental_visibility === "members_only"}
+                  onChange={() => setDraft((d) => ({ ...d, rental_visibility: "members_only" }))}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-[var(--toq-navy)]">Somente membros do clube</span>
+                  <span className="block text-[11px] text-[var(--toq-text-muted)]">
+                    Aparece no feed do clube e no menu Quadras só para membros.
+                  </span>
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 bg-white p-3">
+                <input
+                  type="radio"
+                  name="rental_visibility"
+                  checked={draft.rental_visibility === "public"}
+                  onChange={() => setDraft((d) => ({ ...d, rental_visibility: "public" }))}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-[var(--toq-navy)]">Terceiros pelo sistema</span>
+                  <span className="block text-[11px] text-[var(--toq-text-muted)]">
+                    Também publica no feed geral e fica disponível em Quadras para qualquer usuário.
+                  </span>
+                </span>
+              </label>
+            </div>
+          </fieldset>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex items-center justify-between gap-2">
@@ -588,199 +654,7 @@ function ClubCourtForm({
   );
 }
 
-function BookingModal({
-  clubName,
-  buyerUsername,
-  court,
-  onClose,
-}: {
-  clubName: string;
-  buyerUsername: string;
-  court: ClubCourt;
-  onClose: () => void;
-}) {
-  const plans = (court.plans ?? []).filter((p) => p.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
-  const hours = (court.hours ?? []).slice();
-  const blocks = (court.blocks ?? []).slice();
-
-  const [planId, setPlanId] = useState(plans[0]?.id ?? "");
-  const [dateISO, setDateISO] = useState(() => new Date().toISOString().slice(0, 10));
-  const [startHHMM, setStartHHMM] = useState("07:00");
-  const [quantity, setQuantity] = useState(1);
-  const [hint, setHint] = useState<string | null>(null);
-
-  const selectedPlan = plans.find((p) => p.id === planId) ?? null;
-
-  const weekday = useMemo(() => {
-    const d = new Date(`${dateISO}T12:00:00`);
-    return Number.isNaN(d.getTime()) ? 0 : d.getDay();
-  }, [dateISO]);
-
-  const todaysHours = useMemo(() => hours.filter((h) => h.weekday === weekday), [hours, weekday]);
-
-  const availableStartTimes = useMemo(() => {
-    if (!selectedPlan) return [];
-    const step = 30;
-    const unit = selectedPlan.unit_minutes;
-    const dur = unit * Math.max(1, quantity);
-
-    const windowIntervals = todaysHours
-      .map((h) => ({ start: toMinutes(h.start_time), end: toMinutes(h.end_time) }))
-      .filter((w) => w.end > w.start);
-
-    if (windowIntervals.length === 0) return [];
-
-    // blocks for that date
-    const dayStart = new Date(`${dateISO}T00:00:00`).getTime();
-    const dayEnd = new Date(`${dateISO}T23:59:59`).getTime();
-    const dayBlocks = blocks
-      .filter((b) => {
-        const s = new Date(b.start_ts).getTime();
-        const e = new Date(b.end_ts).getTime();
-        return overlaps(dayStart, dayEnd, s, e);
-      })
-      .map((b) => {
-        const s = new Date(b.start_ts);
-        const e = new Date(b.end_ts);
-        const start = s.getHours() * 60 + s.getMinutes();
-        const end = e.getHours() * 60 + e.getMinutes();
-        return { start, end };
-      });
-
-    const out: string[] = [];
-    for (const w of windowIntervals) {
-      for (let t = w.start; t + dur <= w.end; t += step) {
-        const end = t + dur;
-        const blocked = dayBlocks.some((b) => overlaps(t, end, b.start, b.end));
-        if (!blocked) out.push(minutesToHHMM(t));
-      }
-    }
-    return Array.from(new Set(out));
-  }, [blocks, dateISO, quantity, selectedPlan, todaysHours]);
-
-  const price = selectedPlan ? selectedPlan.price * Math.max(1, quantity) : 0;
-
-  function handleSendWhatsApp() {
-    if (!selectedPlan) return;
-    if (!availableStartTimes.includes(startHHMM)) {
-      setHint("Selecione um horário disponível.");
-      return;
-    }
-    const startMin = toMinutes(`${startHHMM}:00`);
-    const endMin = startMin + selectedPlan.unit_minutes * Math.max(1, quantity);
-    const msg = buildBookingMessage({
-      clubName,
-      courtName: court.name,
-      buyerUsername,
-      dateISO,
-      startHHMM,
-      endHHMM: minutesToHHMM(endMin),
-      planLabel: selectedPlan.label,
-      quantity: Math.max(1, quantity),
-      unitLabel: selectedPlan.unit_label,
-      unitPrice: selectedPlan.price,
-      totalPrice: price,
-    });
-    window.open(whatsappUrl(court.contact_phone, msg), "_blank", "noopener,noreferrer");
-    onClose();
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-[var(--toq-navy)]">Agendar quadra</h2>
-          <button type="button" onClick={onClose} className="text-sm font-semibold text-[var(--toq-text-muted)]">
-            Fechar
-          </button>
-        </div>
-
-        <p className="text-sm font-semibold text-[var(--toq-navy)]">{court.name}</p>
-        <p className="mt-1 text-xs text-[var(--toq-text-muted)]">{courtSizeLabel(court.size_label)}</p>
-
-        <div className="mt-4 space-y-3">
-          <label className="block">
-            <span className="text-xs font-semibold text-[var(--toq-navy)]">Plano</span>
-            <select
-              value={planId}
-              onChange={(e) => setPlanId(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            >
-              {plans.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label} — {formatClubPrice(p.price)} / {p.unit_label} ({p.unit_minutes} min)
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block">
-              <span className="text-xs font-semibold text-[var(--toq-navy)]">Data</span>
-              <input
-                type="date"
-                value={dateISO}
-                onChange={(e) => setDateISO(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs font-semibold text-[var(--toq-navy)]">Quantidade</span>
-              <input
-                type="number"
-                min={1}
-                max={12}
-                value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value || "1", 10) || 1)}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              />
-            </label>
-          </div>
-
-          <label className="block">
-            <span className="text-xs font-semibold text-[var(--toq-navy)]">Horário disponível</span>
-            {availableStartTimes.length === 0 ? (
-              <p className="mt-1 rounded-lg bg-slate-100 px-3 py-2 text-sm text-[var(--toq-text-muted)]">
-                Sem horários disponíveis para este dia/plano.
-              </p>
-            ) : (
-              <select
-                value={startHHMM}
-                onChange={(e) => setStartHHMM(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              >
-                {availableStartTimes.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            )}
-          </label>
-
-          {selectedPlan && (
-            <p className="text-sm font-bold text-[var(--toq-accent)]">
-              Total: {formatClubPrice(price)}
-            </p>
-          )}
-
-          {hint && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-600">{hint}</p>}
-
-          <button
-            type="button"
-            onClick={handleSendWhatsApp}
-            disabled={!selectedPlan || availableStartTimes.length === 0}
-            className="w-full rounded-lg bg-[#25D366] py-2.5 text-sm font-bold text-white disabled:opacity-50"
-          >
-            Enviar pedido no WhatsApp
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function ClubCourtsPanel({ communityId, clubName, myRole, buyerUsername }: Props) {
+export function ClubCourtsPanel({ communityId, clubName, clubSlug, myRole }: Props) {
   const supabase = createClient();
   const canManage = canModerate(myRole);
 
@@ -867,13 +741,20 @@ export function ClubCourtsPanel({ communityId, clubName, myRole, buyerUsername }
     load();
   }, [load]);
 
-  // Realtime: membros veem agenda em tempo real (somente admin/mod altera)
+  // Realtime: agenda e gestão sincronizam ao alterar bloqueios ou reservas confirmadas
   useEffect(() => {
     const channel = supabase
       .channel(`club-court-blocks-${communityId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "club_court_blocks" },
+        () => {
+          void load();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "club_court_bookings" },
         () => {
           void load();
         }
@@ -908,12 +789,18 @@ export function ClubCourtsPanel({ communityId, clubName, myRole, buyerUsername }
         </div>
         {canManage && (
           <div className="flex flex-wrap gap-2">
+            <Link
+              href="/inicio/gestao-de-quadras"
+              className="rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white"
+            >
+              Gestão de Quadras
+            </Link>
             <button
               type="button"
               onClick={openAgendaManager}
               disabled={courts.length === 0}
               title={courts.length === 0 ? "Cadastre uma quadra antes" : "Abrir agenda para marcar locações"}
-              className="rounded-lg bg-[var(--toq-navy)] px-3 py-1.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg toq-btn-outline px-3 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40"
             >
               Gerenciar agenda
             </button>
@@ -934,7 +821,7 @@ export function ClubCourtsPanel({ communityId, clubName, myRole, buyerUsername }
       )}
 
       {courts.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+        <div className="mt-4 rounded-2xl border border-dashed border-[var(--toq-border)] bg-[var(--toq-card)] p-8 text-center">
           <p className="text-sm font-semibold text-[var(--toq-navy)]">Nenhuma quadra cadastrada</p>
           {canManage ? (
             <>
@@ -972,39 +859,45 @@ export function ClubCourtsPanel({ communityId, clubName, myRole, buyerUsername }
                   </span>
                 </div>
                 <p className="mt-1 line-clamp-2 text-xs text-[var(--toq-text-muted)]">{court.description}</p>
+                {court.rental_available === false && (
+                  <p className="mt-2 text-[11px] font-semibold text-amber-600">
+                    Indisponível para locação
+                    {court.rental_unavailable_note ? ` — ${court.rental_unavailable_note}` : ""}
+                  </p>
+                )}
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => setAgendaCourtId(court.id)}
                     className={`rounded-lg px-3 py-2 text-xs font-bold ${
-                      canManage
-                        ? "bg-[var(--toq-navy)] text-white"
-                        : "border border-slate-200 text-[var(--toq-navy)]"
+                      canManage ? "toq-btn-primary text-white" : "toq-btn-outline"
                     }`}
                   >
                     {canManage ? "Agenda — editar horários" : "Ver agenda"}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setBookingCourt(court)}
-                    className="rounded-lg bg-[#25D366] px-3 py-2 text-xs font-bold text-white"
-                  >
-                    Agendar no WhatsApp
-                  </button>
+                  {!canManage && court.rental_available !== false && (
+                    <button
+                      type="button"
+                      onClick={() => setBookingCourt(court)}
+                      className="rounded-lg toq-btn-primary px-3 py-2 text-xs font-bold text-white"
+                    >
+                      Agendar
+                    </button>
+                  )}
                   {canManage && (
                     <>
                       <button
                         type="button"
                         onClick={() => setEditing(court)}
-                        className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-[var(--toq-navy)]"
+                        className="rounded-lg toq-btn-outline px-3 py-2 text-xs font-bold"
                       >
                         Editar
                       </button>
                       <button
                         type="button"
                         onClick={() => void removeCourt(court)}
-                        className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700"
+                        className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-600"
                       >
                         Remover
                       </button>
@@ -1026,6 +919,8 @@ export function ClubCourtsPanel({ communityId, clubName, myRole, buyerUsername }
       {editing !== undefined && (
         <ClubCourtForm
           communityId={communityId}
+          clubName={clubName}
+          clubSlug={clubSlug}
           court={editing}
           onSaved={handleCourtSaved}
           onClose={() => setEditing(undefined)}
@@ -1064,10 +959,10 @@ export function ClubCourtsPanel({ communityId, clubName, myRole, buyerUsername }
       )}
 
       {bookingCourt && (
-        <BookingModal
-          clubName={clubName}
-          buyerUsername={buyerUsername}
+        <CourtBookingDialog
+          open
           court={bookingCourt}
+          clubName={clubName}
           onClose={() => setBookingCourt(null)}
         />
       )}
