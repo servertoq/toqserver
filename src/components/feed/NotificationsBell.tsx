@@ -25,6 +25,7 @@ const NOTIFICATION_SELECT = `
   join_request_id,
   community_invite_id,
   support_ticket_id,
+  coach_lesson_id,
   actor:profiles!notifications_actor_id_fkey(id, username, avatar_url),
   community:communities(id, name, slug, kind)
 `;

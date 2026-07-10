@@ -13,7 +13,9 @@ export type NotificationType =
   | "staff_report_upheld"
   | "staff_report_dismissed"
   | "staff_suggestion_ack"
-  | "staff_support_resolved";
+  | "staff_support_resolved"
+  | "coach_new_enrollment"
+  | "coach_lesson_scheduled";
 
 export type AppNotification = {
   id: string;
@@ -27,6 +29,7 @@ export type AppNotification = {
   join_request_id: string | null;
   community_invite_id: string | null;
   support_ticket_id: string | null;
+  coach_lesson_id: string | null;
   actor: FeedProfile;
   community: { id: string; name: string; slug: string; kind?: "community" | "club" } | null;
 };

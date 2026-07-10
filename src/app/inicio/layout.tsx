@@ -33,7 +33,15 @@ export default async function InicioLayout({
     redirect("/");
   }
 
-  const { data: staffRole } = await supabase.rpc("get_my_staff_role");
+  const [{ data: staffRole }, { data: coachManagement }, { data: myCoachListing }] =
+    await Promise.all([
+      supabase.rpc("get_my_staff_role"),
+      supabase.rpc("user_can_access_coach_management"),
+      supabase.from("coach_listings").select("id").eq("user_id", user.id).maybeSingle(),
+    ]);
+
+  const canAccessCoachManagement =
+    Boolean(coachManagement) || Boolean(myCoachListing);
 
   return (
     <AppShell
@@ -46,6 +54,7 @@ export default async function InicioLayout({
         isBanned: profile.is_banned ?? false,
         plan: normalizePlan((profile.plan as AppProfile["plan"]) ?? "free"),
         showPlanBadge: profile.show_plan_badge ?? true,
+        canAccessCoachManagement: Boolean(coachManagement),
       }}
     >
       {children}

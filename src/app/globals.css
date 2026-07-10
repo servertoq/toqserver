@@ -4229,3 +4229,276 @@ button {
 [data-theme="dark"] .floating-messages-dock .ring-\[var\(--toq-navy\)\] {
   --tw-ring-color: #262626;
 }
+
+/* Aprenda à Jogar — card de divulgação */
+.coach-listing-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid var(--toq-border);
+  background: var(--toq-card);
+  box-shadow: 0 10px 40px rgba(5, 16, 36, 0.08);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.coach-listing-card:hover {
+  border-color: color-mix(in srgb, var(--toq-accent) 35%, var(--toq-border));
+  box-shadow: 0 16px 48px rgba(37, 99, 235, 0.12);
+  transform: translateY(-2px);
+}
+
+.coach-listing-card--owner {
+  border-color: color-mix(in srgb, var(--toq-accent) 45%, var(--toq-border));
+}
+
+.coach-listing-card__hero {
+  position: relative;
+  overflow: hidden;
+  padding: 1.25rem 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #0f2d5c 0%, #1e4a8a 42%, #2563eb 100%);
+}
+
+.coach-listing-card__hero-glow {
+  position: absolute;
+  right: -2rem;
+  top: -2rem;
+  width: 9rem;
+  height: 9rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  filter: blur(8px);
+}
+
+.coach-listing-card__hero-pattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  background-image: radial-gradient(circle at 20% 80%, #fff 1px, transparent 1px),
+    radial-gradient(circle at 80% 20%, #fff 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.coach-listing-card__owner-badge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.18);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  backdrop-filter: blur(6px);
+}
+
+.coach-listing-card__professor {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+}
+
+.coach-listing-card__avatar {
+  width: 3.5rem;
+  height: 3.5rem;
+  flex-shrink: 0;
+  border-radius: 1rem;
+  object-fit: cover;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+}
+
+.coach-listing-card__avatar--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.coach-listing-card__kicker {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.coach-listing-card__title {
+  margin-top: 0.2rem;
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #fff;
+}
+
+.coach-listing-card__username {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+  text-decoration: none;
+}
+
+.coach-listing-card__username:hover {
+  text-decoration: underline;
+}
+
+.coach-listing-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.coach-listing-card__description {
+  flex: 1;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--toq-text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.coach-listing-card__price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.875rem;
+  background: color-mix(in srgb, var(--toq-accent) 10%, var(--toq-card));
+  border: 1px solid color-mix(in srgb, var(--toq-accent) 22%, var(--toq-border));
+}
+
+.coach-listing-card__price-value {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--toq-navy);
+}
+
+.coach-listing-card__price-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--toq-text-muted);
+}
+
+.coach-listing-card__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.coach-listing-card__actions--owner {
+  grid-template-columns: 1fr;
+}
+
+.coach-listing-card__btn {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border-radius: 0.875rem;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition: opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.coach-listing-card__btn--whatsapp {
+  background: #25d366;
+  color: #fff;
+}
+
+.coach-listing-card__btn--whatsapp:hover {
+  background: #1ebe5d;
+}
+
+.coach-listing-card__btn--primary {
+  background: var(--toq-accent);
+  color: #fff;
+}
+
+.coach-listing-card__btn--primary:hover {
+  background: var(--toq-accent-hover);
+}
+
+.coach-listing-card__btn--enrolled {
+  background: color-mix(in srgb, #10b981 14%, var(--toq-card));
+  color: #059669;
+  border: 1px solid color-mix(in srgb, #10b981 35%, var(--toq-border));
+  cursor: default;
+}
+
+.coach-listing-card__btn--danger {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid color-mix(in srgb, #ef4444 35%, var(--toq-border));
+}
+
+.coach-listing-card__btn--danger:hover {
+  background: color-mix(in srgb, #ef4444 8%, var(--toq-card));
+}
+
+[data-theme="dark"] .coach-listing-card {
+  background: #161616 !important;
+  border-color: #2a2a2a !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45) !important;
+}
+
+[data-theme="dark"] .coach-listing-card:hover {
+  border-color: color-mix(in srgb, var(--toq-accent) 50%, #2a2a2a) !important;
+}
+
+[data-theme="dark"] .coach-listing-card--owner {
+  border-color: color-mix(in srgb, var(--toq-accent) 55%, #2a2a2a) !important;
+}
+
+[data-theme="dark"] .coach-listing-card__hero {
+  background: linear-gradient(135deg, #0a1628 0%, #132f5c 45%, #1d4ed8 100%);
+}
+
+[data-theme="dark"] .coach-listing-card__price {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.28);
+}
+
+[data-theme="dark"] .coach-listing-card__price-value {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .coach-listing-card__btn--enrolled {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.coach-listings-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr));
+}
+
+@media (min-width: 1024px) {
+  .coach-listings-grid {
+    grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  }
+}

@@ -16,6 +16,7 @@ export type AppProfile = {
   isBanned: boolean;
   plan: "free" | "professor" | "proprietario" | "proprietario_plus" | "empresario";
   showPlanBadge: boolean;
+  canAccessCoachManagement: boolean;
 };
 
 type NavItem = {
@@ -150,6 +151,16 @@ function IconModeration({ active }: { active: boolean }) {
     <NavIcon>
       <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} aria-hidden>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4z" />
+      </svg>
+    </NavIcon>
+  );
+}
+
+function IconCoachManagement({ active }: { active: boolean }) {
+  return (
+    <NavIcon>
+      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
       </svg>
     </NavIcon>
   );
@@ -453,6 +464,14 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
 
   const navItems = useMemo(() => {
     const items = [...NAV_ITEMS];
+    if (profile.canAccessCoachManagement) {
+      items.splice(8, 0, {
+        href: "/inicio/gestao-de-aulas",
+        label: "Gestão de Aulas",
+        icon: (active) => <IconCoachManagement active={active} />,
+        match: (path) => path.startsWith("/inicio/gestao-de-aulas"),
+      });
+    }
     if (profile.staffRole) {
       items.push({
         href: "/inicio/moderacao",
@@ -462,7 +481,7 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
       });
     }
     return items;
-  }, [profile.staffRole]);
+  }, [profile.staffRole, profile.canAccessCoachManagement]);
 
   useEffect(() => {
     if (profile.isBanned && !pathname.startsWith("/inicio/bloqueado")) {

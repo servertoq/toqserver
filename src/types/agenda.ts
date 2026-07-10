@@ -8,6 +8,7 @@ export type AgendaEvent = {
   event_type: AgendaEventType;
   title: string | null;
   notes: string | null;
+  coach_lesson_id?: string | null;
   created_at: string;
   updated_at: string;
 };

@@ -34,6 +34,10 @@ export function notificationMessage(n: AppNotification): string {
       return "Recebemos sua sugestão e encaminharemos aos setores responsáveis.";
     case "staff_support_resolved":
       return "Seu pedido de suporte foi marcado como resolvido pela equipe Toq Tennis.";
+    case "coach_new_enrollment":
+      return `${name} se inscreveu na sua divulgação de aulas`;
+    case "coach_lesson_scheduled":
+      return `${name} agendou uma aula com você`;
     default:
       return "Nova notificação";
   }
@@ -47,6 +51,14 @@ export function notificationHref(n: AppNotification): string | null {
     n.type === "staff_support_resolved"
   ) {
     return "/inicio/perfil";
+  }
+
+  if (n.type === "coach_new_enrollment") {
+    return "/inicio/gestao-de-aulas";
+  }
+
+  if (n.type === "coach_lesson_scheduled") {
+    return "/inicio/perfil?tab=agenda";
   }
 
   if (n.type === "community_invite") {
@@ -101,6 +113,7 @@ export function mapNotificationRow(row: {
   join_request_id: string | null;
   community_invite_id: string | null;
   support_ticket_id: string | null;
+  coach_lesson_id: string | null;
   actor: FeedProfile | FeedProfile[] | null;
   community:
     | { id: string; name: string; slug: string; kind?: "community" | "club" }
@@ -122,6 +135,7 @@ export function mapNotificationRow(row: {
     join_request_id: row.join_request_id,
     community_invite_id: row.community_invite_id,
     support_ticket_id: row.support_ticket_id ?? null,
+    coach_lesson_id: row.coach_lesson_id ?? null,
     actor: actor ?? { id: "", username: "?", avatar_url: null },
     community: community ?? null,
   };

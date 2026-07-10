@@ -11,6 +11,7 @@ import type { PlanUsage } from "@/types/plans";
 import type { CoachListingWithProfile } from "@/types/coachListings";
 import { appContentClass } from "@/lib/layout";
 import { CoachListingCard } from "./CoachListingCard";
+import { CoachEnrollDialog } from "./CoachEnrollDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 
 export function CoachListingsPage() {
@@ -24,19 +25,29 @@ export function CoachListingsPage() {
   const [deleteTarget, setDeleteTarget] = useState<CoachListingWithProfile | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [planUsage, setPlanUsage] = useState<PlanUsage | null>(null);
+  const [enrolledIds, setEnrolledIds] = useState<Set<string>>(new Set());
+  const [userEmail, setUserEmail] = useState("");
+  const [enrollTarget, setEnrollTarget] = useState<CoachListingWithProfile | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
     setLoading(true);
     try {
-      const [list, mine, usage] = await Promise.all([
+      const [list, mine, usage, profileRow, enrollRows] = await Promise.all([
         fetchCoachListings(supabase),
         fetchMyCoachListing(supabase, profile.id),
         fetchPlanUsage(supabase),
+        supabase.from("profiles").select("email").eq("id", profile.id).single(),
+        supabase
+          .from("coach_listing_enrollments")
+          .select("coach_listing_id")
+          .eq("student_id", profile.id),
       ]);
       setListings(list);
       setMyListing(mine);
       setPlanUsage(usage);
+      setUserEmail((profileRow.data?.email as string) ?? "");
+      setEnrolledIds(new Set((enrollRows.data ?? []).map((r) => r.coach_listing_id as string)));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro ao carregar.";
       if (msg.includes("coach_listings") || msg.includes("does not exist")) {
@@ -149,18 +160,33 @@ export function CoachListingsPage() {
             )}
           </div>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="coach-listings-grid">
             {filtered.map((item) => (
               <CoachListingCard
                 key={item.id}
                 listing={item}
                 currentUserId={profile.id}
+                enrolled={enrolledIds.has(item.id)}
+                onEnroll={setEnrollTarget}
                 onDelete={setDeleteTarget}
               />
             ))}
           </div>
         )}
       </main>
+
+      <CoachEnrollDialog
+        open={!!enrollTarget}
+        listingId={enrollTarget?.id ?? ""}
+        listingTitle={enrollTarget?.title ?? ""}
+        defaultEmail={userEmail}
+        onClose={() => setEnrollTarget(null)}
+        onSuccess={() => {
+          if (enrollTarget) {
+            setEnrolledIds((prev) => new Set(prev).add(enrollTarget.id));
+          }
+        }}
+      />
 
       <ConfirmDialog
         open={!!deleteTarget}
