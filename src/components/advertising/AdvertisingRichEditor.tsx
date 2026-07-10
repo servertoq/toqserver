@@ -3,15 +3,16 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
 import { Extension } from "@tiptap/core";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { uploadAdvertisingImage } from "@/lib/advertising";
+import { ResizableImage, type ImageAlign } from "./ResizableImage";
+import { Indent } from "./indentExtension";
 
 type Props = {
   value: string;
@@ -27,6 +28,13 @@ const FONT_SIZES = [
   { label: "Médio", value: "18px" },
   { label: "Grande", value: "22px" },
   { label: "Título", value: "28px" },
+];
+
+const IMAGE_SIZES = [
+  { label: "Pequena", width: 200 },
+  { label: "Média", width: 360 },
+  { label: "Grande", width: 520 },
+  { label: "Larga", width: 720 },
 ];
 
 const COLORS = ["#0f172a", "#2563eb", "#dc2626", "#16a34a", "#ca8a04", "#7c3aed", "#ffffff"];
@@ -57,21 +65,22 @@ function ToolbarButton({
   onClick,
   children,
   title,
+  disabled,
 }: {
   active?: boolean;
   onClick: () => void;
   children: React.ReactNode;
   title: string;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       title={title}
+      disabled={disabled}
       onClick={onClick}
-      className={`rounded-md px-2 py-1 text-xs font-semibold transition ${
-        active
-          ? "bg-[var(--toq-navy)] text-white"
-          : "text-[var(--toq-navy)] hover:bg-slate-100"
+      className={`rounded-md px-2 py-1 text-xs transition disabled:opacity-40 ${
+        active ? "toq-btn-primary text-white" : "toq-btn-outline"
       }`}
     >
       {children}
@@ -80,6 +89,8 @@ function ToolbarButton({
 }
 
 export function AdvertisingRichEditor({ value, onChange, supabase, userId, articleKey }: Props) {
+  const [, bump] = useReducer((n: number) => n + 1, 0);
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -91,8 +102,9 @@ export function AdvertisingRichEditor({ value, onChange, supabase, userId, artic
       FontSize,
       Color,
       Link.configure({ openOnClick: false, autolink: true }),
-      Image.configure({ inline: false, allowBase64: false }),
-      TextAlign.configure({ types: ["heading", "paragraph", "image"] }),
+      ResizableImage.configure({ inline: false, allowBase64: false }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Indent,
     ],
     content: value,
     editorProps: {
@@ -104,6 +116,8 @@ export function AdvertisingRichEditor({ value, onChange, supabase, userId, artic
     onUpdate: ({ editor: ed }) => {
       onChange(ed.getHTML());
     },
+    onSelectionUpdate: () => bump(),
+    onTransaction: () => bump(),
   });
 
   useEffect(() => {
@@ -123,7 +137,12 @@ export function AdvertisingRichEditor({ value, onChange, supabase, userId, artic
       if (!file) return;
       const url = await uploadAdvertisingImage(supabase, userId, articleKey, file, "inline");
       if (!url) return;
-      editor.chain().focus().setImage({ src: url }).run();
+      editor
+        .chain()
+        .focus()
+        .setImage({ src: url })
+        .updateAttributes("image", { align: "center", width: 480 })
+        .run();
     };
     input.click();
   }, [editor, supabase, userId, articleKey]);
@@ -148,11 +167,30 @@ export function AdvertisingRichEditor({ value, onChange, supabase, userId, artic
     [editor]
   );
 
+  const setImageAlign = useCallback(
+    (align: ImageAlign) => {
+      if (!editor || !editor.isActive("image")) return;
+      editor.chain().focus().updateAttributes("image", { align }).run();
+    },
+    [editor]
+  );
+
+  const setImageWidth = useCallback(
+    (width: number | null) => {
+      if (!editor || !editor.isActive("image")) return;
+      editor.chain().focus().updateAttributes("image", { width }).run();
+    },
+    [editor]
+  );
+
   if (!editor) return null;
 
+  const imageSelected = editor.isActive("image");
+  const imageAlign = (editor.getAttributes("image").align as ImageAlign) || "center";
+
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-      <div className="flex flex-wrap items-center gap-1 border-b border-slate-100 bg-slate-50 p-2">
+    <div className="overflow-hidden rounded-xl border border-[var(--toq-border)] bg-[var(--toq-card)]">
+      <div className="flex flex-wrap items-center gap-1 border-b border-[var(--toq-border)] bg-[var(--toq-input-bg)] p-2">
         <ToolbarButton
           title="Negrito"
           active={editor.isActive("bold")}
@@ -174,7 +212,7 @@ export function AdvertisingRichEditor({ value, onChange, supabase, userId, artic
         >
           <span className="underline">U</span>
         </ToolbarButton>
-        <span className="mx-1 h-5 w-px bg-slate-200" />
+        <span className="mx-1 h-5 w-px bg-[var(--toq-border)]" />
         <ToolbarButton
           title="Lista com marcadores"
           active={editor.isActive("bulletList")}
@@ -189,31 +227,46 @@ export function AdvertisingRichEditor({ value, onChange, supabase, userId, artic
         >
           1. Lista
         </ToolbarButton>
-        <span className="mx-1 h-5 w-px bg-slate-200" />
+        <span className="mx-1 h-5 w-px bg-[var(--toq-border)]" />
         <ToolbarButton
           title="Alinhar à esquerda"
-          active={editor.isActive({ textAlign: "left" })}
-          onClick={() => editor.chain().focus().setTextAlign("left").run()}
+          active={
+            imageSelected ? imageAlign === "left" : editor.isActive({ textAlign: "left" })
+          }
+          onClick={() => {
+            if (imageSelected) setImageAlign("left");
+            else editor.chain().focus().setTextAlign("left").run();
+          }}
         >
           ⬅
         </ToolbarButton>
         <ToolbarButton
           title="Centralizar"
-          active={editor.isActive({ textAlign: "center" })}
-          onClick={() => editor.chain().focus().setTextAlign("center").run()}
+          active={
+            imageSelected ? imageAlign === "center" : editor.isActive({ textAlign: "center" })
+          }
+          onClick={() => {
+            if (imageSelected) setImageAlign("center");
+            else editor.chain().focus().setTextAlign("center").run();
+          }}
         >
           ↔
         </ToolbarButton>
         <ToolbarButton
           title="Alinhar à direita"
-          active={editor.isActive({ textAlign: "right" })}
-          onClick={() => editor.chain().focus().setTextAlign("right").run()}
+          active={
+            imageSelected ? imageAlign === "right" : editor.isActive({ textAlign: "right" })
+          }
+          onClick={() => {
+            if (imageSelected) setImageAlign("right");
+            else editor.chain().focus().setTextAlign("right").run();
+          }}
         >
           ➡
         </ToolbarButton>
-        <span className="mx-1 h-5 w-px bg-slate-200" />
+        <span className="mx-1 h-5 w-px bg-[var(--toq-border)]" />
         <select
-          className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs"
+          className="toq-input px-2 py-1 text-xs"
           defaultValue=""
           onChange={(e) => {
             if (e.target.value) setFontSize(e.target.value);
@@ -235,12 +288,12 @@ export function AdvertisingRichEditor({ value, onChange, supabase, userId, artic
               type="button"
               title={`Cor ${color}`}
               onClick={() => editor.chain().focus().setColor(color).run()}
-              className="h-5 w-5 rounded-full border border-slate-200"
+              className="h-5 w-5 rounded-full border border-[var(--toq-border)]"
               style={{ backgroundColor: color }}
             />
           ))}
         </div>
-        <span className="mx-1 h-5 w-px bg-slate-200" />
+        <span className="mx-1 h-5 w-px bg-[var(--toq-border)]" />
         <ToolbarButton title="Inserir link" onClick={setLink}>
           Link
         </ToolbarButton>
@@ -248,6 +301,31 @@ export function AdvertisingRichEditor({ value, onChange, supabase, userId, artic
           Foto
         </ToolbarButton>
       </div>
+
+      {imageSelected && (
+        <div className="flex flex-wrap items-center gap-1 border-b border-[var(--toq-border)] bg-[var(--toq-accent-soft)] px-2 py-1.5">
+          <span className="mr-1 text-[10px] font-bold uppercase tracking-wide text-[var(--toq-text-muted)]">
+            Imagem
+          </span>
+          {IMAGE_SIZES.map((s) => (
+            <ToolbarButton
+              key={s.width}
+              title={`Largura ${s.label}`}
+              active={editor.getAttributes("image").width === s.width}
+              onClick={() => setImageWidth(s.width)}
+            >
+              {s.label}
+            </ToolbarButton>
+          ))}
+          <ToolbarButton title="Largura original" onClick={() => setImageWidth(null)}>
+            Original
+          </ToolbarButton>
+          <span className="mx-1 text-[10px] text-[var(--toq-text-muted)]">
+            ou arraste o canto da foto
+          </span>
+        </div>
+      )}
+
       <EditorContent editor={editor} />
     </div>
   );

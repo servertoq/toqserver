@@ -23,7 +23,7 @@
   --toq-border: #e2e8f0;
   --toq-surface: #f8fafc;
   --toq-sidebar: var(--toq-accent);
-  /* Aliases legados → azul (substitui lime) */
+  /* Aliases legados ? azul (substitui lime) */
   --toq-lime: var(--toq-accent);
   --toq-lime-bright: #3b82f6;
   --toq-lime-light: var(--toq-accent);
@@ -222,7 +222,7 @@ body {
   }
 }
 
-/* Imagens e mídia não ultrapassam o container */
+/* Imagens e m?dia n?o ultrapassam o container */
 .feed-layout-main img,
 .feed-layout-main video {
   max-width: 100%;
@@ -460,7 +460,7 @@ body {
   object-fit: cover;
 }
 
-/* Avatares circulares — evita height:auto global distorcer fotos de perfil */
+/* Avatares circulares ? evita height:auto global distorcer fotos de perfil */
 .profile-avatar-frame {
   position: relative;
   flex-shrink: 0;
@@ -496,7 +496,7 @@ body {
   border-radius: 50%;
 }
 
-/* Avatares de mensagens — mesmo fix de proporção circular */
+/* Avatares de mensagens ? mesmo fix de propor??o circular */
 .chat-avatar-frame {
   position: relative;
   flex-shrink: 0;
@@ -562,7 +562,7 @@ body {
   pointer-events: none;
 }
 
-/* ── Club ranking podium ── */
+/* ?? Club ranking podium ?? */
 
 .club-ranking-podium {
   display: flex;
@@ -917,7 +917,7 @@ body {
   display: none;
 }
 
-/* Cabeçalho mobile estilo Instagram + menu completo via + */
+/* Cabe?alho mobile estilo Instagram + menu completo via + */
 .app-mobile-header {
   position: fixed;
   top: 0;
@@ -1135,7 +1135,7 @@ body {
   color: #ffffff;
 }
 
-/* Logo — versão recortada de logo_transp.png (sem padding transparente) */
+/* Logo ? vers?o recortada de logo_transp.png (sem padding transparente) */
 .sidebar-logo {
   display: flex;
   align-items: center;
@@ -1158,7 +1158,7 @@ body {
   }
 }
 
-/* Mensagens — página */
+/* Mensagens ? p?gina */
 .messages-inbox {
   border: 1px solid var(--toq-border);
   border-radius: 1.25rem;
@@ -1211,7 +1211,7 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
-/* Agenda — desktop sem scroll da página */
+/* Agenda ? desktop sem scroll da p?gina */
 @media (min-width: 768px) {
   .feed-layout-main:has(.agenda-page) {
     overflow: hidden;
@@ -1239,7 +1239,7 @@ body {
   }
 }
 
-/* Auth — desktop: panorama 50/50 | mobile: 3 telas em scroll */
+/* Auth ? desktop: panorama 50/50 | mobile: 3 telas em scroll */
 .auth-layout {
   position: relative;
   width: 100%;
@@ -1292,7 +1292,7 @@ body {
   overflow: hidden;
 }
 
-/* ── Landing com scroll ── */
+/* ?? Landing com scroll ?? */
 .auth-landing {
   width: 100%;
   color: #ffffff;
@@ -1628,7 +1628,7 @@ body {
 }
 
 .auth-plan-features li::before {
-  content: "✓";
+  content: "?";
   position: absolute;
   left: 0;
   top: 0;
@@ -1811,7 +1811,7 @@ body {
   }
 }
 
-/* ── Hero (splash) ── */
+/* ?? Hero (splash) ?? */
 
 .auth-splash-panorama {
   position: absolute;
@@ -2002,7 +2002,7 @@ body {
   }
 }
 
-/* ── Discover (página 2) ── */
+/* ?? Discover (p?gina 2) ?? */
 .auth-discover-page {
   position: relative;
   display: flex;
@@ -2198,7 +2198,7 @@ body {
   flex-direction: column;
 }
 
-/* ── Auth form ── */
+/* ?? Auth form ?? */
 .auth-form-page {
   position: relative;
   display: flex;
@@ -2302,7 +2302,7 @@ body {
   position: relative;
 }
 
-/* ── Marketing panel (desktop) ── */
+/* ?? Marketing panel (desktop) ?? */
 .auth-marketing-panel {
   position: relative;
   display: none;
@@ -2406,7 +2406,7 @@ body {
   color: rgba(255, 255, 255, 0.76);
 }
 
-/* ── Persona showcase ── */
+/* ?? Persona showcase ?? */
 .auth-persona {
   margin-top: 1.25rem;
   flex: 1;
@@ -2548,7 +2548,7 @@ body {
   box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
 }
 
-/* ── Feature grid ── */
+/* ?? Feature grid ?? */
 .auth-features {
   margin-top: 0.875rem;
   flex-shrink: 0;
@@ -2622,7 +2622,7 @@ body {
   font-size: 0.6875rem;
 }
 
-/* ── Mobile landing ── */
+/* ?? Mobile landing ?? */
 .auth-mobile-landing {
   background: #040f22;
   color: #ffffff;
@@ -3012,7 +3012,7 @@ body {
     min-height: 100dvh;
   }
 
-  /* ── Hero mobile ── */
+  /* ?? Hero mobile ?? */
   .auth-splash-hero {
     min-height: 100svh;
     min-height: 100dvh;
@@ -3074,7 +3074,7 @@ body {
       linear-gradient(90deg, rgba(4, 15, 34, 0.35) 0%, transparent 40%, transparent 60%, rgba(4, 15, 34, 0.35) 100%);
   }
 
-  /* ── Seções com scroll ── */
+  /* ?? Se??es com scroll ?? */
   .auth-landing-section {
     padding:
       2.25rem
@@ -3138,7 +3138,7 @@ body {
     margin-top: 1.25rem;
   }
 
-  /* ── Formulário login/cadastro mobile ── */
+  /* ?? Formul?rio login/cadastro mobile ?? */
   .auth-form-page--mobile {
     min-height: 100svh;
     min-height: 100dvh;
@@ -3297,7 +3297,7 @@ body {
   object-position: 0% 48%;
 }
 
-/* Tablet em pé — cadastro um pouco mais largo (mantém sem scroll) */
+/* Tablet em p? ? cadastro um pouco mais largo (mant?m sem scroll) */
 @media (min-width: 768px) and (max-width: 1023px) {
   .auth-form-overlay .auth-form-card--register {
     width: min(100%, 25rem);
@@ -3370,7 +3370,28 @@ body {
   }
 }
 
-/* Publicidade — editor e artigo */
+/* Publicidade ? editor e artigo */
+.advertising-editor {
+  color: var(--toq-navy);
+}
+
+.advertising-editor [data-indent="1"],
+.advertising-article-body [data-indent="1"] { margin-left: 24px; }
+.advertising-editor [data-indent="2"],
+.advertising-article-body [data-indent="2"] { margin-left: 48px; }
+.advertising-editor [data-indent="3"],
+.advertising-article-body [data-indent="3"] { margin-left: 72px; }
+.advertising-editor [data-indent="4"],
+.advertising-article-body [data-indent="4"] { margin-left: 96px; }
+.advertising-editor [data-indent="5"],
+.advertising-article-body [data-indent="5"] { margin-left: 120px; }
+.advertising-editor [data-indent="6"],
+.advertising-article-body [data-indent="6"] { margin-left: 144px; }
+.advertising-editor [data-indent="7"],
+.advertising-article-body [data-indent="7"] { margin-left: 168px; }
+.advertising-editor [data-indent="8"],
+.advertising-article-body [data-indent="8"] { margin-left: 192px; }
+
 .advertising-editor p,
 .advertising-article-body p {
   margin: 0.75rem 0;
@@ -3378,11 +3399,30 @@ body {
 }
 
 .advertising-editor ul,
-.advertising-article-body ul,
+.advertising-article-body ul {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+  list-style-position: outside;
+}
+
 .advertising-editor ol,
 .advertising-article-body ol {
   margin: 0.75rem 0;
   padding-left: 1.5rem;
+  list-style-type: decimal;
+  list-style-position: outside;
+}
+
+.advertising-editor li,
+.advertising-article-body li {
+  margin: 0.25rem 0;
+  display: list-item;
+}
+
+.advertising-editor li p,
+.advertising-article-body li p {
+  margin: 0;
 }
 
 .advertising-editor a,
@@ -3396,8 +3436,78 @@ body {
   display: block;
   max-width: 100%;
   height: auto;
+}
+
+.advertising-article-body img {
   margin: 1rem auto;
+}
+
+.advertising-article-body img[data-align="left"] {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.advertising-article-body img[data-align="center"] {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.advertising-article-body img[data-align="right"] {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.advertising-image-wrap {
+  margin: 1rem 0;
+  display: flex;
+  width: 100%;
+}
+
+.advertising-image-wrap--left {
+  justify-content: flex-start;
+}
+
+.advertising-image-wrap--center {
+  justify-content: center;
+}
+
+.advertising-image-wrap--right {
+  justify-content: flex-end;
+}
+
+.advertising-image-frame {
+  position: relative;
+  max-width: 100%;
+  line-height: 0;
+}
+
+.advertising-image-frame img {
+  width: 100%;
+  height: auto;
+  margin: 0;
   border-radius: 0.75rem;
+  user-select: none;
+}
+
+.advertising-image-wrap.is-selected .advertising-image-frame {
+  outline: 2px solid var(--toq-accent);
+  outline-offset: 2px;
+  border-radius: 0.75rem;
+}
+
+.advertising-image-resize {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  z-index: 2;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 3px;
+  background: var(--toq-accent);
+  cursor: nwse-resize;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 .advertising-editor img[style*="text-align: center"],
@@ -3435,7 +3545,7 @@ button {
   font: inherit;
 }
 
-/* Componentes reutilizáveis */
+/* Componentes reutiliz?veis */
 .toq-card {
   border-radius: 1rem;
   border: 1px solid var(--toq-border);
@@ -3517,7 +3627,7 @@ button {
   border-bottom: none;
 }
 
-/* Barra lateral do feed (busca, sugestões, publicidade) */
+/* Barra lateral do feed (busca, sugest?es, publicidade) */
 @media (min-width: 1024px) {
   .feed-sidebar-stack {
     display: flex;
@@ -3888,7 +3998,7 @@ button {
   color: var(--toq-profile-muted);
 }
 
-/* Mesma tipografia dos demais campos do resumo (text-sm) — evita CEP maior no mobile */
+/* Mesma tipografia dos demais campos do resumo (text-sm) ? evita CEP maior no mobile */
 .feed-layout-main .profile-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
 .feed-layout-main .profile-page textarea,
 .feed-layout-main .profile-page select {
@@ -3955,7 +4065,7 @@ button {
   background: var(--toq-border);
 }
 
-/* Configurações */
+/* Configura??es */
 .settings-card {
   border: 1px solid var(--toq-border);
   border-radius: 1.25rem;
@@ -4002,7 +4112,7 @@ button {
   box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12);
 }
 
-/* Modo escuro — estilo Instagram */
+/* Modo escuro ? estilo Instagram */
 [data-theme="dark"] html,
 [data-theme="dark"] body {
   background: #000000;
@@ -4022,7 +4132,7 @@ button {
   background: #000000;
 }
 
-/* Sidebar e drawer — preto neutro, sem azul */
+/* Sidebar e drawer ? preto neutro, sem azul */
 [data-theme="dark"] .app-sidebar {
   background: #000000;
   border-right: 1px solid #262626;
@@ -4090,7 +4200,7 @@ button {
   border-bottom: none;
 }
 
-/* Cards e superfícies */
+/* Cards e superf?cies */
 [data-theme="dark"] .toq-card,
 [data-theme="dark"] .toq-card-lg,
 [data-theme="dark"] .messages-inbox,
@@ -4230,7 +4340,7 @@ button {
   --tw-ring-color: #262626;
 }
 
-/* Aprenda à Jogar — card de divulgação */
+/* Aprenda ? Jogar ? card de divulga??o */
 .coach-listing-card {
   display: flex;
   flex-direction: column;
@@ -4504,7 +4614,7 @@ button {
 }
 
 /* =============================================================================
-   Staff role badges (feed) � efeito brilhante tipo GIF
+   Staff role badges (feed) ? efeito brilhante tipo GIF
    ============================================================================= */
 
 .staff-badge {
