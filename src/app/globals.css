@@ -1514,9 +1514,15 @@ body {
 
 @media (min-width: 768px) {
   .auth-plans-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.25rem;
     align-items: stretch;
+  }
+}
+
+@media (min-width: 1100px) {
+  .auth-plans-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -1551,10 +1557,18 @@ body {
     rgba(255, 255, 255, 0.05);
 }
 
+.auth-plan-card--proprietario,
 .auth-plan-card--empresario {
   background:
     radial-gradient(ellipse 80% 60% at 0% 100%, rgba(167, 139, 250, 0.14) 0%, transparent 55%),
     rgba(255, 255, 255, 0.05);
+}
+
+.auth-plan-card--proprietario_plus {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(251, 191, 36, 0.16) 0%, transparent 55%),
+    rgba(255, 255, 255, 0.05);
+  border-color: rgba(251, 191, 36, 0.28);
 }
 
 .auth-plan-badge {

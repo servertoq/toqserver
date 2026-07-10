@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app/AppShell";
 import type { AppProfile } from "@/components/app/AppSidebar";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
+import { normalizePlan } from "@/lib/plans";
 
 export default async function InicioLayout({
   children,
@@ -43,7 +44,7 @@ export default async function InicioLayout({
         avatar_url: profile.avatar_url,
         staffRole: (staffRole as AppProfile["staffRole"]) ?? null,
         isBanned: profile.is_banned ?? false,
-        plan: (profile.plan as AppProfile["plan"]) ?? "free",
+        plan: normalizePlan((profile.plan as AppProfile["plan"]) ?? "free"),
         showPlanBadge: profile.show_plan_badge ?? true,
       }}
     >

@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { deleteCoachListing, fetchCoachListings, fetchMyCoachListing } from "@/lib/coachListings";
-import { fetchPlanUsage } from "@/lib/plans";
+import { fetchPlanUsage, planLimitMessage, canCreateCoachListingResource } from "@/lib/plans";
 import type { PlanUsage } from "@/types/plans";
 import type { CoachListingWithProfile } from "@/types/coachListings";
 import { appContentClass } from "@/lib/layout";
@@ -86,7 +86,7 @@ export function CoachListingsPage() {
     ? `/inicio/aprenda-a-jogar/${myListing.id}/editar`
     : "/inicio/aprenda-a-jogar/cadastrar";
 
-  const canAdvertise = myListing !== null || (planUsage?.can_create_coach_listing ?? false);
+  const canAdvertise = canCreateCoachListingResource(planUsage, profile.staffRole, myListing !== null);
   const createLabel = myListing ? "Editar minha divulgação" : "Divulgar aulas";
 
   return (
@@ -131,13 +131,21 @@ export function CoachListingsPage() {
             <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
               Seja o primeiro a divulgar aulas de tênis na plataforma.
             </p>
-            {!myListing && (
+            {!myListing && canAdvertise && (
               <Link
                 href="/inicio/aprenda-a-jogar/cadastrar"
                 className="mt-4 inline-block rounded-xl toq-btn-primary px-5 py-2.5 text-sm font-bold text-white"
               >
                 Divulgar aulas
               </Link>
+            )}
+            {!myListing && !canAdvertise && planUsage && (
+              <p className="mt-4 text-xs text-[var(--toq-text-muted)]">
+                {planLimitMessage(planUsage, "coach")}{" "}
+                <Link href="/inicio/planos" className="font-semibold text-[var(--toq-navy)] underline">
+                  Ver planos
+                </Link>
+              </p>
             )}
           </div>
         ) : (

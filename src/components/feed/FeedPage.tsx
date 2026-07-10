@@ -18,6 +18,7 @@ import { type CreatePostSubmitData, toCreatePostInput } from "@/lib/createPost";
 import { CreatePostModal } from "./CreatePostModal";
 import { FeedDesktopPostList, FeedMobileTimeline } from "./FeedPostList";
 import { usePostOwnerActions } from "@/lib/usePostOwnerActions";
+import { loadBoostedFeedPosts, mergeBoostedIntoFeed } from "@/lib/feedBoost";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { FloatingMessages } from "@/components/messages/FloatingMessages";
 import { AgendaReminderDialog } from "@/components/agenda/AgendaReminderDialog";
@@ -89,13 +90,16 @@ export function FeedPage() {
     }
 
     setPosts(
-      (rawPosts ?? []).map((row) =>
-        mapPostRow(
-          row,
-          likesByPost[row.id] ?? 0,
-          commentsByPost[row.id] ?? 0,
-          likedSet.has(row.id)
-        )
+      mergeBoostedIntoFeed(
+        (rawPosts ?? []).map((row) =>
+          mapPostRow(
+            row,
+            likesByPost[row.id] ?? 0,
+            commentsByPost[row.id] ?? 0,
+            likedSet.has(row.id)
+          )
+        ),
+        await loadBoostedFeedPosts(supabase, user.id, new Set(postIds))
       )
     );
     setLoading(false);

@@ -5,7 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { mapCourtRow } from "@/lib/courts";
 import { matchesLocationSearch, LOCATION_SEARCH_PLACEHOLDER } from "@/lib/locationSearch";
-import { fetchPlanUsage } from "@/lib/plans";
+import { fetchPlanUsage, canCreateCourtResource } from "@/lib/plans";
+import { useAppProfile } from "@/components/app/AppShell";
 import type { PlanUsage } from "@/types/plans";
 import type { CourtWithOwner } from "@/types/courts";
 import { appContentClass } from "@/lib/layout";
@@ -13,6 +14,7 @@ import { CourtCard } from "./CourtCard";
 import { PageHeader } from "@/components/shared/PageHeader";
 
 export function CourtsPage() {
+  const profile = useAppProfile();
   const supabase = createClient();
   const [courts, setCourts] = useState<CourtWithOwner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,7 @@ export function CourtsPage() {
           title="Quadras"
           subtitle="Encontre a melhor quadra perto de você e agende para treinos, jogos ou torneios!"
           action={
-            planUsage?.can_create_court ? (
+            canCreateCourtResource(planUsage, profile.staffRole) ? (
               <Link
                 href="/inicio/quadras/cadastrar"
                 className="toq-btn-primary rounded-xl px-4 py-2 text-sm text-white"

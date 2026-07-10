@@ -7,6 +7,13 @@ import type { UserPlan } from "@/types/plans";
 import { StaffUsernameSearch, type UsernameSearchUser } from "./StaffUsernameSearch";
 import { StaffDeleteContentPanel } from "./StaffDeleteContentPanel";
 
+const STAFF_ASSIGNABLE_PLANS: UserPlan[] = [
+  "free",
+  "professor",
+  "proprietario",
+  "proprietario_plus",
+];
+
 type Props = {
   onAction: () => void;
 };
@@ -106,7 +113,7 @@ export function StaffToolsPanel({ onAction }: Props) {
       <section className="mt-4 overflow-visible rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <h2 className="text-sm font-bold text-[var(--toq-navy)]">Plano do usuário</h2>
         <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
-          Atribua Usuário, Professor ou Empresário (sem cobrança automática por enquanto).
+          Atribua Usuário, Professor, Proprietário ou Proprietário Plus (sem cobrança automática).
         </p>
         <div className="mt-4">
           <StaffUsernameSearch value={planUser} onChange={setPlanUser} />
@@ -115,7 +122,7 @@ export function StaffToolsPanel({ onAction }: Props) {
             onChange={(e) => setSelectedPlan(e.target.value as UserPlan)}
             className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
           >
-            {(Object.keys(PLAN_LABELS) as UserPlan[]).map((plan) => (
+            {STAFF_ASSIGNABLE_PLANS.map((plan) => (
               <option key={plan} value={plan}>
                 {PLAN_LABELS[plan]}
               </option>

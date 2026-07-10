@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { COMMUNITY_GROUP_CONFIG, groupDetailHref } from "@/lib/communityGroup";
-import { fetchPlanUsage, planLimitMessage } from "@/lib/plans";
+import { fetchPlanUsage, planLimitMessage, canCreateCommunityResource } from "@/lib/plans";
 import type { PlanUsage } from "@/types/plans";
 import type { CommunityGroupKind } from "@/types/community";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
@@ -47,9 +47,11 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
     fetchPlanUsage(supabase).then(setPlanUsage);
   }, [supabase]);
 
-  const canCreate = isClub
-    ? planUsage?.can_create_club ?? false
-    : planUsage?.can_create_community ?? true;
+  const canCreate = canCreateCommunityResource(
+    planUsage,
+    profile.staffRole,
+    isClub ? "club" : "community"
+  );
 
   async function handleCover(list: FileList | null) {
     const file = list?.[0];

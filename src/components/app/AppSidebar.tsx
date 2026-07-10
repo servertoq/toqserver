@@ -14,7 +14,7 @@ export type AppProfile = {
   avatar_url: string | null;
   staffRole: StaffRole | null;
   isBanned: boolean;
-  plan: "free" | "professor" | "empresario";
+  plan: "free" | "professor" | "proprietario" | "proprietario_plus" | "empresario";
   showPlanBadge: boolean;
 };
 

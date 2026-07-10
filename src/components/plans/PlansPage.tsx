@@ -12,14 +12,14 @@ import {
   planMonthlyPriceLabel,
   planUpgradePriceLabel,
 } from "@/lib/billing/plans";
-import { fetchPlanUsage, planLabel } from "@/lib/plans";
+import { fetchPlanUsage, planLabel, normalizePlan } from "@/lib/plans";
 import type { PlanUsage } from "@/types/plans";
 import type { UserPlan } from "@/types/plans";
 import { appContentClass } from "@/lib/layout";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
-const PLAN_IDS: UserPlan[] = ["free", "professor", "empresario"];
+const PLAN_IDS: UserPlan[] = ["free", "professor", "proprietario", "proprietario_plus"];
 
 export function PlansPage() {
   const supabase = createClient();
@@ -62,7 +62,7 @@ export function PlansPage() {
     }
   }, [searchParams, router, load]);
 
-  const currentPlan = usage?.plan ?? profile.plan;
+  const currentPlan = normalizePlan(usage?.plan ?? profile.plan);
 
   async function handleUpgrade(target: UserPlan) {
     await guard(async () => {
@@ -175,7 +175,7 @@ export function PlansPage() {
         {loading ? (
           <p className="text-sm text-[var(--toq-text-muted)]">Carregando planos…</p>
         ) : (
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {PLAN_IDS.map((planId) => {
               const isCurrent = planId === currentPlan;
               const features = PLAN_FEATURES[planId];
@@ -225,10 +225,9 @@ export function PlansPage() {
         )}
 
         <p className="mt-8 text-xs text-[var(--toq-text-muted)]">
-          Preços mensais: Usuário grátis · Professor {formatPlanPrice(2000)} · Empresário{" "}
-          {formatPlanPrice(5000)}. Ao fazer upgrade, você paga a diferença entre os planos. Para
-          reduzir o plano, remova antes conteúdo que exceda os limites do plano inferior (clubes,
-          quadras, comunidades extras ou anúncio de aulas).
+          Preços mensais: Usuário grátis · Professor {formatPlanPrice(2000)} · Proprietário{" "}
+          {formatPlanPrice(9900)} · Proprietário Plus {formatPlanPrice(18900)}. No upgrade você paga
+          a diferença. Para reduzir o plano, remova conteúdo que exceda os limites do plano inferior.
         </p>
       </main>
     </>

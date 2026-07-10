@@ -19,7 +19,7 @@ export type FeedProfile = {
   username: string;
   display_name?: string | null;
   avatar_url: string | null;
-  plan?: "free" | "professor" | "empresario";
+  plan?: "free" | "professor" | "proprietario" | "proprietario_plus" | "empresario";
   show_plan_badge?: boolean;
 };
 
@@ -56,6 +56,7 @@ export type FeedPost = {
   comments_count: number;
   liked_by_me: boolean;
   poll: PostPollMeta | null;
+  is_boosted?: boolean;
 };
 
 export type FeedComment = {

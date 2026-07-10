@@ -14,7 +14,8 @@ type Props = {
 
 export function ProfilePlanSection({ plan, showPlanBadge, onToggleBadge, saving }: Props) {
   const info = PLANS.find((p) => p.id === plan) ?? PLANS[0];
-  const canToggle = plan === "professor" || plan === "empresario";
+  const canToggle =
+    plan === "professor" || plan === "proprietario" || plan === "proprietario_plus";
 
   return (
     <div className="rounded-2xl border border-[var(--toq-profile-border)] bg-white p-4">

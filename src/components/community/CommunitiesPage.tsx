@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { mapCommunityRow } from "@/lib/community";
-import { fetchPlanUsage, planLimitMessage } from "@/lib/plans";
+import { fetchPlanUsage, planLimitMessage, canCreateCommunityResource } from "@/lib/plans";
 import { matchesLocationSearch, LOCATION_SEARCH_PLACEHOLDER } from "@/lib/locationSearch";
 import type { PlanUsage } from "@/types/plans";
 import { COMMUNITY_GROUP_CONFIG } from "@/lib/communityGroup";
@@ -110,8 +110,11 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
     fetchPlanUsage(supabase).then(setPlanUsage);
   }, [supabase]);
 
-  const canCreateGroup =
-    groupKind === "club" ? planUsage?.can_create_club ?? false : planUsage?.can_create_community ?? true;
+  const canCreateGroup = canCreateCommunityResource(
+    planUsage,
+    profile.staffRole,
+    groupKind === "club" ? "club" : "community"
+  );
 
   useEffect(() => {
     load();

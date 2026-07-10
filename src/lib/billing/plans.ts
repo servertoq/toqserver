@@ -4,17 +4,27 @@ import type { UserPlan } from "@/types/plans";
 export const PLAN_PRICES_CENTS: Record<UserPlan, number> = {
   free: 0,
   professor: 2000,
-  empresario: 5000,
+  proprietario: 9900,
+  proprietario_plus: 18900,
+  empresario: 9900,
 };
 
 const PLAN_ORDER: Record<UserPlan, number> = {
   free: 0,
   professor: 1,
+  proprietario: 2,
+  proprietario_plus: 3,
   empresario: 2,
 };
 
+export function normalizePlan(plan: UserPlan | null | undefined): UserPlan {
+  if (!plan) return "free";
+  if (plan === "empresario") return "proprietario";
+  return plan;
+}
+
 export function planOrder(plan: UserPlan) {
-  return PLAN_ORDER[plan];
+  return PLAN_ORDER[normalizePlan(plan)];
 }
 
 export function isUpgrade(from: UserPlan, to: UserPlan) {
@@ -25,10 +35,11 @@ export function isDowngrade(from: UserPlan, to: UserPlan) {
   return planOrder(to) < planOrder(from);
 }
 
-/** Valor a pagar ao mudar de plano (diferença mensal). */
 export function planUpgradeAmountCents(from: UserPlan, to: UserPlan): number {
   if (!isUpgrade(from, to)) return 0;
-  return PLAN_PRICES_CENTS[to] - PLAN_PRICES_CENTS[from];
+  const fromNorm = normalizePlan(from);
+  const toNorm = normalizePlan(to);
+  return PLAN_PRICES_CENTS[toNorm] - PLAN_PRICES_CENTS[fromNorm];
 }
 
 export function formatPlanPrice(cents: number) {
@@ -39,7 +50,7 @@ export function formatPlanPrice(cents: number) {
 }
 
 export function planMonthlyPriceLabel(plan: UserPlan) {
-  const cents = PLAN_PRICES_CENTS[plan];
+  const cents = PLAN_PRICES_CENTS[normalizePlan(plan)];
   if (cents <= 0) return "Grátis";
   return `${formatPlanPrice(cents)}/mês`;
 }
@@ -58,23 +69,38 @@ export const PLAN_FEATURES: Record<
     { label: "Feed, mensagens e publicidade", included: true },
     { label: "Ver clubes, quadras e torneios", included: true },
     { label: "Ver anúncios de aulas", included: true },
-    { label: "Até 1 comunidade", included: true },
+    { label: "Até 3 comunidades", included: true },
     { label: "Divulgar aulas (Aprenda à Jogar)", included: false },
     { label: "Criar clube ou quadras", included: false },
-    { label: "Badge no feed", included: false },
+    { label: "Badge e destaque no feed", included: false },
   ],
   professor: [
     { label: "Tudo do plano Usuário", included: true },
-    { label: "1 anúncio em Aprenda à Jogar", included: true },
-    { label: "Até 3 comunidades", included: true },
     { label: "Badge Professor no feed", included: true },
-    { label: "Criar clube", included: false },
-    { label: "Cadastrar quadras", included: false },
+    { label: "1 anúncio em Aprenda à Jogar", included: true },
+    { label: "Posts em destaque a cada 3 horas", included: true },
+    { label: "Criar clube ou quadras", included: false },
+  ],
+  proprietario: [
+    { label: "Tudo do plano Usuário", included: true },
+    { label: "Badge Proprietário no feed", included: true },
+    { label: "1 clube privado", included: true },
+    { label: "Até 4 quadras (clube + aba Quadras)", included: true },
+    { label: "Posts em destaque a cada 2 horas", included: true },
+    { label: "Anúncio de aulas (professor)", included: false },
+  ],
+  proprietario_plus: [
+    { label: "Tudo do plano Proprietário", included: true },
+    { label: "Clubes ilimitados", included: true },
+    { label: "Quadras ilimitadas", included: true },
+    { label: "Posts em destaque a cada 2 horas", included: true },
   ],
   empresario: [
-    { label: "Tudo do plano Professor", included: true },
+    { label: "Tudo do plano Usuário", included: true },
+    { label: "Badge Proprietário no feed", included: true },
     { label: "1 clube privado", included: true },
-    { label: "Até 5 quadras (clube + aba Quadras)", included: true },
-    { label: "Badge Empresário no feed", included: true },
+    { label: "Até 4 quadras (clube + aba Quadras)", included: true },
+    { label: "Posts em destaque a cada 2 horas", included: true },
+    { label: "Anúncio de aulas (professor)", included: false },
   ],
 };

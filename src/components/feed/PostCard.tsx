@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { recordBoostImpression } from "@/lib/feedBoost";
 import { formatTimeAgo, postTypeLabel } from "@/lib/feed";
 import { profileDisplayName } from "@/lib/profile";
 import { profilePath } from "@/lib/publicProfile";
@@ -59,6 +61,29 @@ export function PostCard({
   useEffect(() => {
     if (highlightCommentId) setShowComments(true);
   }, [highlightCommentId]);
+
+  useEffect(() => {
+    if (!post.is_boosted || isAuthor) return;
+    const el = articleRef.current;
+    if (!el) return;
+
+    const supabase = createClient();
+    let recorded = false;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (recorded) return;
+        const visible = entries.some((e) => e.isIntersecting && e.intersectionRatio >= 0.4);
+        if (visible) {
+          recorded = true;
+          void recordBoostImpression(supabase, post.id);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.4 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [post.id, post.is_boosted, isAuthor]);
 
   async function handleLike() {
     setLikeLoading(true);
@@ -124,6 +149,11 @@ export function PostCard({
             {visBadge && (
               <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
                 {visBadge}
+              </span>
+            )}
+            {post.is_boosted && (
+              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase text-sky-800">
+                Destaque
               </span>
             )}
             <span className="text-xs text-[var(--toq-text-muted)]">

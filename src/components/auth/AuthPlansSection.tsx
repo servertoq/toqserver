@@ -2,12 +2,14 @@ import { PLAN_FEATURES, planMonthlyPriceLabel } from "@/lib/billing/plans";
 import { PLAN_LABELS } from "@/lib/plans";
 import type { UserPlan } from "@/types/plans";
 
-const LANDING_PLANS: UserPlan[] = ["free", "professor", "empresario"];
+const LANDING_PLANS: UserPlan[] = ["free", "professor", "proprietario", "proprietario_plus"];
 
 const PLAN_TAGLINE: Record<UserPlan, string> = {
-  free: "Para jogar, socializar e acompanhar a rede.",
-  professor: "Para quem dá aula e quer visibilidade.",
-  empresario: "Para clubes e arenas com quadras na plataforma.",
+  free: "Para jogar, socializar e criar até 3 comunidades.",
+  professor: "Para quem dá aula — badge e destaque no feed a cada 3h.",
+  proprietario: "Para donos de arena — 1 clube, 4 quadras, destaque a cada 2h.",
+  proprietario_plus: "Escala total — clubes e quadras ilimitados.",
+  empresario: "Para donos de arena.",
 };
 
 type Props = {

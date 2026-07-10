@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { planUpgradeAmountCents } from "@/lib/billing/plans";
+import { planUpgradeAmountCents, normalizePlan } from "@/lib/billing/plans";
 import { createAdminClient, isStripeConfigured } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { planLabel } from "@/lib/plans";
 import type { UserPlan } from "@/types/plans";
 
-const VALID_TARGETS: UserPlan[] = ["professor", "empresario"];
+const VALID_TARGETS: UserPlan[] = ["professor", "proprietario", "proprietario_plus"];
 
 export async function POST(request: Request) {
   if (!isStripeConfigured()) {
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Perfil não encontrado." }, { status: 404 });
   }
 
-  const currentPlan = (profile.plan as UserPlan) ?? "free";
+  const currentPlan = normalizePlan((profile.plan as UserPlan) ?? "free");
   const amountCents = planUpgradeAmountCents(currentPlan, targetPlan);
 
   if (amountCents <= 0) {
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
           currency: "brl",
           unit_amount: amountCents,
           product_data: {
-            name: `Upgrade Toq Tennis — ${targetPlan === "professor" ? "Professor" : "Empresário"}`,
+            name: `Upgrade Toq Tennis — ${planLabel(targetPlan)}`,
             description: `Diferença mensal do plano ${currentPlan} para ${targetPlan}`,
           },
         },
