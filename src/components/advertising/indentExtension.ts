@@ -1,4 +1,4 @@
-import { Extension } from "@tiptap/core";
+import { Extension, type CommandProps } from "@tiptap/core";
 import { AllSelection, NodeSelection, TextSelection, type Transaction } from "@tiptap/pm/state";
 import { INDENT_STEP_PX } from "./indentConstants";
 
@@ -97,7 +97,7 @@ export const Indent = Extension.create({
     const apply =
       (delta: number) =>
       () =>
-      ({ tr, state, dispatch, editor }) => {
+      ({ tr, state, dispatch, editor }: CommandProps) => {
         if (delta > 0 && editor.can().sinkListItem("listItem")) {
           return editor.commands.sinkListItem("listItem");
         }
