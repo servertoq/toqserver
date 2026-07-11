@@ -1,0 +1,16 @@
+---
+description: Continuidade do setup Cloudflare/domínio toqtennis.com.br
+alwaysApply: true
+---
+
+# Handoff domínio / Cloudflare
+
+Quando o assunto for domínio, Cloudflare, DNS, Registro.br, Vercel Domains, SSL do site ou `toqtennis.com.br`:
+
+1. Leia primeiro [`docs/handoff-cloudflare.md`](docs/handoff-cloudflare.md) e siga o estado/próximos passos de lá.
+2. Não reinvente o fluxo: nameservers Cloudflare são `kyle.ns.cloudflare.com` e `lina.ns.cloudflare.com`.
+3. Supabase Auth do app usa o projeto `zkomrypjcoxxogiwpbjo` (não `fusiidqqsjruzibkjmwh`).
+4. Callback Google OAuth: `https://zkomrypjcoxxogiwpbjo.supabase.co/auth/v1/callback`.
+5. Scripts: `scripts/setup-cloudflare.mjs` e `scripts/validate-cloudflare.mjs`.
+
+Atualize `docs/handoff-cloudflare.md` se o status mudar (ex.: nameservers Active, SSL ok).
