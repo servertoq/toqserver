@@ -1,6 +1,6 @@
 # Handoff — Cloudflare + domínio toqtennis.com.br
 
-Atualizado: 2026-07-11 (sessão empresa). Continuar neste arquivo no PC de casa após `git pull`.
+Atualizado: 2026-07-13. Continuar neste arquivo após o contador do Registro.br.
 
 ## Objetivo
 Colocar Cloudflare (proxy laranja) na frente do site na Vercel, com SSL Full (strict) e segurança básica.
@@ -13,21 +13,18 @@ Colocar Cloudflare (proxy laranja) na frente do site na Vercel, com SSL Full (st
 | Site Cloudflare | Criado — conta `servertoq@gmail.com` |
 | DNS no Cloudflare | CNAME `@` e `www` → `cname.vercel-dns.com` (Proxied) |
 | Nameservers Cloudflare | `kyle.ns.cloudflare.com` / `lina.ns.cloudflare.com` |
-| Nameservers Registro.br | **BLOQUEADO** ~1h+ — ainda `a.auto.dns.br` / `b.auto.dns.br` |
+| Nameservers Registro.br | **Pedido salvo** — kyle/lina; Registro.br indica ~2h para aplicar. Público ainda `a.sec.dns.br` / `c.sec.dns.br` |
+| Cloudflare Overview | Waiting for nameserver propagation |
 | SSL / Bot Fight / Security | Pendente (só depois do domínio Active no CF) |
 | Login Google | OK — callback `https://zkomrypjcoxxogiwpbjo.supabase.co/auth/v1/callback` |
 | Supabase Site URL | Deve ser `https://toqtennis.com.br` |
 | Supabase Redirect URLs | Já incluem `toqtennis.com.br` e `www` + `/auth/callback` |
 
-## Próximos passos (PC de casa)
+## Próximos passos (depois das ~2h do Registro.br)
 
-1. **Registro.br** → domínio `toqtennis.com.br` → **Alterar servidores DNS** (não “Configurar Zona DNS”).
-   - Remover: `a.auto.dns.br`, `b.auto.dns.br`
-   - Colocar só: `kyle.ns.cloudflare.com`, `lina.ns.cloudflare.com`
-   - Se houver DNSSEC, desligar antes.
-   - Só funciona depois do contador do Registro.br zerar (“Servidores DNS externos poderão ser delegados…”).
+1. **Cloudflare** → Overview → **Check nameservers now** até status **Active**.
 
-2. **Cloudflare** → Overview → **Check nameservers** até status **Active**.
+2. **Cloudflare → DNS** — confirmar CNAME `@` e `www` → `cname.vercel-dns.com` (Proxied / laranja).
 
 3. **Cloudflare → SSL/TLS**
    - Encryption mode: **Full (strict)**
@@ -55,6 +52,13 @@ $env:CLOUDFLARE_API_TOKEN="..."
 node scripts/setup-cloudflare.mjs
 node scripts/validate-cloudflare.mjs
 ```
+
+## E-mail (paralelo ao Cloudflare)
+
+Spam do reset de senha: migrar SMTP do Gmail → **Resend** com domínio verificado. Guia: [`docs/auth-email-setup.md`](auth-email-setup.md).
+
+- DNS do Resend (SPF/DKIM/MX do subdomínio `mail.…`) pode ir no Registro.br **agora** ou no Cloudflare depois de Active.
+- Remetente alvo: `noreply@mail.toqtennis.com.br` (ou raiz, se verificar `toqtennis.com.br`).
 
 ## O que NÃO mexer
 
