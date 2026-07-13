@@ -1,6 +1,6 @@
 # Handoff — Cloudflare + domínio toqtennis.com.br
 
-Atualizado: 2026-07-13. Continuar neste arquivo após o contador do Registro.br.
+Atualizado: 2026-07-13. Zona **Active** (tráfego com `cf-ray`).
 
 ## Objetivo
 Colocar Cloudflare (proxy laranja) na frente do site na Vercel, com SSL Full (strict) e segurança básica.
@@ -10,39 +10,40 @@ Colocar Cloudflare (proxy laranja) na frente do site na Vercel, com SSL Full (st
 | Item | Status |
 |------|--------|
 | Domínio na Vercel | OK — `toqtennis.com.br` cadastrado |
-| Site Cloudflare | Criado — conta `servertoq@gmail.com` |
-| DNS no Cloudflare | CNAME `@` e `www` → `cname.vercel-dns.com` (Proxied) |
-| Nameservers Cloudflare | `kyle.ns.cloudflare.com` / `lina.ns.cloudflare.com` |
-| Nameservers Registro.br | **Pedido salvo** — kyle/lina; Registro.br indica ~2h para aplicar. Público ainda `a.sec.dns.br` / `c.sec.dns.br` |
-| Cloudflare Overview | Waiting for nameserver propagation |
-| SSL / Bot Fight / Security | Pendente (só depois do domínio Active no CF) |
+| Site Cloudflare | **Active** — conta `servertoq@gmail.com` |
+| DNS no Cloudflare | Confirmar CNAME `@` e `www` → `cname.vercel-dns.com` (Proxied) |
+| Nameservers | `kyle.ns.cloudflare.com` / `lina.ns.cloudflare.com` (público OK) |
+| Proxy | OK — `www` responde com `server: cloudflare` + `cf-ray` |
+| Canônico | Apex `toqtennis.com.br` redireciona **308 → www** (webhook Stripe deve usar `www`) |
+| SSL | Full (strict) + Always HTTPS (confirmar) |
+| Security | Bot Fight + Browser Integrity On; Under Attack Off |
+| Resend | **Próximo** — domínio `mail.toqtennis.com.br` no Cloudflare |
+| Stripe test | Checkout + webhook `https://www.toqtennis.com.br/api/billing/webhook` OK |
 | Login Google | OK — callback `https://zkomrypjcoxxogiwpbjo.supabase.co/auth/v1/callback` |
-| Supabase Site URL | Deve ser `https://toqtennis.com.br` |
-| Supabase Redirect URLs | Já incluem `toqtennis.com.br` e `www` + `/auth/callback` |
+| Supabase Site URL / Redirects | Incluir apex e `www` |
+| `NEXT_PUBLIC_APP_URL` | Preferir `https://www.toqtennis.com.br` |
 
-## Próximos passos (depois das ~2h do Registro.br)
+## Próximos passos (agora)
 
-1. **Cloudflare** → Overview → **Check nameservers now** até status **Active**.
+1. **Cloudflare → DNS** — `@` e `www` Proxied (nuvem laranja) → Vercel.
 
-2. **Cloudflare → DNS** — confirmar CNAME `@` e `www` → `cname.vercel-dns.com` (Proxied / laranja).
+2. **Cloudflare → SSL/TLS**
+   - Overview → Encryption mode: **Full (strict)**
+   - Edge Certificates → **Always Use HTTPS**: On
 
-3. **Cloudflare → SSL/TLS**
-   - Encryption mode: **Full (strict)**
-   - Always Use HTTPS: On
-
-4. **Cloudflare → Security**
-   - Security Level: **Medium**
+3. **Cloudflare → Security**
+   - Settings → Security Level: **Medium**
    - Bot Fight Mode: **On**
    - Browser Integrity Check: **On**
 
-5. **Vercel** → env Production:
-   - `NEXT_PUBLIC_APP_URL=https://toqtennis.com.br`
-   - Redeploy se mudar a env.
+4. **Vercel** → `NEXT_PUBLIC_APP_URL=https://www.toqtennis.com.br` → Redeploy.
 
-6. **Validar**
-   - `https://toqtennis.com.br` abre
-   - Header `cf-ray` presente (DevTools → Network)
-   - Login Google + “esqueci a senha”
+5. **Resend** (ver `docs/auth-email-setup.md`):
+   - Domínio `mail.toqtennis.com.br` no Resend
+   - DNS no Cloudflare (não apagar ainda o SPF `-all` / DMARC da **raiz** — o envio sai do subdomínio `mail`)
+   - SMTP no Supabase → testar reset
+
+6. **Validar** site, login Google, reset senha, checkout.
 
 ## Scripts no repo
 
