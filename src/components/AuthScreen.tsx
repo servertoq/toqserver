@@ -10,7 +10,7 @@ import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { AvatarCropModal } from "@/components/profile/AvatarCropModal";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 
-type View = "login" | "register" | "forgot" | "reset";
+type View = "login" | "register" | "forgot" | "reset" | "complete";
 type Screen = "splash" | "auth";
 type Gender = "masculino" | "feminino" | "outro";
 
@@ -47,8 +47,16 @@ export function AuthScreen() {
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [view, setView] = useState<View>("login");
-  const [screen, setScreen] = useState<Screen>("splash");
+  const initialView = ((): View => {
+    if (searchParams.get("complete") === "1") return "complete";
+    if (searchParams.get("reset") === "1") return "reset";
+    if (searchParams.get("forgot") === "1") return "forgot";
+    return "login";
+  })();
+  const skipSplash =
+    initialView === "complete" || initialView === "reset" || initialView === "forgot";
+  const [view, setView] = useState<View>(initialView);
+  const [screen, setScreen] = useState<Screen>(skipSplash ? "auth" : "splash");
   const { isSubmitting: loading, guard } = useSingleSubmit();
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
@@ -84,6 +92,10 @@ export function AuthScreen() {
     }
     if (searchParams.get("reset") === "1") {
       setView("reset");
+      setScreen("auth");
+    }
+    if (searchParams.get("complete") === "1") {
+      setView("complete");
       setScreen("auth");
     }
   }, [searchParams]);
@@ -227,13 +239,64 @@ export function AuthScreen() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?next=/inicio`,
         },
       });
 
       if (error) {
         setMessage({ type: "error", text: "Não foi possível conectar com o Google." });
       }
+    });
+  }
+
+  async function handleCompleteProfile(e: React.FormEvent) {
+    e.preventDefault();
+    resetMessages();
+    if (loading) return;
+
+    const normalizedUsername = normalizeUsername(username.trim());
+    if (!/^[a-zA-Z0-9_]{3,30}$/.test(normalizedUsername)) {
+      setMessage({
+        type: "error",
+        text: "Nome de usuário: use de 3 a 30 caracteres (letras, números e _).",
+      });
+      return;
+    }
+    if (!birthDate) {
+      setMessage({ type: "error", text: "Informe a data de nascimento." });
+      return;
+    }
+
+    await guard(async () => {
+      const { data: available, error: usernameError } = await supabase.rpc(
+        "is_username_available",
+        { p_username: normalizedUsername }
+      );
+
+      if (usernameError) {
+        setMessage({ type: "error", text: "Não foi possível verificar o usuário." });
+        return;
+      }
+      if (!available) {
+        setMessage({ type: "error", text: "Este nome de usuário já está em uso." });
+        return;
+      }
+
+      const { error } = await supabase.rpc("complete_profile_setup", {
+        p_username: normalizedUsername,
+        p_birth_date: birthDate,
+        p_gender: gender,
+      });
+
+      if (error) {
+        setMessage({
+          type: "error",
+          text: error.message || "Não foi possível salvar o perfil.",
+        });
+        return;
+      }
+
+      window.location.href = "/inicio";
     });
   }
 
@@ -460,6 +523,18 @@ export function AuthScreen() {
             </div>
           )}
 
+          {view === "complete" && (
+            <div className="auth-register-header mb-3 md:mb-4">
+              <ToqLogoWithBalls className="auth-register-logo mt-2 md:mt-3" />
+              <h2 className="mt-2 text-center text-base font-bold text-[var(--toq-text)] md:mt-3 md:text-lg">
+                Complete seu perfil
+              </h2>
+              <p className="mt-2 text-center text-sm text-[var(--toq-text-muted)]">
+                Escolha um nome de usuário e informe sua data de nascimento para continuar.
+              </p>
+            </div>
+          )}
+
           {view === "register" && (
             <div className="auth-register-header mb-3 md:mb-4">
               <button
@@ -634,6 +709,75 @@ export function AuthScreen() {
                 </div>
               </div>
               <SubmitButton loading={loading} label="Criar conta" tone="light" />
+              <Divider />
+              <GoogleButton loading={loading} onClick={handleGoogleLogin} />
+            </form>
+          )}
+
+          {view === "complete" && (
+            <form
+              onSubmit={handleCompleteProfile}
+              className="auth-register-form flex min-w-0 flex-col gap-1.5 md:gap-2"
+            >
+              <Field
+                label="Nome de usuário"
+                id="completeUsername"
+                value={username}
+                onChange={(v) => setUsername(normalizeUsername(v))}
+                autoComplete="username"
+                hint="Letras, números e _. Espaços viram _"
+                required
+              />
+              <div className="grid min-w-0 grid-cols-1 gap-2 md:grid-cols-2 md:items-end">
+                <Field
+                  label="Data de nascimento"
+                  id="completeBirthDate"
+                  type="date"
+                  value={birthDate}
+                  onChange={setBirthDate}
+                  required
+                />
+                <div className="min-w-0">
+                  <span className="mb-1 block text-xs font-medium text-[var(--toq-text-muted)]">
+                    Sexo
+                  </span>
+                  <div className="auth-gender-grid grid h-[38px] grid-cols-3 gap-1">
+                    {GENDER_OPTIONS.map((o) => (
+                      <label
+                        key={o.value}
+                        className={`flex cursor-pointer items-center justify-center rounded-lg border text-center text-[11px] font-medium leading-tight transition sm:text-xs ${
+                          gender === o.value
+                            ? "border-[var(--toq-accent)] toq-btn-primary text-white"
+                            : "border-slate-200 bg-white text-[var(--toq-text-muted)] hover:border-[var(--toq-accent)]"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="completeGender"
+                          value={o.value}
+                          checked={gender === o.value}
+                          onChange={() => setGender(o.value)}
+                          className="sr-only"
+                        />
+                        {o.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <SubmitButton loading={loading} label="Continuar" tone="light" />
+              <button
+                type="button"
+                disabled={loading}
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  router.replace("/");
+                  switchView("login");
+                }}
+                className="w-full text-center text-xs text-[var(--toq-text-muted)] hover:text-[var(--toq-accent)]"
+              >
+                Sair e voltar ao login
+              </button>
             </form>
           )}
 

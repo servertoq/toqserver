@@ -1628,13 +1628,13 @@ body {
 }
 
 .auth-plan-features li::before {
-  content: "?";
+  content: "\2713";
   position: absolute;
   left: 0;
   top: 0;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 800;
-  color: #60a5fa;
+  color: #4ade80;
 }
 
 .auth-plan-cta {
