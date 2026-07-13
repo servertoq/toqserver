@@ -24,8 +24,9 @@ export default async function BloqueadoPage() {
   const reason = profile.banned_reason?.trim();
 
   return (
-    <main className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
-      <h1 className="text-xl font-bold text-[var(--toq-navy)]">Conta suspensa</h1>
+    <main className="flex min-h-dvh flex-col items-center justify-center px-4 py-10 text-center">
+      <p className="text-sm font-bold tracking-[0.2em] text-[var(--toq-accent)]">TOQ</p>
+      <h1 className="mt-4 text-xl font-bold text-[var(--toq-navy)]">Conta suspensa</h1>
       <p className="mt-2 max-w-md text-sm text-[var(--toq-text-muted)]">
         Sua conta foi suspensa pela moderação da Toq Tennis.
         {reason ? (

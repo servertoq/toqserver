@@ -22,6 +22,14 @@ export function AppShell({
   profile: AppProfile;
   children: React.ReactNode;
 }) {
+  if (profile.isBanned) {
+    return (
+      <ProfileContext.Provider value={profile}>
+        <div className="flex min-h-dvh w-full flex-col">{children}</div>
+      </ProfileContext.Provider>
+    );
+  }
+
   return (
     <ProfileContext.Provider value={profile}>
       <PresenceHeartbeat />
