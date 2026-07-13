@@ -39,12 +39,16 @@ export async function POST(request: Request) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("plan, email, username")
+    .select("plan, email, username, is_banned")
     .eq("id", user.id)
     .single();
 
   if (!profile) {
     return NextResponse.json({ error: "Perfil não encontrado." }, { status: 404 });
+  }
+
+  if (profile.is_banned) {
+    return NextResponse.json({ error: "Conta suspensa." }, { status: 403 });
   }
 
   const currentPlan = normalizePlan((profile.plan as UserPlan) ?? "free");

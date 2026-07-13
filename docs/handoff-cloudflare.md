@@ -45,8 +45,13 @@ node scripts/validate-cloudflare.mjs
 
 1. Privar o repositório GitHub
 2. Stripe **live** quando for cobrança real (`pk_live` / `sk_live` + webhook live)
-3. Branding OAuth Google (nome/logo no Google Cloud) / custom domain Auth (pago) se quiser tirar `*.supabase.co` da tela de consentimento
-4. Ban no servidor (middleware) — endurecimento de segurança
+3. Branding OAuth Google / custom domain Auth (pago) se quiser tirar `*.supabase.co` da tela de consentimento
+
+## Já feito (segurança app)
+
+- Proteção de `plan` / `ban` via trigger (migration 067)
+- Ban no servidor: middleware + layout + checkout → `/inicio/bloqueado`
+- Onboarding Google (migration 068)
 
 ## Prompt rápido (outro PC / chat novo)
 

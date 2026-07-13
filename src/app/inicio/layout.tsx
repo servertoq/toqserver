@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app/AppShell";
 import type { AppProfile } from "@/components/app/AppSidebar";
@@ -40,6 +41,15 @@ export default async function InicioLayout({
     redirect("/?complete=1");
   }
 
+  const pathname = (await headers()).get("x-pathname") ?? "";
+  if (
+    profile.is_banned &&
+    pathname.startsWith("/inicio") &&
+    !pathname.startsWith("/inicio/bloqueado")
+  ) {
+    redirect("/inicio/bloqueado");
+  }
+
   const [{ data: staffRole }, { data: coachManagement }, { data: myCoachListing }] =
     await Promise.all([
       supabase.rpc("get_my_staff_role"),
@@ -53,9 +63,6 @@ export default async function InicioLayout({
     user.id,
     staffRoleValue
   );
-
-  const canAccessCoachManagement =
-    Boolean(coachManagement) || Boolean(myCoachListing);
 
   return (
     <AppShell
