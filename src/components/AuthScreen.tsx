@@ -484,8 +484,10 @@ export function AuthScreen() {
     <>
     <section
       className={`auth-form-card pointer-events-auto w-full max-w-md rounded-2xl ${
-        view === "register"
-          ? "auth-form-card--register"
+        view === "register" || view === "complete"
+          ? view === "complete"
+            ? "auth-form-card--register auth-form-card--complete"
+            : "auth-form-card--register"
           : view === "login"
             ? "auth-form-card--login"
           : view === "forgot" || view === "reset"
@@ -638,41 +640,37 @@ export function AuthScreen() {
                 minLength={8}
                 required
               />
-              <div className="grid min-w-0 grid-cols-1 gap-2 md:grid-cols-2 md:items-end">
-                <Field
-                  label="Data de nascimento"
-                  id="birthDate"
-                  type="date"
-                  value={birthDate}
-                  onChange={setBirthDate}
-                  required
-                />
-                <div className="min-w-0">
-                  <span className="mb-1 block text-xs font-medium text-[var(--toq-text-muted)]">
-                    Sexo
-                  </span>
-                  <div className="auth-gender-grid grid h-[38px] grid-cols-3 gap-1">
-                    {GENDER_OPTIONS.map((o) => (
-                      <label
-                        key={o.value}
-                        className={`flex cursor-pointer items-center justify-center rounded-lg border text-center text-[11px] font-medium leading-tight transition sm:text-xs ${
-                          gender === o.value
-                            ? "border-[var(--toq-accent)] toq-btn-primary text-white"
-                            : "border-slate-200 bg-white text-[var(--toq-text-muted)] hover:border-[var(--toq-accent)]"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="gender"
-                          value={o.value}
-                          checked={gender === o.value}
-                          onChange={() => setGender(o.value)}
-                          className="sr-only"
-                        />
-                        {o.label}
-                      </label>
-                    ))}
-                  </div>
+              <Field
+                label="Data de nascimento"
+                id="birthDate"
+                type="date"
+                value={birthDate}
+                onChange={setBirthDate}
+                required
+              />
+              <div className="auth-gender-field">
+                <span className="auth-gender-label">Sexo</span>
+                <div className="auth-gender-grid" role="radiogroup" aria-label="Sexo">
+                  {GENDER_OPTIONS.map((o) => (
+                    <label
+                      key={o.value}
+                      className={
+                        gender === o.value
+                          ? "border border-[var(--toq-accent)] toq-btn-primary text-white"
+                          : "border border-slate-200 bg-white text-[var(--toq-text-muted)] hover:border-[var(--toq-accent)]"
+                      }
+                    >
+                      <input
+                        type="radio"
+                        name="gender"
+                        value={o.value}
+                        checked={gender === o.value}
+                        onChange={() => setGender(o.value)}
+                        className="sr-only"
+                      />
+                      {o.label}
+                    </label>
+                  ))}
                 </div>
               </div>
               <div className="auth-avatar-picker rounded-lg border border-slate-200 bg-slate-50 p-2 md:p-3">
@@ -728,41 +726,37 @@ export function AuthScreen() {
                 hint="Letras, números e _. Espaços viram _"
                 required
               />
-              <div className="grid min-w-0 grid-cols-1 gap-2 md:grid-cols-2 md:items-end">
-                <Field
-                  label="Data de nascimento"
-                  id="completeBirthDate"
-                  type="date"
-                  value={birthDate}
-                  onChange={setBirthDate}
-                  required
-                />
-                <div className="min-w-0">
-                  <span className="mb-1 block text-xs font-medium text-[var(--toq-text-muted)]">
-                    Sexo
-                  </span>
-                  <div className="auth-gender-grid grid h-[38px] grid-cols-3 gap-1">
-                    {GENDER_OPTIONS.map((o) => (
-                      <label
-                        key={o.value}
-                        className={`flex cursor-pointer items-center justify-center rounded-lg border text-center text-[11px] font-medium leading-tight transition sm:text-xs ${
-                          gender === o.value
-                            ? "border-[var(--toq-accent)] toq-btn-primary text-white"
-                            : "border-slate-200 bg-white text-[var(--toq-text-muted)] hover:border-[var(--toq-accent)]"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="completeGender"
-                          value={o.value}
-                          checked={gender === o.value}
-                          onChange={() => setGender(o.value)}
-                          className="sr-only"
-                        />
-                        {o.label}
-                      </label>
-                    ))}
-                  </div>
+              <Field
+                label="Data de nascimento"
+                id="completeBirthDate"
+                type="date"
+                value={birthDate}
+                onChange={setBirthDate}
+                required
+              />
+              <div className="auth-gender-field">
+                <span className="auth-gender-label">Sexo</span>
+                <div className="auth-gender-grid" role="radiogroup" aria-label="Sexo">
+                  {GENDER_OPTIONS.map((o) => (
+                    <label
+                      key={o.value}
+                      className={
+                        gender === o.value
+                          ? "border border-[var(--toq-accent)] toq-btn-primary text-white"
+                          : "border border-slate-200 bg-white text-[var(--toq-text-muted)] hover:border-[var(--toq-accent)]"
+                      }
+                    >
+                      <input
+                        type="radio"
+                        name="completeGender"
+                        value={o.value}
+                        checked={gender === o.value}
+                        onChange={() => setGender(o.value)}
+                        className="sr-only"
+                      />
+                      {o.label}
+                    </label>
+                  ))}
                 </div>
               </div>
               <SubmitButton loading={loading} label="Continuar" tone="light" />
