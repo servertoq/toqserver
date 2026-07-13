@@ -217,13 +217,28 @@ export function AuthScreen() {
         return;
       }
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: emailToUse,
         password,
       });
 
-      if (error) {
+      if (error || !authData.user) {
         setMessage({ type: "error", text: "Credenciais inválidas. Verifique e tente novamente." });
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_banned, profile_complete")
+        .eq("id", authData.user.id)
+        .maybeSingle();
+
+      if (profile?.is_banned) {
+        window.location.href = "/inicio/bloqueado";
+        return;
+      }
+      if (profile && profile.profile_complete === false) {
+        window.location.href = "/?complete=1";
         return;
       }
 

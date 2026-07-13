@@ -37,9 +37,13 @@ export async function GET(request: Request) {
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("profile_complete")
+          .select("profile_complete, is_banned")
           .eq("id", user.id)
           .maybeSingle();
+
+        if (profile?.is_banned) {
+          return NextResponse.redirect(`${origin}/inicio/bloqueado`);
+        }
 
         if (profile && profile.profile_complete === false) {
           return NextResponse.redirect(`${origin}/?complete=1`);

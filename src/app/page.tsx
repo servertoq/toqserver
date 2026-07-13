@@ -21,9 +21,13 @@ export default async function HomePage({
   if (user && params.reset !== "1") {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("profile_complete")
+      .select("profile_complete, is_banned")
       .eq("id", user.id)
       .maybeSingle();
+
+    if (profile?.is_banned) {
+      redirect("/inicio/bloqueado");
+    }
 
     if (profile && profile.profile_complete === false) {
       if (params.complete !== "1") {

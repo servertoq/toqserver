@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -8,7 +9,8 @@ export default async function BloqueadoPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/");
+    // Evita bounce para o login no 1º request pós-auth (cookie ainda estabilizando).
+    redirect("/inicio");
   }
 
   const { data: profile } = await supabase
@@ -25,8 +27,21 @@ export default async function BloqueadoPage() {
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-4 py-10 text-center">
-      <p className="text-sm font-bold tracking-[0.2em] text-[var(--toq-accent)]">TOQ</p>
-      <h1 className="mt-4 text-xl font-bold text-[var(--toq-navy)]">Conta suspensa</h1>
+      <div
+        className="relative h-12 w-[7.5rem] shrink-0"
+        aria-label="Toq Tennis"
+        role="img"
+      >
+        <Image
+          src="/imagens_publicas/logo_sidebar.png"
+          alt="TOQ"
+          fill
+          sizes="120px"
+          className="object-contain object-center"
+          priority
+        />
+      </div>
+      <h1 className="mt-6 text-xl font-bold text-[var(--toq-navy)]">Conta suspensa</h1>
       <p className="mt-2 max-w-md text-sm text-[var(--toq-text-muted)]">
         Sua conta foi suspensa pela moderação da Toq Tennis.
         {reason ? (
