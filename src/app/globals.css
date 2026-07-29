@@ -2262,24 +2262,129 @@ body {
 }
 
 .legal-page__footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 1.25rem;
-  text-align: center;
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.45);
-  background: #030b18;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding:
+    1.5rem
+    max(1.25rem, env(safe-area-inset-right))
+    max(1.75rem, calc(env(safe-area-inset-bottom) + 1rem))
+    max(1.25rem, env(safe-area-inset-left));
+  background:
+    radial-gradient(ellipse 55% 90% at 85% 0%, rgba(37, 99, 235, 0.14) 0%, transparent 55%),
+    #030b18;
 }
 
-.legal-page__footer a {
-  color: #93c5fd;
+.legal-page__footer-inner {
+  max-width: 52rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .legal-page__footer-inner {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr auto;
+    align-items: center;
+    gap: 1.5rem 2rem;
+  }
+}
+
+.legal-page__footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.legal-page__footer-logo-link {
+  display: inline-flex;
+  width: fit-content;
+  text-decoration: none;
+}
+
+.legal-page__footer-logo {
+  display: block;
+  height: 1.75rem;
+  width: 5.25rem;
+  background: #ffffff;
+}
+
+.legal-page__footer-meta {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.legal-page__footer-docs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.9rem;
+}
+
+.legal-page__footer-doc-link {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.62);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.legal-page__footer-doc-link:hover {
+  color: #fff;
 }
 
 .legal-page__contacts {
-  margin-bottom: 0.15rem;
+  margin: 0;
+}
+
+.legal-page__contacts.site-contact-links--row {
+  justify-content: flex-start;
+}
+
+@media (min-width: 768px) {
+  .legal-page__contacts.site-contact-links--row {
+    justify-content: flex-end;
+  }
+}
+
+/* Compactar contatos no rodapé legal: só ícone + valor, sem pills grandes */
+.legal-page__contacts .site-contact-links__item {
+  padding: 0.3rem 0.55rem 0.3rem 0.3rem;
+  gap: 0.55rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+
+.legal-page__contacts .site-contact-links__icon-wrap {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+}
+
+.legal-page__contacts .site-contact-links__icon {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.legal-page__contacts .site-contact-links__label {
+  display: none;
+}
+
+.legal-page__contacts .site-contact-links__value {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding-right: 0.2rem;
+}
+
+@media (max-width: 640px) {
+  .legal-page__contacts.site-contact-links--row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .legal-page__contacts .site-contact-links__item {
+    width: 100%;
+  }
 }
 
 /* Cookie consent banner */

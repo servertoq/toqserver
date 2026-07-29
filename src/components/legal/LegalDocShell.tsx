@@ -86,10 +86,39 @@ export function LegalDocShell({ docId }: Props) {
       </div>
 
       <footer className="legal-page__footer">
-        <SiteContactLinks className="legal-page__contacts" />
-        <p>
-          © {new Date().getFullYear()} {LEGAL_SITE.brand}
-        </p>
+        <div className="legal-page__footer-inner">
+          <div className="legal-page__footer-brand">
+            <Link href="/" className="legal-page__footer-logo-link" aria-label={LEGAL_SITE.brand}>
+              <span
+                className="legal-page__footer-logo"
+                style={{
+                  maskImage: "url(/imagens_publicas/logo_transp.png)",
+                  WebkitMaskImage: "url(/imagens_publicas/logo_transp.png)",
+                  maskSize: "contain",
+                  WebkitMaskSize: "contain",
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskPosition: "left center",
+                  WebkitMaskPosition: "left center",
+                }}
+                aria-hidden
+              />
+            </Link>
+            <p className="legal-page__footer-meta">
+              © {new Date().getFullYear()} {LEGAL_SITE.brand}
+            </p>
+          </div>
+
+          <nav className="legal-page__footer-docs" aria-label="Outros documentos">
+            {LEGAL_NAV.filter((item) => item.id !== docId).map((item) => (
+              <Link key={item.id} href={item.href} className="legal-page__footer-doc-link">
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          <SiteContactLinks variant="row" className="legal-page__contacts" />
+        </div>
       </footer>
     </div>
   );
