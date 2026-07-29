@@ -1,7 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useRef } from "react";
+import { LEGAL_NAV, LEGAL_SITE } from "@/lib/legal/site";
+import { SiteContactLinks } from "@/components/legal/SiteContactLinks";
 import { AuthFeatureGrid } from "./AuthFeatureGrid";
 import { AuthHowItWorks } from "./AuthHowItWorks";
 import { AuthPersonaCards } from "./AuthPersonaCards";
@@ -152,6 +155,22 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
           </div>
         </div>
       </section>
+
+      <footer className="auth-landing-footer">
+        <div className="auth-landing-section-inner auth-landing-footer-inner">
+          <nav className="auth-landing-footer-nav" aria-label="Documentos legais">
+            {LEGAL_NAV.map((item) => (
+              <Link key={item.id} href={item.href} className="auth-landing-footer-link">
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <SiteContactLinks />
+          <p className="auth-landing-footer-meta">
+            © {new Date().getFullYear()} {LEGAL_SITE.brand}
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

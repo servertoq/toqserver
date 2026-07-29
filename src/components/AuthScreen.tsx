@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthFormPage } from "@/components/auth/AuthFormPage";
 import { AuthSplash } from "@/components/auth/AuthSplash";
+import { TermsAcceptCheckbox } from "@/components/legal/TermsAcceptCheckbox";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { AvatarCropModal } from "@/components/profile/AvatarCropModal";
@@ -73,6 +74,7 @@ export function AuthScreen() {
   const [gender, setGender] = useState<Gender>("masculino");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Esqueci senha
   const [forgotEmail, setForgotEmail] = useState("");
@@ -246,9 +248,17 @@ export function AuthScreen() {
     });
   }
 
-  async function handleGoogleLogin() {
+  async function handleGoogleLogin(requireTerms = false) {
     resetMessages();
     if (loading) return;
+
+    if (requireTerms && !acceptedTerms) {
+      setMessage({
+        type: "error",
+        text: "Aceite os Termos de uso e a Política de Privacidade para continuar.",
+      });
+      return;
+    }
 
     await guard(async () => {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -268,6 +278,14 @@ export function AuthScreen() {
     e.preventDefault();
     resetMessages();
     if (loading) return;
+
+    if (!acceptedTerms) {
+      setMessage({
+        type: "error",
+        text: "Aceite os Termos de uso e a Política de Privacidade para continuar.",
+      });
+      return;
+    }
 
     const normalizedUsername = normalizeUsername(username.trim());
     if (!/^[a-zA-Z0-9_]{3,30}$/.test(normalizedUsername)) {
@@ -411,6 +429,14 @@ export function AuthScreen() {
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     resetMessages();
+
+    if (!acceptedTerms) {
+      setMessage({
+        type: "error",
+        text: "Aceite os Termos de uso e a Política de Privacidade para criar a conta.",
+      });
+      return;
+    }
 
     const normalizedUsername = normalizeUsername(username.trim());
 
@@ -609,7 +635,7 @@ export function AuthScreen() {
               </button>
               <SubmitButton loading={loading} label="Entrar" tone="light" />
               <Divider />
-              <GoogleButton loading={loading} onClick={handleGoogleLogin} />
+              <GoogleButton loading={loading} onClick={() => void handleGoogleLogin(false)} />
               <RegisterButton onClick={() => openAuth("register")} />
             </form>
           )}
@@ -721,9 +747,14 @@ export function AuthScreen() {
                   </div>
                 </div>
               </div>
+              <TermsAcceptCheckbox
+                id="accept-terms-register"
+                checked={acceptedTerms}
+                onChange={setAcceptedTerms}
+              />
               <SubmitButton loading={loading} label="Criar conta" tone="light" />
               <Divider />
-              <GoogleButton loading={loading} onClick={handleGoogleLogin} />
+              <GoogleButton loading={loading} onClick={() => void handleGoogleLogin(true)} />
             </form>
           )}
 
@@ -774,6 +805,11 @@ export function AuthScreen() {
                   ))}
                 </div>
               </div>
+              <TermsAcceptCheckbox
+                id="accept-terms-complete"
+                checked={acceptedTerms}
+                onChange={setAcceptedTerms}
+              />
               <SubmitButton loading={loading} label="Continuar" tone="light" />
               <button
                 type="button"
