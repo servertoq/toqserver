@@ -25,6 +25,7 @@ Cloudflare (proxy) na frente da Vercel, SSL, segurança básica, e-mail Auth via
 | OAuth branding | Nome/logo Toq no Google Cloud (URL `*.supabase.co` só some com Custom Domain Pro) |
 | `NEXT_PUBLIC_APP_URL` | `https://www.toqtennis.com.br` |
 | GitHub | Ainda público — **privar quando puder** |
+| Suporte (público) | `suporte@toqtennis.com.br` → Cloudflare Email Routing → `servertoq@gmail.com` |
 
 ## Manutenção / não reinventar
 
@@ -54,6 +55,27 @@ node scripts/validate-cloudflare.mjs
    - Redeploy Vercel
    - Modelo atual: cobrança **única** da diferença no upgrade (não é assinatura mensal automática)
 3. Custom domain Auth (Pro) se quiser tirar `*.supabase.co` da tela do Google
+4. **DNSSEC + CAA** (scanners Hardenize) — ver checklist abaixo
+
+### Checklist DNSSEC + CAA (manual no Cloudflare)
+
+**CAA** (DNS → Records → Add record, type CAA, Name `@`):
+
+| flags | tag | value |
+|-------|-----|--------|
+| 0 | issue | `letsencrypt.org` |
+| 0 | issue | `pki.goog` |
+| 0 | issuewild | `letsencrypt.org` |
+| 0 | issuewild | `pki.goog` |
+
+(Cobre Let’s Encrypt e Google Trust Services — comuns com Cloudflare/Vercel.)
+
+**DNSSEC:**
+
+1. Cloudflare → domínio → **DNS** → **Settings** (ou DNSSEC) → **Enable DNSSEC**
+2. Copie o registro **DS** que o Cloudflare mostrar
+3. Registro.br → domínio → DNSSEC → colar o DS → salvar
+4. Espere propagar (minutos a algumas horas) e reescaneie no Hardenize
 
 ## Já feito (segurança app)
 

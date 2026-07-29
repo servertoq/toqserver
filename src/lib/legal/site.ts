@@ -3,7 +3,7 @@ export const LEGAL_SITE = {
   brandShort: "TOQ",
   domain: "www.toqtennis.com.br",
   url: "https://www.toqtennis.com.br",
-  contactEmail: "servertoq@gmail.com",
+  contactEmail: "suporte@toqtennis.com.br",
   instagramUrl: "https://www.instagram.com/toq.tennis/",
   instagramHandle: "@toq.tennis",
   whatsappDisplay: "(11) 94087-3795",

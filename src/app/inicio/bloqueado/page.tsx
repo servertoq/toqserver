@@ -52,10 +52,10 @@ export default async function BloqueadoPage() {
         ) : null}{" "}
         Se acredita que houve um engano, entre em contato em{" "}
         <a
-          href="mailto:servertoq@gmail.com"
+          href="mailto:suporte@toqtennis.com.br"
           className="font-semibold text-[var(--toq-accent)]"
         >
-          servertoq@gmail.com
+          suporte@toqtennis.com.br
         </a>
         .
       </p>
