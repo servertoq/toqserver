@@ -2,6 +2,8 @@ import { LEGAL_SITE } from "@/lib/legal/site";
 
 type Props = {
   className?: string;
+  /** `row` = botões horizontais; `stack` = lista vertical com rótulo */
+  variant?: "row" | "stack";
 };
 
 function IconInstagram({ className = "" }: { className?: string }) {
@@ -37,37 +39,60 @@ function IconEmail({ className = "" }: { className?: string }) {
   );
 }
 
-export function SiteContactLinks({ className = "" }: Props) {
+const CONTACTS = [
+  {
+    key: "instagram",
+    href: LEGAL_SITE.instagramUrl,
+    external: true,
+    label: "Instagram",
+    value: LEGAL_SITE.instagramHandle,
+    Icon: IconInstagram,
+    tone: "instagram" as const,
+  },
+  {
+    key: "whatsapp",
+    href: LEGAL_SITE.whatsappUrl,
+    external: true,
+    label: "WhatsApp",
+    value: LEGAL_SITE.whatsappDisplay,
+    Icon: IconWhatsApp,
+    tone: "whatsapp" as const,
+  },
+  {
+    key: "email",
+    href: `mailto:${LEGAL_SITE.contactEmail}`,
+    external: false,
+    label: "E-mail",
+    value: LEGAL_SITE.contactEmail,
+    Icon: IconEmail,
+    tone: "email" as const,
+  },
+];
+
+export function SiteContactLinks({ className = "", variant = "stack" }: Props) {
   return (
-    <div className={`site-contact-links ${className}`.trim()} aria-label="Contatos">
-      <a
-        href={LEGAL_SITE.instagramUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="site-contact-links__item"
-        title={`Instagram ${LEGAL_SITE.instagramHandle}`}
-      >
-        <IconInstagram className="site-contact-links__icon" />
-        <span>{LEGAL_SITE.instagramHandle}</span>
-      </a>
-      <a
-        href={LEGAL_SITE.whatsappUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="site-contact-links__item"
-        title={`WhatsApp ${LEGAL_SITE.whatsappDisplay}`}
-      >
-        <IconWhatsApp className="site-contact-links__icon" />
-        <span>{LEGAL_SITE.whatsappDisplay}</span>
-      </a>
-      <a
-        href={`mailto:${LEGAL_SITE.contactEmail}`}
-        className="site-contact-links__item"
-        title={LEGAL_SITE.contactEmail}
-      >
-        <IconEmail className="site-contact-links__icon" />
-        <span>{LEGAL_SITE.contactEmail}</span>
-      </a>
-    </div>
+    <ul
+      className={`site-contact-links site-contact-links--${variant} ${className}`.trim()}
+      aria-label="Contatos"
+    >
+      {CONTACTS.map(({ key, href, external, label, value, Icon, tone }) => (
+        <li key={key}>
+          <a
+            href={href}
+            className={`site-contact-links__item site-contact-links__item--${tone}`}
+            title={`${label} ${value}`}
+            {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+          >
+            <span className="site-contact-links__icon-wrap" aria-hidden>
+              <Icon className="site-contact-links__icon" />
+            </span>
+            <span className="site-contact-links__copy">
+              <span className="site-contact-links__label">{label}</span>
+              <span className="site-contact-links__value">{value}</span>
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
   );
 }

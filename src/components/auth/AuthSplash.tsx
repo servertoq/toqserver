@@ -158,17 +158,51 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
 
       <footer className="auth-landing-footer">
         <div className="auth-landing-section-inner auth-landing-footer-inner">
-          <nav className="auth-landing-footer-nav" aria-label="Documentos legais">
-            {LEGAL_NAV.map((item) => (
-              <Link key={item.id} href={item.href} className="auth-landing-footer-link">
-                {item.label}
+          <div className="auth-landing-footer-grid">
+            <div className="auth-landing-footer-brand">
+              <Link href="/" className="auth-landing-footer-logo-link" aria-label={LEGAL_SITE.brand}>
+                <span
+                  className="auth-landing-footer-logo"
+                  style={{
+                    maskImage: "url(/imagens_publicas/logo_transp.png)",
+                    WebkitMaskImage: "url(/imagens_publicas/logo_transp.png)",
+                    maskSize: "contain",
+                    WebkitMaskSize: "contain",
+                    maskRepeat: "no-repeat",
+                    WebkitMaskRepeat: "no-repeat",
+                    maskPosition: "left center",
+                    WebkitMaskPosition: "left center",
+                  }}
+                  aria-hidden
+                />
               </Link>
-            ))}
-          </nav>
-          <SiteContactLinks />
-          <p className="auth-landing-footer-meta">
-            © {new Date().getFullYear()} {LEGAL_SITE.brand}
-          </p>
+              <p className="auth-landing-footer-tagline">
+                Rede social e plataforma do tênis — partidas, aulas, arenas e comunidade.
+              </p>
+            </div>
+
+            <div className="auth-landing-footer-col">
+              <p className="auth-landing-footer-heading">Legal</p>
+              <nav className="auth-landing-footer-nav" aria-label="Documentos legais">
+                {LEGAL_NAV.map((item) => (
+                  <Link key={item.id} href={item.href} className="auth-landing-footer-link">
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+
+            <div className="auth-landing-footer-col">
+              <p className="auth-landing-footer-heading">Contato</p>
+              <SiteContactLinks />
+            </div>
+          </div>
+
+          <div className="auth-landing-footer-bottom">
+            <p className="auth-landing-footer-meta">
+              © {new Date().getFullYear()} {LEGAL_SITE.brand}
+            </p>
+          </div>
         </div>
       </footer>
     </div>
