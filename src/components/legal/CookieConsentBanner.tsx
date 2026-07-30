@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LEGAL_SITE } from "@/lib/legal/site";
 
-export const COOKIE_CONSENT_KEY = "toq_cookie_consent";
+export const COOKIE_CONSENT_KEY = "toq_cookie_consent_v2";
 
 export type CookieConsentValue = "accepted" | "essential";
 
@@ -44,14 +45,23 @@ export function CookieConsentBanner() {
       <div className="cookie-banner__inner">
         <div className="cookie-banner__copy">
           <p id="cookie-banner-title" className="cookie-banner__title">
-            Cookies e privacidade
+            Cookies e privacidade (LGPD)
           </p>
           <p className="cookie-banner__text">
-            Usamos cookies essenciais para login e funcionamento do site, e preferências (como tema).
-            Saiba mais na nossa{" "}
+            Usamos cookies e tecnologias similares essenciais para login, segurança e funcionamento do
+            site, além de preferências (como tema). Você pode aceitar todos ou manter apenas os
+            essenciais. Detalhes na{" "}
             <Link href="/cookies" className="cookie-banner__link">
               Política de Cookies
+            </Link>{" "}
+            e na{" "}
+            <Link href="/privacidade" className="cookie-banner__link">
+              Política de Privacidade
             </Link>
+            . Para exercer direitos LGPD:{" "}
+            <a href={`mailto:${LEGAL_SITE.contactEmail}`} className="cookie-banner__link">
+              {LEGAL_SITE.contactEmail}
+            </a>
             .
           </p>
         </div>

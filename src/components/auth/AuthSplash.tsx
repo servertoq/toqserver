@@ -200,7 +200,20 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
 
           <div className="auth-landing-footer-bottom">
             <p className="auth-landing-footer-meta">
-              © {new Date().getFullYear()} {LEGAL_SITE.brand}
+              © {new Date().getFullYear()} {LEGAL_SITE.brand}. Tratamos dados pessoais conforme a LGPD
+              (Lei nº 13.709/2018). Consulte a{" "}
+              <Link href="/privacidade" className="auth-landing-footer-link-inline">
+                Política de Privacidade
+              </Link>{" "}
+              e os{" "}
+              <Link href="/termos" className="auth-landing-footer-link-inline">
+                Termos de uso
+              </Link>
+              . Contato do titular:{" "}
+              <a href={`mailto:${LEGAL_SITE.contactEmail}`} className="auth-landing-footer-link-inline">
+                {LEGAL_SITE.contactEmail}
+              </a>
+              .
             </p>
           </div>
         </div>

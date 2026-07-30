@@ -2067,8 +2067,20 @@ body {
 
 .auth-landing-footer-meta {
   margin: 0;
+  max-width: 52rem;
   font-size: 0.75rem;
+  line-height: 1.5;
   color: rgba(255, 255, 255, 0.42);
+}
+
+.auth-landing-footer-link-inline {
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.auth-landing-footer-link-inline:hover {
+  color: #fff;
 }
 
 .site-contact-links {

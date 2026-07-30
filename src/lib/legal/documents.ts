@@ -25,7 +25,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
         heading: "1. Quem somos",
         paragraphs: [
           `A plataforma ${LEGAL_SITE.brand} (“${LEGAL_SITE.brandShort}”, “nós”, “nosso”), disponível em ${LEGAL_SITE.domain}, é operada por ${LEGAL_SITE.operatorLabel}.`,
-          `Ao criar uma conta ou usar o serviço, você concorda com estes Termos e com a Política de Privacidade.`,
+          `Ao criar uma conta ou usar o serviço, você concorda com estes Termos e com a Política de Privacidade, que descreve o tratamento de dados pessoais nos termos da LGPD (Lei nº 13.709/2018).`,
           disclaimer,
         ],
       },
@@ -111,9 +111,11 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
         paragraphs: ["Dependendo do uso, podemos tratar:"],
         bullets: [
           "Cadastro: e-mail, senha (hash), nome de usuário, data de nascimento, sexo/gênero (se informado), foto de perfil",
-          "Perfil e uso: posts, comentários, comunidades, mensagens, preferências (ex.: tema claro/escuro)",
+          "Perfil e uso: posts, comentários, comunidades, mensagens, preferências (ex.: tema claro/escuro), cidade/UF do perfil",
+          "Localização: coordenadas do dispositivo (GPS) quando você autoriza no navegador — para preencher cidade no perfil, ordenar conteúdo “perto de mim” e recursos de mapas; a permissão pode ser revogada a qualquer momento nas configurações do navegador",
+          "Reservas de quadra: data/horário, quadra, clube, status da reserva, usuário que reservou e jogadores convidados (até 3), espelhados na agenda/partidas do perfil quando aplicável",
           "Pagamentos: dados de cobrança processados pelo Stripe (nós não armazenamos número completo de cartão)",
-          "Localização aproximada / mapas: quando você usa recursos de mapas (Google Maps) ao cadastrar ou visualizar quadras",
+          "Mapas: Google Maps ao cadastrar ou visualizar quadras, quando o recurso for utilizado",
           "Dados técnicos: IP, tipo de dispositivo/navegador, logs de segurança e cookies essenciais",
           "Login social: dados fornecidos pelo Google OAuth quando você escolhe essa opção",
         ],
@@ -121,8 +123,9 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
       {
         heading: "3. Finalidades e bases legais",
         paragraphs: [
-          "Tratamos dados para: prestar o serviço; autenticar contas; personalizar a experiência; processar upgrades de plano; moderar a comunidade; cumprir obrigações legais; e melhorar segurança e estabilidade.",
-          "Bases típicas (LGPD): execução de contrato (art. 7º, V), legítimo interesse (art. 7º, IX) quando aplicável, consentimento (art. 7º, I) quando exigido (ex.: cookies não essenciais), e cumprimento de obrigação legal.",
+          "Tratamos dados para: prestar o serviço; autenticar contas; personalizar a experiência (incluindo proximidade geográfica quando autorizado); processar upgrades de plano; gerenciar reservas e agendas; moderar a comunidade; cumprir obrigações legais; e melhorar segurança e estabilidade.",
+          "Bases típicas (LGPD): execução de contrato (art. 7º, V) para cadastro e uso da plataforma; legítimo interesse (art. 7º, IX) quando aplicável (ex.: segurança e prevenção a fraudes); consentimento (art. 7º, I) quando exigido (ex.: cookies não essenciais e uso de GPS do dispositivo); e cumprimento de obrigação legal.",
+          "O consentimento para localização do dispositivo é específico e pode ser retirado a qualquer momento, sem prejuízo do uso das demais funções que não dependam de GPS.",
         ],
       },
       {
@@ -153,8 +156,8 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
       {
         heading: "7. Seus direitos (LGPD)",
         paragraphs: [
-          "Você pode solicitar: confirmação de tratamento, acesso, correção, anonimização, portabilidade, eliminação (quando cabível), informação sobre compartilhamentos, e revogação de consentimento.",
-          `Para exercer direitos, escreva para ${LEGAL_SITE.contactEmail} com o e-mail da conta. Podemos pedir confirmação de identidade.`,
+          "Nos termos da LGPD, você pode solicitar: confirmação da existência de tratamento; acesso aos dados; correção de dados incompletos, inexatos ou desatualizados; anonimização, bloqueio ou eliminação de dados desnecessários ou tratados em desconformidade; portabilidade; informação sobre compartilhamentos; informação sobre a possibilidade de não consentir e as consequências; e revogação do consentimento.",
+          `Para exercer direitos, escreva para ${LEGAL_SITE.contactEmail} com o e-mail da conta. Podemos pedir confirmação de identidade. Responderemos em prazo razoável, observados os prazos legais.`,
         ],
       },
       {
@@ -196,15 +199,17 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
         paragraphs: ["Na versão atual da plataforma:"],
         bullets: [
           "Essenciais: sessão de autenticação (Supabase), segurança e funcionamento básico do site",
-          "Preferências: tema (claro/escuro/sistema) e registro da sua escolha no banner de cookies",
+          "Preferências: tema (claro/escuro/sistema) e registro da sua escolha neste banner de cookies (LGPD)",
+          "Localização: quando você autoriza o GPS no navegador, as coordenadas podem ser usadas na sessão para cidade do perfil e recursos de proximidade; isso depende da permissão do dispositivo, não de cookie de publicidade",
           "Não utilizamos, no momento, cookies de publicidade de terceiros ou redes de anúncios",
         ],
       },
       {
         heading: "3. Base legal e escolha",
         paragraphs: [
-          "Cookies essenciais são necessários ao serviço. Preferências e cookies não essenciais dependem do seu consentimento quando aplicável.",
-          "Você pode aceitar ou recusar cookies não essenciais no banner. Recusar não impede o uso das funções essenciais.",
+          "Cookies essenciais são necessários ao serviço (execução de contrato / legítimo interesse, conforme o caso).",
+          "Preferências e cookies não essenciais dependem do seu consentimento (LGPD, art. 7º, I), quando aplicável.",
+          "Você pode aceitar ou recusar cookies não essenciais neste banner. Recusar não impede o uso das funções essenciais.",
           "Também é possível limpar cookies/armazenamento pelo navegador; isso pode desconectar a sessão.",
         ],
       },

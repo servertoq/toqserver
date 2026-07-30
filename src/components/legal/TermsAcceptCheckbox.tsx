@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LEGAL_SITE } from "@/lib/legal/site";
 
 type Props = {
   checked: boolean;
@@ -32,7 +33,9 @@ export function TermsAcceptCheckbox({ checked, onChange, id = "accept-terms" }: 
         >
           Política de Privacidade
         </Link>
-        .
+        , e autorizo o tratamento dos meus dados pessoais pela {LEGAL_SITE.brand} conforme a LGPD (Lei
+        nº 13.709/2018), inclusive para cadastro, login, perfil, localização quando eu permitir,
+        reservas e comunicações do serviço.
       </span>
     </label>
   );
