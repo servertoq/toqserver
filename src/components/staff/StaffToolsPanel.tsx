@@ -10,6 +10,7 @@ import { StaffDeleteContentPanel } from "./StaffDeleteContentPanel";
 const STAFF_ASSIGNABLE_PLANS: UserPlan[] = [
   "free",
   "professor",
+  "promotor",
   "proprietario",
   "proprietario_plus",
 ];
@@ -113,7 +114,7 @@ export function StaffToolsPanel({ onAction }: Props) {
       <section className="mt-4 overflow-visible rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <h2 className="text-sm font-bold text-[var(--toq-navy)]">Plano do usuário</h2>
         <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
-          Atribua Usuário, Professor, Proprietário ou Proprietário Plus (sem cobrança automática).
+          Atribua Usuário, Professor, Promotor, Proprietário ou Proprietário Plus (sem cobrança automática).
         </p>
         <div className="mt-4">
           <StaffUsernameSearch value={planUser} onChange={setPlanUser} />

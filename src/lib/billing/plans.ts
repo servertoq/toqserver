@@ -4,6 +4,7 @@ import type { UserPlan } from "@/types/plans";
 export const PLAN_PRICES_CENTS: Record<UserPlan, number> = {
   free: 0,
   professor: 2000,
+  promotor: 5000,
   proprietario: 9900,
   proprietario_plus: 18900,
   empresario: 9900,
@@ -12,9 +13,10 @@ export const PLAN_PRICES_CENTS: Record<UserPlan, number> = {
 const PLAN_ORDER: Record<UserPlan, number> = {
   free: 0,
   professor: 1,
-  proprietario: 2,
-  proprietario_plus: 3,
-  empresario: 2,
+  promotor: 2,
+  proprietario: 3,
+  proprietario_plus: 4,
+  empresario: 3,
 };
 
 export function normalizePlan(plan: UserPlan | null | undefined): UserPlan {
@@ -71,6 +73,7 @@ export const PLAN_FEATURES: Record<
     { label: "Ver anúncios de aulas", included: true },
     { label: "Até 3 comunidades", included: true },
     { label: "Divulgar aulas (Aprenda à Jogar)", included: false },
+    { label: "Criar torneios avulsos", included: false },
     { label: "Criar clube ou quadras", included: false },
     { label: "Badge e destaque no feed", included: false },
   ],
@@ -79,7 +82,16 @@ export const PLAN_FEATURES: Record<
     { label: "Badge Professor no feed", included: true },
     { label: "1 anúncio em Aprenda à Jogar", included: true },
     { label: "Posts em destaque a cada 3 horas", included: true },
+    { label: "Criar torneios avulsos", included: false },
     { label: "Criar clube ou quadras", included: false },
+  ],
+  promotor: [
+    { label: "Tudo do plano Usuário", included: true },
+    { label: "Badge Promotor no feed", included: true },
+    { label: "Criar e gerenciar torneios avulsos", included: true },
+    { label: "Painel Gestão de Torneios", included: true },
+    { label: "Posts em destaque a cada 4 horas", included: true },
+    { label: "Criar clube ou divulgar aulas", included: false },
   ],
   proprietario: [
     { label: "Tudo do plano Usuário", included: true },

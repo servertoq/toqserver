@@ -23,7 +23,7 @@ export type FeedProfile = {
   username: string;
   display_name?: string | null;
   avatar_url: string | null;
-  plan?: "free" | "professor" | "proprietario" | "proprietario_plus" | "empresario";
+  plan?: "free" | "professor" | "promotor" | "proprietario" | "proprietario_plus" | "empresario";
   show_plan_badge?: boolean;
   staff_role?: StaffRole | null;
 };

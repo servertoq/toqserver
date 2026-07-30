@@ -124,7 +124,9 @@ export type ClubCourt = {
 
 export type ClubTournament = {
   id: string;
-  community_id: string;
+  community_id: string | null;
+  created_by?: string | null;
+  location_label?: string | null;
   name: string;
   description: string;
   how_it_works: string;
@@ -146,7 +148,13 @@ export type ClubTournament = {
     address_neighborhood?: string | null;
     address_street?: string | null;
     address_state?: string | null;
-  };
+  } | null;
+  promoter?: {
+    id: string;
+    username: string;
+    avatar_url: string | null;
+    display_name?: string | null;
+  } | null;
 };
 
 export type ClubTab = "feed" | "shop" | "ranking" | "courts" | "tournaments";

@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { planLabel } from "@/lib/plans";
 import type { UserPlan } from "@/types/plans";
 
-const VALID_TARGETS: UserPlan[] = ["professor", "proprietario", "proprietario_plus"];
+const VALID_TARGETS: UserPlan[] = ["professor", "promotor", "proprietario", "proprietario_plus"];
 
 export async function POST(request: Request) {
   if (!isStripeConfigured()) {

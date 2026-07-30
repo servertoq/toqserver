@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
-import { fetchAllTournaments } from "@/lib/tournaments";
+import { fetchAllTournaments, tournamentLocationLabel, tournamentOrganizerLabel } from "@/lib/tournaments";
 import { matchesLocationSearch, LOCATION_SEARCH_PLACEHOLDER } from "@/lib/locationSearch";
 import { partitionByProximity } from "@/lib/nearbyLocation";
 import { useUserLocationAnchor } from "@/hooks/useUserLocationAnchor";
@@ -12,6 +12,9 @@ import { appContentClass } from "@/lib/layout";
 import { TournamentCard } from "./TournamentCard";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { NearbySection, OtherSection } from "@/components/shared/NearbySections";
+import { isPromotorPlan } from "@/lib/plans";
+import { canModeratePlatform } from "@/lib/staff";
+import Link from "next/link";
 
 export function TournamentsPage() {
   const supabase = createClient();
@@ -21,6 +24,9 @@ export function TournamentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+
+  const canManagePromoter =
+    isPromotorPlan(profile.plan) || canModeratePlatform(profile.staffRole);
 
   const load = useCallback(async () => {
     setError(null);
@@ -47,8 +53,8 @@ export function TournamentsPage() {
       tournaments.filter((t) =>
         matchesLocationSearch(search, {
           name: t.name,
-          description: `${t.description}\n${t.prizes}\n${t.community?.name ?? ""}`,
-          city: t.community?.address_city,
+          description: `${t.description}\n${t.prizes}\n${tournamentOrganizerLabel(t)}`,
+          city: t.location_label ?? t.community?.address_city,
           cep: t.community?.address_zip,
           neighborhood: t.community?.address_neighborhood,
           street: t.community?.address_street,
@@ -61,11 +67,14 @@ export function TournamentsPage() {
     () =>
       partitionByProximity(
         filtered,
-        (t) => ({
-          city: t.community?.address_city,
-          state: t.community?.address_state,
-          cep: t.community?.address_zip,
-        }),
+        (t) => {
+          const loc = tournamentLocationLabel(t);
+          return {
+            city: t.community?.address_city ?? loc,
+            state: t.community?.address_state,
+            cep: t.community?.address_zip,
+          };
+        },
         anchor
       ),
     [anchor, filtered]
@@ -78,10 +87,11 @@ export function TournamentsPage() {
           <TournamentCard
             key={t.id}
             tournament={t}
-            clubName={t.community?.name ?? "Clube"}
+            clubName={tournamentOrganizerLabel(t)}
             username={profile.username}
             canSignup
             canShare={t.is_active}
+            showClubLink={Boolean(t.community_id)}
           />
         ))}
       </div>
@@ -94,7 +104,17 @@ export function TournamentsPage() {
         <PageHeader
           kicker=""
           title="Torneios"
-          subtitle="Torneios cadastrados pelos clubes. Busque por nome, cidade ou CEP e compartilhe no chat."
+          subtitle="Torneios de clubes e de promotores. Busque por nome, cidade ou CEP e compartilhe no chat."
+          action={
+            canManagePromoter ? (
+              <Link
+                href="/inicio/gestao-de-torneios"
+                className="toq-btn-primary rounded-xl px-4 py-2 text-sm text-white"
+              >
+                Gestão de Torneios
+              </Link>
+            ) : undefined
+          }
         />
 
         <input

@@ -19,7 +19,13 @@ import { appContentClass } from "@/lib/layout";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
-const PLAN_IDS: UserPlan[] = ["free", "professor", "proprietario", "proprietario_plus"];
+const PLAN_IDS: UserPlan[] = [
+  "free",
+  "professor",
+  "promotor",
+  "proprietario",
+  "proprietario_plus",
+];
 
 export function PlansPage() {
   const supabase = createClient();

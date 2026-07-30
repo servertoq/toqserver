@@ -9,6 +9,7 @@ export { normalizePlan } from "@/lib/billing/plans";
 export const PLAN_LABELS: Record<UserPlan, string> = {
   free: "Usuário",
   professor: "Professor",
+  promotor: "Promotor",
   proprietario: "Proprietário",
   proprietario_plus: "Proprietário Plus",
   empresario: "Proprietário",
@@ -27,6 +28,13 @@ export const PLANS: PlanInfo[] = [
     priceLabel: "R$ 20/mês",
     description:
       "Badge de professor, 1 anúncio de aulas e posts em destaque no feed a cada 3 horas.",
+  },
+  {
+    id: "promotor",
+    label: "Promotor",
+    priceLabel: "R$ 50/mês",
+    description:
+      "Badge de promotor, painel para criar torneios avulsos e destaque no feed a cada 4 horas.",
   },
   {
     id: "proprietario",
@@ -54,13 +62,17 @@ export function isProfessorPlan(plan: UserPlan | null | undefined) {
   return normalizePlan(plan ?? "free") === "professor";
 }
 
+export function isPromotorPlan(plan: UserPlan | null | undefined) {
+  return normalizePlan(plan ?? "free") === "promotor";
+}
+
 export function isProprietarioPlan(plan: UserPlan | null | undefined) {
   const p = normalizePlan(plan ?? "free");
   return p === "proprietario" || p === "proprietario_plus";
 }
 
 export function hasPaidPlan(plan: UserPlan | null | undefined) {
-  return isProfessorPlan(plan) || isProprietarioPlan(plan);
+  return isProfessorPlan(plan) || isPromotorPlan(plan) || isProprietarioPlan(plan);
 }
 
 /** CEO, CTO e Moderador ignoram limites de plano na plataforma. */
@@ -98,6 +110,17 @@ export function canCreateCoachListingResource(
   );
 }
 
+export function canCreateStandaloneTournamentResource(
+  usage: PlanUsage | null | undefined,
+  staffRole: StaffRole | null | undefined
+) {
+  return (
+    hasStaffUnlimitedAccess(staffRole) ||
+    (usage?.can_create_standalone_tournament ?? false) ||
+    isPromotorPlan(usage?.plan)
+  );
+}
+
 export function canShowPlanBadge(
   plan: UserPlan | null | undefined,
   showPlanBadge: boolean | null | undefined
@@ -108,17 +131,19 @@ export function canShowPlanBadge(
 export function planBadgeClass(plan: UserPlan) {
   const p = normalizePlan(plan);
   if (p === "professor") return "bg-emerald-100 text-emerald-800";
+  if (p === "promotor") return "bg-sky-100 text-sky-900";
   if (p === "proprietario_plus") return "bg-amber-100 text-amber-900";
   return "bg-violet-100 text-violet-800";
 }
 
 export function planHasFeedBoost(plan: UserPlan | null | undefined) {
-  return isProfessorPlan(plan) || isProprietarioPlan(plan);
+  return isProfessorPlan(plan) || isPromotorPlan(plan) || isProprietarioPlan(plan);
 }
 
 export function feedBoostIntervalHours(plan: UserPlan | null | undefined): number | null {
   const p = normalizePlan(plan ?? "free");
   if (p === "professor") return 3;
+  if (p === "promotor") return 4;
   if (p === "proprietario" || p === "proprietario_plus") return 2;
   return null;
 }

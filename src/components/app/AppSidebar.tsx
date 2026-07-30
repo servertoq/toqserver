@@ -14,10 +14,11 @@ export type AppProfile = {
   avatar_url: string | null;
   staffRole: StaffRole | null;
   isBanned: boolean;
-  plan: "free" | "professor" | "proprietario" | "proprietario_plus" | "empresario";
+  plan: "free" | "professor" | "promotor" | "proprietario" | "proprietario_plus" | "empresario";
   showPlanBadge: boolean;
   canAccessCoachManagement: boolean;
   canAccessCourtManagement: boolean;
+  canAccessPromoterManagement: boolean;
 };
 
 type NavItem = {
@@ -465,16 +466,27 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
 
   const navItems = useMemo(() => {
     const items = [...NAV_ITEMS];
+    let insertAt = 8;
     if (profile.canAccessCoachManagement) {
-      items.splice(8, 0, {
+      items.splice(insertAt, 0, {
         href: "/inicio/gestao-de-aulas",
         label: "Gestão de Aulas",
         icon: (active) => <IconCoachManagement active={active} />,
         match: (path) => path.startsWith("/inicio/gestao-de-aulas"),
       });
+      insertAt += 1;
+    }
+    if (profile.canAccessPromoterManagement) {
+      items.splice(insertAt, 0, {
+        href: "/inicio/gestao-de-torneios",
+        label: "Gestão de Torneios",
+        icon: (active) => <IconTournaments active={active} />,
+        match: (path) => path.startsWith("/inicio/gestao-de-torneios"),
+      });
+      insertAt += 1;
     }
     if (profile.canAccessCourtManagement) {
-      items.splice(profile.canAccessCoachManagement ? 9 : 8, 0, {
+      items.splice(insertAt, 0, {
         href: "/inicio/gestao-de-quadras",
         label: "Gestão de Quadras",
         icon: (active) => <IconCoachManagement active={active} />,
@@ -490,7 +502,12 @@ export function AppSidebar({ profile }: { profile: AppProfile }) {
       });
     }
     return items;
-  }, [profile.staffRole, profile.canAccessCoachManagement, profile.canAccessCourtManagement]);
+  }, [
+    profile.staffRole,
+    profile.canAccessCoachManagement,
+    profile.canAccessCourtManagement,
+    profile.canAccessPromoterManagement,
+  ]);
 
   useEffect(() => {
     if (profile.isBanned && !pathname.startsWith("/inicio/bloqueado")) {

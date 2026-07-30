@@ -4,6 +4,7 @@ export type LegacyUserPlan = "empresario";
 export type UserPlan =
   | "free"
   | "professor"
+  | "promotor"
   | "proprietario"
   | "proprietario_plus"
   | LegacyUserPlan;
@@ -23,6 +24,7 @@ export type PlanUsage = {
   can_create_club: boolean;
   can_create_court: boolean;
   can_create_community: boolean;
+  can_create_standalone_tournament?: boolean;
   has_feed_boost?: boolean;
   feed_boost_hours?: number | null;
 };

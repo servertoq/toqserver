@@ -7,7 +7,8 @@ import { normalizePhoneDigits } from "@/lib/courts";
 import type { ClubTournament } from "@/types/clubFeatures";
 
 type Props = {
-  communityId: string;
+  /** Quando omitido/null, cria torneio avulso (plano Promotor). */
+  communityId?: string | null;
   tournament?: ClubTournament | null;
   onSaved: () => void;
   onClose: () => void;
@@ -20,17 +21,19 @@ function toDatetimeLocal(iso: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function ClubTournamentForm({ communityId, tournament, onSaved, onClose }: Props) {
+export function ClubTournamentForm({ communityId = null, tournament, onSaved, onClose }: Props) {
   const supabase = createClient();
   const profile = useAppProfile();
   const fileRef = useRef<HTMLInputElement>(null);
   const isEdit = !!tournament;
+  const isStandalone = !communityId;
 
   const [name, setName] = useState(tournament?.name ?? "");
   const [description, setDescription] = useState(tournament?.description ?? "");
   const [howItWorks, setHowItWorks] = useState(tournament?.how_it_works ?? "");
   const [prizes, setPrizes] = useState(tournament?.prizes ?? "");
   const [whatsapp, setWhatsapp] = useState(tournament?.contact_whatsapp ?? "");
+  const [locationLabel, setLocationLabel] = useState(tournament?.location_label ?? "");
   const [isPrivate, setIsPrivate] = useState(tournament?.is_private ?? false);
   const [startsAt, setStartsAt] = useState(toDatetimeLocal(tournament?.starts_at ?? null));
   const [endsAt, setEndsAt] = useState(toDatetimeLocal(tournament?.ends_at ?? null));
@@ -85,12 +88,14 @@ export function ClubTournamentForm({ communityId, tournament, onSaved, onClose }
 
       const payload = {
         community_id: communityId,
+        created_by: isStandalone ? profile.id : (tournament?.created_by ?? profile.id),
         name: name.trim(),
         description: description.trim(),
         how_it_works: howItWorks.trim(),
         prizes: prizes.trim(),
         contact_whatsapp: whatsapp.trim(),
-        is_private: isPrivate,
+        location_label: locationLabel.trim() || null,
+        is_private: isStandalone ? false : isPrivate,
         starts_at: startsAt ? new Date(startsAt).toISOString() : null,
         ends_at: endsAt ? new Date(endsAt).toISOString() : null,
       };
@@ -113,7 +118,8 @@ export function ClubTournamentForm({ communityId, tournament, onSaved, onClose }
 
       if (imageFile && tournamentId) {
         const ext = imageFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
-        const path = `${profile.id}/${communityId}/${tournamentId}/cover.${ext}`;
+        const folder = communityId ?? "standalone";
+        const path = `${profile.id}/${folder}/${tournamentId}/cover.${ext}`;
         const { error: upErr } = await supabase.storage
           .from("club-tournament-images")
           .upload(path, imageFile, { upsert: true, contentType: imageFile.type });
@@ -156,7 +162,7 @@ export function ClubTournamentForm({ communityId, tournament, onSaved, onClose }
       >
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-lg font-bold text-[var(--toq-navy)]">
-            {isEdit ? "Editar torneio" : "Novo torneio"}
+            {isEdit ? "Editar torneio" : isStandalone ? "Novo torneio avulso" : "Novo torneio"}
           </h3>
           <button
             type="button"
@@ -276,6 +282,21 @@ export function ClubTournamentForm({ communityId, tournament, onSaved, onClose }
             />
           </label>
 
+          {(isStandalone || locationLabel) && (
+            <label className="block">
+              <span className="text-xs font-semibold text-[var(--toq-navy)]">
+                Local / cidade {isStandalone ? "" : "(opcional)"}
+              </span>
+              <input
+                value={locationLabel}
+                onChange={(e) => setLocationLabel(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                placeholder="Ex.: São Paulo / SP — Arena XYZ"
+                required={isStandalone}
+              />
+            </label>
+          )}
+
           <div className="grid grid-cols-2 gap-2">
             <label className="block">
               <span className="text-xs font-semibold text-[var(--toq-navy)]">Início (opcional)</span>
@@ -297,18 +318,25 @@ export function ClubTournamentForm({ communityId, tournament, onSaved, onClose }
             </label>
           </div>
 
-          <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-            <input
-              type="checkbox"
-              checked={isPrivate}
-              onChange={(e) => setIsPrivate(e.target.checked)}
-              className="mt-0.5"
-            />
-            <span className="text-xs text-[var(--toq-navy)]">
-              <strong>Torneio privado</strong> — visível e com inscrição apenas para membros do clube.
-              Desmarcado = todos os usuários do site veem na aba Torneios.
-            </span>
-          </label>
+          {!isStandalone && (
+            <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+              <input
+                type="checkbox"
+                checked={isPrivate}
+                onChange={(e) => setIsPrivate(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span className="text-xs text-[var(--toq-navy)]">
+                <strong>Torneio privado</strong> — visível e com inscrição apenas para membros do clube.
+                Desmarcado = todos os usuários do site veem na aba Torneios.
+              </span>
+            </label>
+          )}
+          {isStandalone && (
+            <p className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+              Torneios avulsos aparecem na aba Torneios para toda a plataforma.
+            </p>
+          )}
         </div>
 
         {error && (

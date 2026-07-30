@@ -4,8 +4,11 @@ import { AppShell } from "@/components/app/AppShell";
 import type { AppProfile } from "@/components/app/AppSidebar";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
-import { normalizePlan } from "@/lib/plans";
+import { normalizePlan, isPromotorPlan } from "@/lib/plans";
+import { canModeratePlatform } from "@/lib/staff";
 import { resolveCanAccessCourtManagement } from "@/lib/courtManagementAccess";
+import type { UserPlan } from "@/types/plans";
+import type { StaffRole } from "@/types/staff";
 
 export default async function InicioLayout({
   children,
@@ -50,19 +53,29 @@ export default async function InicioLayout({
     redirect("/inicio/bloqueado");
   }
 
-  const [{ data: staffRole }, { data: coachManagement }, { data: myCoachListing }] =
-    await Promise.all([
-      supabase.rpc("get_my_staff_role"),
-      supabase.rpc("user_can_access_coach_management"),
-      supabase.from("coach_listings").select("id").eq("user_id", user.id).maybeSingle(),
-    ]);
+  const [
+    { data: staffRole },
+    { data: coachManagement },
+    { data: myCoachListing },
+    { data: promoterManagement },
+  ] = await Promise.all([
+    supabase.rpc("get_my_staff_role"),
+    supabase.rpc("user_can_access_coach_management"),
+    supabase.from("coach_listings").select("id").eq("user_id", user.id).maybeSingle(),
+    supabase.rpc("user_can_access_promoter_management"),
+  ]);
 
   const staffRoleValue = (staffRole as AppProfile["staffRole"]) ?? null;
+  const plan = normalizePlan((profile.plan as AppProfile["plan"]) ?? "free");
   const canAccessCourtManagement = await resolveCanAccessCourtManagement(
     supabase,
     user.id,
     staffRoleValue
   );
+  const canAccessPromoterManagement =
+    Boolean(promoterManagement) ||
+    isPromotorPlan(plan as UserPlan) ||
+    canModeratePlatform((staffRoleValue as StaffRole | null) ?? null);
 
   return (
     <AppShell
@@ -73,10 +86,11 @@ export default async function InicioLayout({
         avatar_url: profile.avatar_url,
         staffRole: staffRoleValue,
         isBanned: profile.is_banned ?? false,
-        plan: normalizePlan((profile.plan as AppProfile["plan"]) ?? "free"),
+        plan,
         showPlanBadge: profile.show_plan_badge ?? true,
-        canAccessCoachManagement: Boolean(coachManagement),
+        canAccessCoachManagement: Boolean(coachManagement) || Boolean(myCoachListing),
         canAccessCourtManagement,
+        canAccessPromoterManagement,
       }}
     >
       {children}

@@ -5,6 +5,8 @@ import { useState } from "react";
 import {
   formatTournamentDateRange,
   tournamentClubHref,
+  tournamentLocationLabel,
+  tournamentOrganizerLabel,
   tournamentSignupUrl,
 } from "@/lib/tournaments";
 import type { ClubTournament } from "@/types/clubFeatures";
@@ -13,7 +15,7 @@ import { TournamentDetailDialog } from "./TournamentDetailDialog";
 
 type Props = {
   tournament: ClubTournament;
-  clubName: string;
+  clubName?: string;
   username: string;
   showClubLink?: boolean;
   canSignup?: boolean;
@@ -54,18 +56,17 @@ export function TournamentCard({
   const [detailOpen, setDetailOpen] = useState(false);
   const dateRange = formatTournamentDateRange(tournament.starts_at, tournament.ends_at);
   const clubHref = tournamentClubHref(tournament);
+  const organizer = clubName || tournamentOrganizerLabel(tournament);
   const signupHref = canSignup
     ? tournamentSignupUrl(
         tournament.contact_whatsapp,
         tournament.name,
-        clubName,
+        organizer,
         username
       )
     : null;
 
-  const cityLabel = [tournament.community?.address_city, tournament.community?.address_state]
-    .filter(Boolean)
-    .join(" · ");
+  const cityLabel = tournamentLocationLabel(tournament);
 
   const shareEnabled = canShare && tournament.is_active;
   const cover = tournament.image_url || tournament.community?.cover_image_url;
@@ -107,11 +108,12 @@ export function TournamentCard({
             href={clubHref}
             className="truncate text-[11px] font-semibold text-[var(--toq-sky)] hover:underline"
           >
-            {clubName}
+            {organizer}
           </Link>
         ) : (
           <p className="truncate text-[11px] font-semibold text-[var(--toq-text-muted)]">
-            {clubName}
+            {organizer}
+            {!tournament.community_id ? " · Avulso" : ""}
           </p>
         )}
 
@@ -159,7 +161,7 @@ export function TournamentCard({
 
       <TournamentDetailDialog
         tournament={tournament}
-        clubName={clubName}
+        clubName={organizer}
         username={username}
         open={detailOpen}
         onClose={() => setDetailOpen(false)}
