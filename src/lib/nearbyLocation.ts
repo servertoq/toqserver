@@ -188,6 +188,13 @@ export async function fetchProfileLocation(
   };
 }
 
+type BigDataCloudAdmin = {
+  name?: string;
+  adminLevel?: number;
+  description?: string;
+  isoCode?: string;
+};
+
 export async function reverseGeocodeCity(
   latitude: number,
   longitude: number
@@ -205,18 +212,59 @@ export async function reverseGeocodeCity(
       principalSubdivisionCode?: string;
       principalSubdivision?: string;
       postcode?: string;
+      localityInfo?: { administrative?: BigDataCloudAdmin[] };
     };
-    const city = data.city || data.locality || null;
-    const stateCode = data.principalSubdivisionCode?.replace(/^BR-/, "") || null;
-    const state =
+
+    const admins = data.localityInfo?.administrative ?? [];
+    const cityFromAdmin =
+      admins.find((a) => a.adminLevel === 8)?.name ||
+      admins.find((a) => /cidade|munic[ií]pio|city|municipality/i.test(a.description ?? ""))?.name ||
+      null;
+
+    const city = (data.city || data.locality || cityFromAdmin || "").trim() || null;
+    const stateCode = data.principalSubdivisionCode?.replace(/^BR-/i, "") || null;
+    let state =
       stateCode && stateCode.length === 2
         ? stateCode.toUpperCase()
-        : data.principalSubdivision?.slice(0, 2).toUpperCase() || null;
+        : null;
+    if (!state) {
+      const isoFromAdmin = admins
+        .map((a) => a.isoCode?.replace(/^BR-/i, ""))
+        .find((code) => code && code.length === 2);
+      if (isoFromAdmin) state = isoFromAdmin.toUpperCase();
+    }
+    if (!state && data.principalSubdivision) {
+      const raw = data.principalSubdivision.trim();
+      if (/^[A-Za-z]{2}$/.test(raw)) state = raw.toUpperCase();
+    }
+
     const cep = data.postcode ? normalizeCep(data.postcode) || null : null;
     return { city, state, cep: cep && cep.length === 8 ? cep : null };
   } catch {
     return { city: null, state: null, cep: null };
   }
+}
+
+export type DetectPlaceErrorCode =
+  | "unsupported"
+  | "permission"
+  | "unavailable"
+  | "timeout"
+  | "geocode";
+
+export class DetectPlaceError extends Error {
+  code: DetectPlaceErrorCode;
+  constructor(code: DetectPlaceErrorCode, message: string) {
+    super(message);
+    this.name = "DetectPlaceError";
+    this.code = code;
+  }
+}
+
+function geoErrorCode(code: number | undefined): DetectPlaceErrorCode {
+  if (code === 1) return "permission";
+  if (code === 3) return "timeout";
+  return "unavailable";
 }
 
 /** Obtém cidade/UF (e CEP se disponível) a partir do GPS do dispositivo. */
@@ -229,11 +277,16 @@ export async function detectCurrentPlace(options?: {
   cep: string | null;
   latitude: number;
   longitude: number;
-} | null> {
-  if (typeof window === "undefined" || !navigator.geolocation) return null;
+}> {
+  if (typeof window === "undefined" || !navigator.geolocation) {
+    throw new DetectPlaceError(
+      "unsupported",
+      "Seu navegador não suporta geolocalização."
+    );
+  }
 
   const timeoutMs = options?.timeoutMs ?? 10000;
-  const coords = await new Promise<{ latitude: number; longitude: number } | null>((resolve) => {
+  const coords = await new Promise<{ latitude: number; longitude: number }>((resolve, reject) => {
     if (!options?.forceRefresh) {
       const cached = readCachedGeo();
       if (cached) {
@@ -250,15 +303,32 @@ export async function detectCurrentPlace(options?: {
         writeCachedGeo(next.latitude, next.longitude);
         resolve(next);
       },
-      () => resolve(null),
-      { enableHighAccuracy: false, timeout: timeoutMs, maximumAge: options?.forceRefresh ? 0 : 15 * 60 * 1000 }
+      (err) => {
+        const code = geoErrorCode(err?.code);
+        const messages: Record<DetectPlaceErrorCode, string> = {
+          unsupported: "Seu navegador não suporta geolocalização.",
+          permission: "Permissão de localização negada no navegador.",
+          unavailable: "Não foi possível obter a localização do dispositivo.",
+          timeout: "Tempo esgotado ao obter a localização. Tente novamente.",
+          geocode: "Não foi possível identificar a cidade.",
+        } as const;
+        reject(new DetectPlaceError(code, messages[code]));
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: timeoutMs,
+        maximumAge: options?.forceRefresh ? 0 : 15 * 60 * 1000,
+      }
     );
   });
 
-  if (!coords) return null;
-
   const place = await reverseGeocodeCity(coords.latitude, coords.longitude);
-  if (!place.city || !place.state) return null;
+  if (!place.city || !place.state) {
+    throw new DetectPlaceError(
+      "geocode",
+      "Localização obtida, mas não foi possível identificar a cidade. Tente novamente."
+    );
+  }
 
   return {
     city: place.city,

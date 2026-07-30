@@ -6,7 +6,7 @@ import {
   formatProfileLocation,
   hasProfileLocation,
 } from "@/lib/address";
-import { detectCurrentPlace } from "@/lib/nearbyLocation";
+import { DetectPlaceError, detectCurrentPlace } from "@/lib/nearbyLocation";
 
 type LocationValue = Pick<AddressFields, "zip" | "city" | "state">;
 
@@ -38,19 +38,17 @@ export function ProfileLocationField({
       setLoading(true);
       try {
         const place = await detectCurrentPlace({ forceRefresh, timeoutMs: 12000 });
-        if (!place) {
-          setError(
-            "Não foi possível obter a localização. Permita o acesso à localização no navegador."
-          );
-          return;
-        }
         onChange({
           zip: place.cep ?? "",
           city: place.city,
           state: place.state,
         });
-      } catch {
-        setError("Não foi possível obter a localização. Tente novamente.");
+      } catch (err) {
+        if (err instanceof DetectPlaceError) {
+          setError(err.message);
+        } else {
+          setError("Não foi possível obter a localização. Tente novamente.");
+        }
       } finally {
         setLoading(false);
       }
