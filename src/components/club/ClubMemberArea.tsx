@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Community, CommunityMemberRole } from "@/types/community";
 import type { ClubTab } from "@/types/clubFeatures";
@@ -50,7 +50,7 @@ export function ClubMemberArea({
   const shopEnabled = community.shop_enabled ?? false;
 
   const tabParam = searchParams.get("tab");
-  const initialTab: ClubTab =
+  const resolvedTab: ClubTab =
     tabParam === "shop" && shopEnabled
       ? "shop"
       : tabParam === "ranking"
@@ -61,7 +61,11 @@ export function ClubMemberArea({
             ? "tournaments"
             : "feed";
 
-  const [tab, setTab] = useState<ClubTab>(initialTab);
+  const [tab, setTab] = useState<ClubTab>(resolvedTab);
+
+  useEffect(() => {
+    setTab(resolvedTab);
+  }, [resolvedTab]);
 
   useEffect(() => {
     if (tab === "shop" && !shopEnabled) setTab("feed");
@@ -72,9 +76,22 @@ export function ClubMemberArea({
     const params = new URLSearchParams(searchParams.toString());
     if (next === "feed") params.delete("tab");
     else params.set("tab", next);
+    params.delete("action");
     const q = params.toString();
     router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
   }
+
+  const courtsAction = searchParams.get("action");
+  const courtsAutoOpen =
+    courtsAction === "nova" || courtsAction === "agenda" ? courtsAction : null;
+
+  const clearCourtsAction = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (!params.has("action")) return;
+    params.delete("action");
+    const q = params.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams]);
 
   return (
     <div className="mt-6 overflow-hidden toq-card-lg">
@@ -117,6 +134,8 @@ export function ClubMemberArea({
             clubName={community.name}
             clubSlug={community.slug}
             myRole={myRole}
+            autoOpen={courtsAutoOpen}
+            onAutoOpenConsumed={clearCourtsAction}
           />
         )}
         {tab === "tournaments" && (

@@ -1,11 +1,13 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { mapCommunityRow } from "@/lib/community";
 import { fetchPlanUsage, planLimitMessage, canCreateCommunityResource } from "@/lib/plans";
 import { matchesLocationSearch, LOCATION_SEARCH_PLACEHOLDER } from "@/lib/locationSearch";
+import { partitionByProximity } from "@/lib/nearbyLocation";
+import { useUserLocationAnchor } from "@/hooks/useUserLocationAnchor";
 import type { PlanUsage } from "@/types/plans";
 import { COMMUNITY_GROUP_CONFIG } from "@/lib/communityGroup";
 import type { Community, CommunityGroupKind, CommunityMemberRole } from "@/types/community";
@@ -14,12 +16,21 @@ import { ClubRecommendDialog } from "@/components/club/ClubRecommendDialog";
 import { appContentClass } from "@/lib/layout";
 import { CommunityCard } from "./CommunityCard";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { NearbySection, OtherSection } from "@/components/shared/NearbySections";
+
+type MappedCommunity = ReturnType<typeof mapCommunityRow>;
+
+function sortClubs(a: MappedCommunity, b: MappedCommunity) {
+  if (a.is_favorite !== b.is_favorite) return a.is_favorite ? -1 : 1;
+  return b.member_count - a.member_count;
+}
 
 export function CommunitiesPage({ groupKind = "community" }: { groupKind?: CommunityGroupKind }) {
   const config = COMMUNITY_GROUP_CONFIG[groupKind];
   const profile = useAppProfile();
   const supabase = createClient();
-  const [communities, setCommunities] = useState<ReturnType<typeof mapCommunityRow>[]>([]);
+  const { anchor } = useUserLocationAnchor(profile.id);
+  const [communities, setCommunities] = useState<MappedCommunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -117,10 +128,7 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
     );
 
     if (groupKind === "club") {
-      mapped.sort((a, b) => {
-        if (a.is_favorite !== b.is_favorite) return a.is_favorite ? -1 : 1;
-        return b.member_count - a.member_count;
-      });
+      mapped.sort(sortClubs);
     }
 
     setCommunities(mapped);
@@ -141,24 +149,39 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
     load();
   }, [load]);
 
-  const filtered = communities.filter((c) => {
-    if (groupKind === "club") {
-      return matchesLocationSearch(search, {
-        name: c.name,
+  const filtered = useMemo(
+    () =>
+      communities.filter((c) =>
+        matchesLocationSearch(search, {
+          name: c.name,
+          city: c.address_city,
+          cep: c.address_zip,
+          neighborhood: c.address_neighborhood,
+          street: c.address_street,
+          description: c.description,
+        })
+      ),
+    [communities, search]
+  );
+
+  const { nearby, others } = useMemo(() => {
+    const split = partitionByProximity(
+      filtered,
+      (c) => ({
         city: c.address_city,
+        state: c.address_state,
         cep: c.address_zip,
-        neighborhood: c.address_neighborhood,
-        street: c.address_street,
-        description: c.description,
-      });
-    }
-    const q = search.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      c.name.toLowerCase().includes(q) ||
-      c.description.toLowerCase().includes(q)
+      }),
+      anchor
     );
-  });
+    if (groupKind === "club") {
+      return {
+        nearby: [...split.nearby].sort(sortClubs),
+        others: [...split.others].sort(sortClubs),
+      };
+    }
+    return split;
+  }, [anchor, filtered, groupKind]);
 
   function handleFavoriteChange(communityId: string, favorited: boolean) {
     setCommunities((prev) => {
@@ -166,11 +189,23 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
         c.id === communityId ? { ...c, is_favorite: favorited } : c
       );
       if (groupKind !== "club") return next;
-      return [...next].sort((a, b) => {
-        if (a.is_favorite !== b.is_favorite) return a.is_favorite ? -1 : 1;
-        return b.member_count - a.member_count;
-      });
+      return [...next].sort(sortClubs);
     });
+  }
+
+  const nearbyTitle = groupKind === "club" ? "Clubes perto de mim" : "Comunidades perto de mim";
+  const othersTitle = groupKind === "club" ? "Outros clubes" : "Outras comunidades";
+
+  function renderGrid(items: MappedCommunity[]) {
+    return (
+      <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {items.map((c) => (
+          <li key={c.id}>
+            <CommunityCard community={c} onFavoriteChange={handleFavoriteChange} />
+          </li>
+        ))}
+      </ul>
+    );
   }
 
   return (
@@ -214,7 +249,7 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
 
         <input
           type="search"
-          placeholder={groupKind === "club" ? LOCATION_SEARCH_PLACEHOLDER : config.searchPlaceholder}
+          placeholder={LOCATION_SEARCH_PLACEHOLDER}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="toq-input mb-6 w-full px-4 py-2.5 text-sm"
@@ -239,14 +274,17 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
               </p>
             )}
           </div>
+        ) : nearby.length > 0 ? (
+          <div className="space-y-8">
+            <NearbySection title={nearbyTitle} anchor={anchor}>
+              {renderGrid(nearby)}
+            </NearbySection>
+            {others.length > 0 && (
+              <OtherSection title={othersTitle}>{renderGrid(others)}</OtherSection>
+            )}
+          </div>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((c) => (
-              <li key={c.id}>
-                <CommunityCard community={c} onFavoriteChange={handleFavoriteChange} />
-              </li>
-            ))}
-          </ul>
+          renderGrid(filtered)
         )}
       </main>
 

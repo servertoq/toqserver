@@ -11,6 +11,8 @@ const SELECT = `
   user_id,
   title,
   description,
+  club_name,
+  location_label,
   price_label,
   contact_whatsapp,
   post_id,
@@ -25,6 +27,8 @@ export function mapCoachListingRow(row: Record<string, unknown>): CoachListingWi
   const { profile: _p, ...listing } = row;
   return {
     ...(listing as CoachListing),
+    club_name: (listing.club_name as string | null | undefined) ?? null,
+    location_label: (listing.location_label as string | null | undefined) ?? null,
     profile: profile as CoachListingWithProfile["profile"],
   };
 }
@@ -33,11 +37,20 @@ export function coachListingFeedTitle(title: string) {
   return title.trim();
 }
 
-export function coachListingFeedBody(description: string, priceLabel: string) {
-  const desc = description.trim();
+export function coachListingFeedBody(
+  description: string,
+  priceLabel: string,
+  clubName?: string | null,
+  locationLabel?: string | null
+) {
+  const parts: string[] = [description.trim()];
+  const club = clubName?.trim();
+  const location = locationLabel?.trim();
+  if (club) parts.push(`Clube: ${club}`);
+  if (location) parts.push(`Local: ${location}`);
   const price = priceLabel.trim();
-  if (!price) return desc;
-  return `${desc}\n\nValor: ${price}`;
+  if (price) parts.push(`Valor: ${price}`);
+  return parts.filter(Boolean).join("\n\n");
 }
 
 export function coachContactUrl(whatsapp: string, title: string, coachUsername: string) {
@@ -97,6 +110,11 @@ function isMissingCoachPostTypeError(message: string | undefined) {
   return lower.includes("post_type") && lower.includes("coach");
 }
 
+function nullableTrim(value: string): string | null {
+  const t = value.trim();
+  return t.length >= 2 ? t : null;
+}
+
 async function writeCoachFeedPost(
   supabase: SupabaseClient,
   input: {
@@ -104,12 +122,19 @@ async function writeCoachFeedPost(
     title: string;
     description: string;
     priceLabel: string;
+    clubName?: string | null;
+    locationLabel?: string | null;
     postId: string | null;
   },
   postType: "coach" | "player"
 ): Promise<{ postId: string | null; error: string | null }> {
   const payload = {
-    body: coachListingFeedBody(input.description, input.priceLabel),
+    body: coachListingFeedBody(
+      input.description,
+      input.priceLabel,
+      input.clubName,
+      input.locationLabel
+    ),
     title: coachListingFeedTitle(input.title),
     post_type: postType,
     visibility: "public" as const,
@@ -147,6 +172,8 @@ async function syncFeedPost(
     title: string;
     description: string;
     priceLabel: string;
+    clubName?: string | null;
+    locationLabel?: string | null;
     postId: string | null;
   }
 ): Promise<{ postId: string | null; error: string | null }> {
@@ -165,11 +192,16 @@ export async function createCoachListing(
   form: CoachListingFormData
 ): Promise<{ listing: CoachListingWithProfile | null; error: string | null }> {
   const whatsapp = normalizePhoneDigits(form.contact_whatsapp);
+  const clubName = nullableTrim(form.club_name);
+  const locationLabel = nullableTrim(form.location_label);
+
   const { postId, error: postErr } = await syncFeedPost(supabase, {
     authorId: userId,
     title: form.title,
     description: form.description,
     priceLabel: form.price_label,
+    clubName,
+    locationLabel,
     postId: null,
   });
 
@@ -183,6 +215,8 @@ export async function createCoachListing(
       user_id: userId,
       title: form.title.trim(),
       description: form.description.trim(),
+      club_name: clubName,
+      location_label: locationLabel,
       price_label: form.price_label.trim(),
       contact_whatsapp: whatsapp,
       post_id: postId,
@@ -210,11 +244,16 @@ export async function updateCoachListing(
   form: CoachListingFormData
 ): Promise<{ error: string | null }> {
   const whatsapp = normalizePhoneDigits(form.contact_whatsapp);
+  const clubName = nullableTrim(form.club_name);
+  const locationLabel = nullableTrim(form.location_label);
+
   const { error: postErr } = await syncFeedPost(supabase, {
     authorId: userId,
     title: form.title,
     description: form.description,
     priceLabel: form.price_label,
+    clubName,
+    locationLabel,
     postId: listing.post_id,
   });
 
@@ -225,6 +264,8 @@ export async function updateCoachListing(
     .update({
       title: form.title.trim(),
       description: form.description.trim(),
+      club_name: clubName,
+      location_label: locationLabel,
       price_label: form.price_label.trim(),
       contact_whatsapp: whatsapp,
     })
@@ -256,6 +297,8 @@ export function emptyCoachListingForm(): CoachListingFormData {
   return {
     title: "",
     description: "",
+    club_name: "",
+    location_label: "",
     price_label: "",
     contact_whatsapp: "",
   };
@@ -265,6 +308,8 @@ export function coachListingToForm(listing: CoachListing): CoachListingFormData 
   return {
     title: listing.title,
     description: listing.description,
+    club_name: listing.club_name ?? "",
+    location_label: listing.location_label ?? "",
     price_label: listing.price_label,
     contact_whatsapp: listing.contact_whatsapp,
   };

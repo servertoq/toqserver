@@ -16,6 +16,7 @@ export function ClubCourtBrowseCard({ court }: { court: BrowsableClubCourt }) {
     .map((p) => Number(p.price))
     .sort((a, b) => a - b)[0];
   const rentalOpen = court.rental_available !== false;
+  const showPrices = court.show_prices !== false;
 
   return (
     <Link
@@ -35,9 +36,12 @@ export function ClubCourtBrowseCard({ court }: { court: BrowsableClubCourt }) {
       <p className="mt-2 line-clamp-2 text-sm text-[var(--toq-text-muted)]">{court.description}</p>
       <p className="mt-3 text-xs text-[var(--toq-text-muted)]">
         {court.community?.name}
+        {court.community?.address_city
+          ? ` · ${court.community.address_city}${court.community.address_state ? ` — ${court.community.address_state}` : ""}`
+          : ""}
         {court.rental_visibility === "members_only" ? " · Membros" : " · Pública"}
       </p>
-      {minPrice != null && (
+      {showPrices && minPrice != null && (
         <p className="mt-2 text-xs font-bold text-[var(--toq-navy)]">A partir de {formatClubPrice(minPrice)}</p>
       )}
     </Link>
@@ -110,6 +114,7 @@ export function ClubCourtDetailPage({ court: initial }: { court: BrowsableClubCo
     .map((p) => Number(p.price))
     .sort((a, b) => a - b)[0];
   const rentalOpen = court.rental_available !== false;
+  const showPrices = court.show_prices !== false;
 
   return (
     <>
@@ -135,7 +140,7 @@ export function ClubCourtDetailPage({ court: initial }: { court: BrowsableClubCo
           <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-[var(--toq-navy)]">
             {court.description}
           </p>
-          {minPrice != null && rentalOpen && (
+          {showPrices && minPrice != null && rentalOpen && (
             <p className="mt-4 text-sm font-bold text-[var(--toq-accent)]">
               A partir de {formatClubPrice(minPrice)}
             </p>

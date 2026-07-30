@@ -1,12 +1,17 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { mapCourtRow } from "@/lib/courts";
 import { fetchBrowsableClubCourts } from "@/lib/clubCourtBrowse";
 import { matchesLocationSearch, LOCATION_SEARCH_PLACEHOLDER } from "@/lib/locationSearch";
+import { partitionByProximity, type PlaceLocation } from "@/lib/nearbyLocation";
+import { useUserLocationAnchor } from "@/hooks/useUserLocationAnchor";
 import { fetchPlanUsage, canCreateCourtResource } from "@/lib/plans";
+import { fetchManagedClubs, type ManagedClub } from "@/lib/courtManagement";
+import { groupDetailHref } from "@/lib/communityGroup";
 import { useAppProfile } from "@/components/app/AppShell";
 import type { PlanUsage } from "@/types/plans";
 import type { CourtWithOwner } from "@/types/courts";
@@ -15,19 +20,54 @@ import { CourtCard } from "./CourtCard";
 import { ClubCourtBrowseCard } from "./ClubCourtBrowse";
 import type { BrowsableClubCourt } from "@/lib/clubCourtBrowse";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { NearbySection, OtherSection } from "@/components/shared/NearbySections";
+
+type CourtsFilter = "all" | "my_club";
+type ClubAction = "nova" | "agenda";
+
+type CourtListItem =
+  | { kind: "club"; id: string; court: BrowsableClubCourt }
+  | { kind: "standalone"; id: string; court: CourtWithOwner };
+
+function courtItemPlace(item: CourtListItem): PlaceLocation {
+  if (item.kind === "standalone") {
+    return {
+      latitude: item.court.latitude,
+      longitude: item.court.longitude,
+      city: item.court.city,
+      state: item.court.state,
+      cep: item.court.cep,
+    };
+  }
+  return {
+    city: item.court.community?.address_city,
+    state: item.court.community?.address_state,
+    cep: item.court.community?.address_zip,
+  };
+}
+
+function clubCourtsHref(slug: string, action?: ClubAction) {
+  const base = `${groupDetailHref("club", slug)}?tab=courts`;
+  return action ? `${base}&action=${action}` : base;
+}
 
 export function CourtsPage() {
   const profile = useAppProfile();
+  const router = useRouter();
   const supabase = createClient();
+  const { anchor } = useUserLocationAnchor(profile.id);
   const [courts, setCourts] = useState<CourtWithOwner[]>([]);
   const [clubCourts, setClubCourts] = useState<BrowsableClubCourt[]>([]);
+  const [managedClubs, setManagedClubs] = useState<ManagedClub[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<CourtsFilter>("all");
   const [planUsage, setPlanUsage] = useState<PlanUsage | null>(null);
+  const [clubPicker, setClubPicker] = useState<ClubAction | null>(null);
 
   const refreshClubCourts = useCallback(async () => {
-    const [{ data, error: listErr }, usage, clubRows] = await Promise.all([
+    const [{ data, error: listErr }, usage, clubRows, clubs] = await Promise.all([
       supabase
         .from("courts")
         .select(
@@ -39,8 +79,12 @@ export function CourtsPage() {
         .order("created_at", { ascending: false }),
       fetchPlanUsage(supabase),
       fetchBrowsableClubCourts(supabase, profile.id),
+      profile.canAccessCourtManagement
+        ? fetchManagedClubs(supabase, profile.id)
+        : Promise.resolve([] as ManagedClub[]),
     ]);
     setPlanUsage(usage);
+    setManagedClubs(clubs);
 
     if (listErr) {
       setError(
@@ -51,7 +95,7 @@ export function CourtsPage() {
 
     setCourts((data ?? []).map((row) => mapCourtRow(row)));
     setClubCourts(clubRows);
-  }, [profile.id, supabase]);
+  }, [profile.canAccessCourtManagement, profile.id, supabase]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -100,30 +144,154 @@ export function CourtsPage() {
     };
   }, [refreshClubCourts, supabase]);
 
-  const filteredCourts = courts.filter((c) =>
-    matchesLocationSearch(search, {
-      name: c.name,
-      city: c.city,
-      cep: c.cep,
-      neighborhood: c.neighborhood,
-      street: c.street,
-      description: c.description,
-      formattedAddress: c.formatted_address,
-    })
+  const myClubCourts = useMemo(
+    () => clubCourts.filter((c) => c.is_member_club),
+    [clubCourts]
   );
 
-  const q = search.trim().toLowerCase();
-  const filteredClubCourts = clubCourts.filter((c) => {
-    if (!q) return true;
-    return (
-      c.name.toLowerCase().includes(q) ||
-      c.description.toLowerCase().includes(q) ||
-      (c.community?.name ?? "").toLowerCase().includes(q)
+  const filteredCourts = useMemo(() => {
+    if (filter === "my_club") return [];
+    return courts.filter((c) =>
+      matchesLocationSearch(search, {
+        name: c.name,
+        city: c.city,
+        cep: c.cep,
+        neighborhood: c.neighborhood,
+        street: c.street,
+        description: c.description,
+        formattedAddress: c.formatted_address,
+      })
     );
-  });
+  }, [courts, filter, search]);
 
-  const totalCount = filteredCourts.length + filteredClubCourts.length;
-  const hasAny = courts.length + clubCourts.length > 0;
+  const filteredClubCourts = useMemo(() => {
+    const source = filter === "my_club" ? myClubCourts : clubCourts;
+    return source.filter((c) =>
+      matchesLocationSearch(search, {
+        name: c.name,
+        description: c.description,
+        city: c.community?.address_city,
+        cep: c.community?.address_zip,
+        neighborhood: c.community?.address_neighborhood,
+        street: c.community?.address_street,
+        formattedAddress: c.community?.name,
+      })
+    );
+  }, [clubCourts, filter, myClubCourts, search]);
+
+  const listItems = useMemo<CourtListItem[]>(() => {
+    const clubItems: CourtListItem[] = filteredClubCourts.map((court) => ({
+      kind: "club",
+      id: `club-${court.id}`,
+      court,
+    }));
+    const standaloneItems: CourtListItem[] = filteredCourts.map((court) => ({
+      kind: "standalone",
+      id: court.id,
+      court,
+    }));
+    return [...clubItems, ...standaloneItems];
+  }, [filteredClubCourts, filteredCourts]);
+
+  const { nearby, others } = useMemo(
+    () => partitionByProximity(listItems, courtItemPlace, anchor),
+    [anchor, listItems]
+  );
+
+  const totalCount = listItems.length;
+  const hasAny =
+    filter === "my_club"
+      ? myClubCourts.length > 0
+      : courts.length + clubCourts.length > 0;
+
+  function renderCourtGrid(items: CourtListItem[]) {
+    return (
+      <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {items.map((item) => (
+          <li key={item.id}>
+            {item.kind === "club" ? (
+              <ClubCourtBrowseCard court={item.court} />
+            ) : (
+              <CourtCard court={item.court} />
+            )}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  const canCreateStandalone = canCreateCourtResource(planUsage, profile.staffRole);
+  const hasManagedClubs = managedClubs.length > 0;
+  const showManagerActions = profile.canAccessCourtManagement && hasManagedClubs;
+
+  function resolveClubAction(action: ClubAction): string | null {
+    if (managedClubs.length === 1) return clubCourtsHref(managedClubs[0].slug, action);
+    if (managedClubs.length > 1) {
+      setClubPicker(action);
+      return null;
+    }
+    return null;
+  }
+
+  const headerAction =
+    showManagerActions || canCreateStandalone ? (
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {showManagerActions && (
+          <>
+            <Link
+              href="/inicio/gestao-de-quadras"
+              className="inline-flex h-9 items-center justify-center rounded-xl toq-btn-primary px-3.5 text-xs font-bold leading-none text-white sm:text-sm"
+            >
+              Gestão de Quadras
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                const href = resolveClubAction("agenda");
+                if (href) router.push(href);
+              }}
+              className="inline-flex h-9 items-center justify-center rounded-xl toq-btn-outline px-3.5 text-xs font-bold leading-none sm:text-sm"
+            >
+              Gerenciar agenda
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const href = resolveClubAction("nova");
+                if (href) router.push(href);
+              }}
+              className="inline-flex h-9 items-center justify-center rounded-xl toq-btn-primary px-3.5 text-xs font-bold leading-none text-white sm:text-sm"
+            >
+              + Nova quadra
+            </button>
+            {canCreateStandalone && (
+              <Link
+                href="/inicio/quadras/cadastrar"
+                className="inline-flex h-9 items-center justify-center rounded-xl toq-btn-outline px-3.5 text-xs font-bold leading-none sm:text-sm"
+              >
+                Quadra avulsa
+              </Link>
+            )}
+          </>
+        )}
+        {!showManagerActions && canCreateStandalone && (
+          <Link
+            href="/inicio/quadras/cadastrar"
+            className="inline-flex h-9 items-center justify-center rounded-xl toq-btn-primary px-4 text-sm font-bold text-white"
+          >
+            Cadastrar quadra
+          </Link>
+        )}
+        {profile.canAccessCourtManagement && !hasManagedClubs && (
+          <Link
+            href="/inicio/gestao-de-quadras"
+            className="inline-flex h-9 items-center justify-center rounded-xl toq-btn-outline px-3.5 text-xs font-bold leading-none sm:text-sm"
+          >
+            Gestão de Quadras
+          </Link>
+        )}
+      </div>
+    ) : undefined;
 
   return (
     <>
@@ -132,17 +300,33 @@ export function CourtsPage() {
           kicker=""
           title="Quadras"
           subtitle="Encontre a melhor quadra perto de você e agende para treinos, jogos ou torneios!"
-          action={
-            canCreateCourtResource(planUsage, profile.staffRole) ? (
-              <Link
-                href="/inicio/quadras/cadastrar"
-                className="toq-btn-primary rounded-xl px-4 py-2 text-sm text-white"
-              >
-                Cadastrar quadra
-              </Link>
-            ) : undefined
-          }
+          action={headerAction}
         />
+
+        <div className="mb-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setFilter("all")}
+            className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
+              filter === "all"
+                ? "bg-[var(--toq-accent)] text-white"
+                : "border border-[var(--toq-border)] bg-[var(--toq-card)] text-[var(--toq-navy)] hover:border-[var(--toq-accent)]"
+            }`}
+          >
+            Todas
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter("my_club")}
+            className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
+              filter === "my_club"
+                ? "bg-[var(--toq-accent)] text-white"
+                : "border border-[var(--toq-border)] bg-[var(--toq-card)] text-[var(--toq-navy)] hover:border-[var(--toq-accent)]"
+            }`}
+          >
+            Do meu clube
+          </button>
+        </div>
 
         <input
           type="search"
@@ -161,29 +345,75 @@ export function CourtsPage() {
         {loading ? (
           <p className="text-sm text-[var(--toq-text-muted)]">Carregando…</p>
         ) : totalCount === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+          <div className="rounded-2xl border border-dashed border-[var(--toq-border)] bg-[var(--toq-card)] p-8 text-center">
             <p className="text-sm font-semibold text-[var(--toq-navy)]">
-              {!hasAny ? "Nenhuma quadra cadastrada ainda" : "Nenhum resultado na busca"}
+              {!hasAny
+                ? filter === "my_club"
+                  ? "Nenhuma quadra nos seus clubes"
+                  : "Nenhuma quadra cadastrada ainda"
+                : "Nenhum resultado na busca"}
             </p>
             <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
-              Seja o primeiro a cadastrar uma quadra na sua região.
+              {filter === "my_club"
+                ? "Entre em um clube ou peça ao administrador para cadastrar quadras."
+                : "Seja o primeiro a cadastrar uma quadra na sua região."}
             </p>
           </div>
+        ) : nearby.length > 0 ? (
+          <div className="space-y-8">
+            <NearbySection title="Quadras perto de mim" anchor={anchor}>
+              {renderCourtGrid(nearby)}
+            </NearbySection>
+            {others.length > 0 && (
+              <OtherSection title="Outras quadras">{renderCourtGrid(others)}</OtherSection>
+            )}
+          </div>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {filteredClubCourts.map((c) => (
-              <li key={`club-${c.id}`}>
-                <ClubCourtBrowseCard court={c} />
-              </li>
-            ))}
-            {filteredCourts.map((c) => (
-              <li key={c.id}>
-                <CourtCard court={c} />
-              </li>
-            ))}
-          </ul>
+          renderCourtGrid(listItems)
         )}
       </main>
+
+      {clubPicker && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="club-picker-title"
+          onClick={() => setClubPicker(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="club-picker-title" className="text-lg font-bold text-[var(--toq-navy)]">
+              {clubPicker === "nova" ? "Cadastrar quadra em qual clube?" : "Gerenciar agenda de qual clube?"}
+            </h2>
+            <p className="mt-1 text-sm text-[var(--toq-text-muted)]">
+              Escolha o clube para continuar com planos, preços e agenda.
+            </p>
+            <ul className="mt-4 space-y-2">
+              {managedClubs.map((club) => (
+                <li key={club.id}>
+                  <Link
+                    href={clubCourtsHref(club.slug, clubPicker)}
+                    className="block rounded-xl border border-[var(--toq-border)] px-4 py-3 text-sm font-semibold text-[var(--toq-navy)] transition hover:border-[var(--toq-accent)]"
+                    onClick={() => setClubPicker(null)}
+                  >
+                    {club.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              onClick={() => setClubPicker(null)}
+              className="mt-4 w-full rounded-lg border border-[var(--toq-border)] px-4 py-2.5 text-sm font-semibold text-[var(--toq-text-muted)]"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

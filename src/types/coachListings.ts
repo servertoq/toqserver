@@ -3,6 +3,10 @@ export type CoachListing = {
   user_id: string;
   title: string;
   description: string;
+  /** Clube/academia onde dá aulas (opcional). */
+  club_name: string | null;
+  /** Localização direta: cidade, bairro, endereço ou região. */
+  location_label: string | null;
   price_label: string;
   contact_whatsapp: string;
   post_id: string | null;
@@ -22,6 +26,8 @@ export type CoachListingWithProfile = CoachListing & {
 export type CoachListingFormData = {
   title: string;
   description: string;
+  club_name: string;
+  location_label: string;
   price_label: string;
   contact_whatsapp: string;
 };

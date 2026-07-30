@@ -13,7 +13,7 @@ import {
 } from "@/lib/profile";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { type AddressFields, EMPTY_ADDRESS, profileLocationToDbPayload } from "@/lib/address";
-import { ProfileCepField } from "@/components/shared/ProfileCepField";
+import { ProfileLocationField } from "@/components/shared/ProfileLocationField";
 import { ProfilePlanSection } from "./ProfilePlanSection";
 import type { UserPlan } from "@/types/plans";
 import { ProfileAvatar } from "./ProfileAvatar";
@@ -278,9 +278,10 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
         </div>
       </fieldset>
 
-      <ProfileCepField
+      <ProfileLocationField
         value={address}
         onChange={(next) => setAddress({ ...address, ...next })}
+        autoDetect
       />
 
       <label className="block">

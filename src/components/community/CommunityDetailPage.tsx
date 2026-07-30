@@ -22,6 +22,7 @@ import { createPostWithMedia, POST_SELECT } from "@/lib/posts";
 import { CreatePostBox } from "@/components/feed/CreatePostBox";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { PostCard } from "@/components/feed/PostCard";
+import { PostBody } from "@/components/feed/PostBody";
 import { Suspense } from "react";
 import { ClubMemberArea } from "@/components/club/ClubMemberArea";
 import { ReportButton } from "@/components/report/ReportButton";
@@ -53,6 +54,7 @@ export function CommunityDetailPage({
 
   const [community, setCommunity] = useState<Community | null>(null);
   const [myRole, setMyRole] = useState<CommunityMemberRole | null>(null);
+  const [isClubProfessor, setIsClubProfessor] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(false);
   const [pendingInviteId, setPendingInviteId] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -93,12 +95,13 @@ export function CommunityDetailPage({
 
     const { data: membership } = await supabase
       .from("community_members")
-      .select("role")
+      .select("role, is_club_professor")
       .eq("community_id", c.id)
       .eq("user_id", user.id)
       .maybeSingle();
 
     setMyRole((membership?.role as CommunityMemberRole) ?? null);
+    setIsClubProfessor(Boolean(membership?.is_club_professor));
 
     if ((c.kind ?? groupKind) === "club" && membership) {
       const { data: fav } = await supabase
@@ -342,11 +345,22 @@ export function CommunityDetailPage({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <h1 className="text-xl font-bold text-[var(--toq-navy)]">{community.name}</h1>
-                <p className="mt-1 text-sm text-[var(--toq-text-muted)]">{community.description}</p>
+                {community.description?.trim() ? (
+                  <div className="mt-1">
+                    <PostBody
+                      body={community.description}
+                      maxLines={3}
+                      className="break-words text-sm leading-relaxed text-[var(--toq-text-muted)]"
+                    />
+                  </div>
+                ) : null}
                 <p className="mt-2 text-xs font-semibold text-[var(--toq-accent)]">
                   {community.member_count.toLocaleString("pt-BR")} / 1.000 membros ·{" "}
                   {groupVisibilityLabel(community.kind ?? groupKind, community.is_private)}
-                  {myRole && ` · ${memberRoleLabel(myRole)}`}
+                  {myRole &&
+                    ` · ${[memberRoleLabel(myRole), isClubProfessor ? "Professor" : null]
+                      .filter(Boolean)
+                      .join(" · ")}`}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">

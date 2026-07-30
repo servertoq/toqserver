@@ -29,9 +29,11 @@ export function ProfilePlanSection({ plan, showPlanBadge, onToggleBadge, saving 
         </Link>
       </div>
       <p className="mt-2 text-base font-bold text-[var(--toq-profile-navy)]">{info.label}</p>
-      <p className="mt-0.5 text-sm font-semibold text-[var(--toq-profile-accent)]">
-        {planMonthlyPriceLabel(plan)}
-      </p>
+      {plan !== "free" && (
+        <p className="mt-0.5 text-sm font-semibold text-[var(--toq-profile-accent)]">
+          {planMonthlyPriceLabel(plan)}
+        </p>
+      )}
       <p className="mt-2 text-sm leading-relaxed text-[var(--toq-profile-muted)]">
         {info.description}
       </p>

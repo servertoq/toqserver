@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { UsernameSearchInput } from "@/components/shared/UsernameSearchInput";
-import { canExpelMember, memberRoleLabel, sortMembers } from "@/lib/community";
+import { canExpelMember, canModerate, memberCargoLabels, sortMembers } from "@/lib/community";
 import type { CommunityGroupKind, CommunityInvite, CommunityJoinRequest, CommunityMember, CommunityMemberRole } from "@/types/community";
 
 type Props = {
@@ -17,6 +17,7 @@ type Props = {
 export function CommunityModerationPanel({ communityId, groupKind, myRole, onChanged }: Props) {
   const supabase = createClient();
   const isOwner = myRole === "owner";
+  const canManageProfessor = groupKind === "club" && canModerate(myRole);
   const groupLabel = groupKind === "club" ? "clube" : "comunidade";
   const [tab, setTab] = useState<"requests" | "members" | "invite">("requests");
   const [requests, setRequests] = useState<CommunityJoinRequest[]>([]);
@@ -43,8 +44,8 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
     if (!q) return members;
     return members.filter((m) => {
       const username = m.profile.username.toLowerCase();
-      const role = memberRoleLabel(m.role).toLowerCase();
-      return username.includes(q) || role.includes(q);
+      const roles = memberCargoLabels(m).join(" ").toLowerCase();
+      return username.includes(q) || roles.includes(q);
     });
   }, [members, memberQuery]);
 
@@ -117,6 +118,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
         user_id,
         role,
         joined_at,
+        is_club_professor,
         profile:profiles!community_members_user_id_fkey(id, username, avatar_url)
       `
       )
@@ -128,6 +130,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
         user_id: m.user_id,
         role: m.role as CommunityMemberRole,
         joined_at: m.joined_at,
+        is_club_professor: Boolean(m.is_club_professor),
         profile: p ?? { id: m.user_id, username: "?", avatar_url: null },
       };
     });
@@ -212,6 +215,23 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
       p_is_moderator: makeMod,
     });
     setActionId(null);
+    await load();
+    onChanged();
+  }
+
+  async function toggleClubProfessor(userId: string, makeProfessor: boolean) {
+    setKickMessage(null);
+    setActionId(userId);
+    const { error } = await supabase.rpc("set_club_professor", {
+      p_community_id: communityId,
+      p_user_id: userId,
+      p_is_professor: makeProfessor,
+    });
+    setActionId(null);
+    if (error) {
+      setKickMessage(error.message);
+      return;
+    }
     await load();
     onChanged();
   }
@@ -373,7 +393,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
                   @{m.profile.username}
                 </span>
                 <span className="ml-2 text-[10px] font-bold uppercase text-[var(--toq-text-muted)]">
-                  {memberRoleLabel(m.role)}
+                  {memberCargoLabels(m).join(" · ")}
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -395,6 +415,16 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
                     className="text-xs font-semibold text-[var(--toq-text-muted)]"
                   >
                     Remover mod.
+                  </button>
+                )}
+                {canManageProfessor && (
+                  <button
+                    type="button"
+                    disabled={actionId === m.user_id}
+                    onClick={() => toggleClubProfessor(m.user_id, !m.is_club_professor)}
+                    className="text-xs font-semibold text-[var(--toq-sky)]"
+                  >
+                    {m.is_club_professor ? "Remover professor" : "Tornar professor"}
                   </button>
                 )}
                 {canExpelMember(myRole, m.role) && (

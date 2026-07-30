@@ -73,6 +73,40 @@ export type ManagedClubCourt = ClubCourt & {
   community?: { id: string; name: string; slug: string } | null;
 };
 
+export type ManagedClub = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+/** Clubes em que o usuário é dono ou moderador (para gestão/agenda/cadastro completo). */
+export async function fetchManagedClubs(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<ManagedClub[]> {
+  const { data, error } = await supabase
+    .from("community_members")
+    .select("community_id, community:communities!inner(id, name, slug, kind)")
+    .eq("user_id", userId)
+    .in("role", ["owner", "moderator"]);
+
+  if (error) throw new Error(error.message);
+
+  const clubs: ManagedClub[] = [];
+  for (const row of data ?? []) {
+    const raw = row.community as
+      | { id: string; name: string; slug: string; kind: string }
+      | { id: string; name: string; slug: string; kind: string }[]
+      | null;
+    const community = Array.isArray(raw) ? raw[0] : raw;
+    if (!community || community.kind !== "club") continue;
+    clubs.push({ id: community.id, name: community.name, slug: community.slug });
+  }
+
+  clubs.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  return clubs;
+}
+
 export async function fetchManagedCourts(supabase: SupabaseClient, userId: string): Promise<ManagedClubCourt[]> {
   const { data: memberships, error: memErr } = await supabase
     .from("community_members")

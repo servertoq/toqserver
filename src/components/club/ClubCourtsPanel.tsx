@@ -74,6 +74,8 @@ type CourtDraft = {
   description: string;
   contact_phone: string;
   rental_visibility: CourtRentalVisibility;
+  /** false = não mostrar valores no anúncio */
+  show_prices: boolean;
   plans: PlanDraftRow[];
   hours: Array<{
     key: string;
@@ -159,6 +161,7 @@ function fromCourt(court?: ClubCourt | null): CourtDraft {
     description: court?.description ?? "",
     contact_phone: court?.contact_phone ?? "",
     rental_visibility: court?.rental_visibility ?? "members_only",
+    show_prices: court?.show_prices !== false,
     plans,
     hours,
   };
@@ -289,6 +292,7 @@ function ClubCourtForm({
             description: draft.description.trim(),
             contact_phone: draft.contact_phone.trim(),
             rental_visibility: draft.rental_visibility,
+            show_prices: draft.show_prices,
           })
           .eq("id", courtId);
         if (updErr) throw new Error(updErr.message);
@@ -302,6 +306,7 @@ function ClubCourtForm({
             description: draft.description.trim(),
             contact_phone: draft.contact_phone.trim(),
             rental_visibility: draft.rental_visibility,
+            show_prices: draft.show_prices,
           })
           .select("id")
           .single();
@@ -506,6 +511,23 @@ function ClubCourtForm({
               </label>
             </div>
           </div>
+
+          <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-3">
+            <input
+              type="checkbox"
+              checked={!draft.show_prices}
+              onChange={(e) => setDraft((d) => ({ ...d, show_prices: !e.target.checked }))}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="block text-sm font-semibold text-[var(--toq-navy)]">
+                Não exibir valores no anúncio
+              </span>
+              <span className="block text-[11px] text-[var(--toq-text-muted)]">
+                Os preços dos planos continuam valendo na reserva; só não aparecem na listagem e no feed.
+              </span>
+            </span>
+          </label>
 
           <div className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4">
             <div className="flex items-center justify-between gap-2">
@@ -788,7 +810,20 @@ function ClubCourtForm({
   );
 }
 
-export function ClubCourtsPanel({ communityId, clubName, clubSlug, myRole }: Props) {
+type PanelProps = Props & {
+  /** Abre formulário ou agenda ao montar (ex.: links da aba Quadras). */
+  autoOpen?: "nova" | "agenda" | null;
+  onAutoOpenConsumed?: () => void;
+};
+
+export function ClubCourtsPanel({
+  communityId,
+  clubName,
+  clubSlug,
+  myRole,
+  autoOpen = null,
+  onAutoOpenConsumed,
+}: PanelProps) {
   const supabase = createClient();
   const canManage = canModerate(myRole);
 
@@ -801,6 +836,7 @@ export function ClubCourtsPanel({ communityId, clubName, clubSlug, myRole }: Pro
   const agendaCourt = courts.find((c) => c.id === agendaCourtId) ?? null;
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const autoOpenHandled = useRef(false);
 
   async function handleCourtSaved(courtId: string) {
     setEditing(undefined);
@@ -808,14 +844,14 @@ export function ClubCourtsPanel({ communityId, clubName, clubSlug, myRole }: Pro
     setAgendaCourtId(courtId);
   }
 
-  function openAgendaManager() {
+  function openAgendaManager(courtList: ClubCourt[] = courts) {
     setInfo(null);
-    if (courts.length === 0) {
+    if (courtList.length === 0) {
       setInfo("Cadastre uma quadra com o botão “+ Nova quadra” antes de gerenciar a agenda.");
       return;
     }
-    if (courts.length === 1) {
-      setAgendaCourtId(courts[0].id);
+    if (courtList.length === 1) {
+      setAgendaCourtId(courtList[0].id);
       return;
     }
     setAgendaPickerOpen(true);
@@ -874,6 +910,14 @@ export function ClubCourtsPanel({ communityId, clubName, clubSlug, myRole }: Pro
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (loading || !canManage || !autoOpen || autoOpenHandled.current) return;
+    autoOpenHandled.current = true;
+    if (autoOpen === "nova") setEditing(null);
+    else if (autoOpen === "agenda") openAgendaManager(courts);
+    onAutoOpenConsumed?.();
+  }, [autoOpen, canManage, courts, loading, onAutoOpenConsumed]);
 
   // Realtime: agenda e gestão sincronizam ao alterar bloqueios ou reservas confirmadas
   useEffect(() => {

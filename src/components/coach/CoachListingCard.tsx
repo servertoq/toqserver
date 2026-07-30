@@ -75,6 +75,23 @@ export function CoachListingCard({
       <div className="coach-listing-card__body">
         <p className="coach-listing-card__description">{listing.description}</p>
 
+        {(listing.club_name || listing.location_label) && (
+          <dl className="coach-listing-card__meta">
+            {listing.club_name && (
+              <div className="coach-listing-card__meta-row">
+                <dt>Clube</dt>
+                <dd>{listing.club_name}</dd>
+              </div>
+            )}
+            {listing.location_label && (
+              <div className="coach-listing-card__meta-row">
+                <dt>Local</dt>
+                <dd>{listing.location_label}</dd>
+              </div>
+            )}
+          </dl>
+        )}
+
         <div className="coach-listing-card__price">
           <span className="coach-listing-card__price-value">{listing.price_label}</span>
           <span className="coach-listing-card__price-label">investimento</span>

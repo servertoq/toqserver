@@ -15,8 +15,7 @@ import {
 } from "@/lib/profile";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { type AddressFields, profileLocationToDbPayload } from "@/lib/address";
-import { ProfileCepField } from "@/components/shared/ProfileCepField";
-import { planMonthlyPriceLabel } from "@/lib/billing/plans";
+import { ProfileLocationField } from "@/components/shared/ProfileLocationField";
 import { planLabel } from "@/lib/plans";
 import type { UserPlan } from "@/types/plans";
 
@@ -198,10 +197,11 @@ export function ProfileResumoSection({
             Localização
           </dt>
           <dd className="mt-1.5">
-            <ProfileCepField
+            <ProfileLocationField
               value={location}
               onChange={setLocation}
               readOnly={!isOwnProfile}
+              autoDetect={isOwnProfile}
               compact
               hideLabel
             />
@@ -213,13 +213,7 @@ export function ProfileResumoSection({
             Plano
           </dt>
           <dd className="mt-1.5">
-            <p className="text-sm font-semibold text-[var(--toq-profile-navy)]">
-              {planLabel(plan)}
-              <span className="font-normal text-[var(--toq-profile-muted)]">
-                {" "}
-                · {planMonthlyPriceLabel(plan)}
-              </span>
-            </p>
+            <p className="text-sm font-semibold text-[var(--toq-profile-navy)]">{planLabel(plan)}</p>
             {isOwnProfile && (
               <Link
                 href="/inicio/planos"

@@ -117,20 +117,14 @@ export function hasProfileLocation(addr: Pick<AddressFields, "zip" | "city" | "s
 }
 
 export function formatProfileLocation(addr: Pick<AddressFields, "zip" | "city" | "state">): string | null {
-  if (!hasProfileLocation(addr)) return null;
-
-  const zip = normalizeCep(addr.zip);
   const city = addr.city.trim();
   const state = addr.state.trim().toUpperCase();
-  const parts: string[] = [];
+  if (!city && !state && !normalizeCep(addr.zip)) return null;
 
-  if (city && state) parts.push(`${city} — ${state}`);
-  else if (city) parts.push(city);
-  else if (state) parts.push(state);
-
-  if (zip) parts.push(`CEP ${formatCepDisplay(zip)}`);
-
-  return parts.join(" · ");
+  if (city && state) return `${city} — ${state}`;
+  if (city) return city;
+  if (state) return state;
+  return null;
 }
 
 export function hasAddress(addr: AddressFields): boolean {

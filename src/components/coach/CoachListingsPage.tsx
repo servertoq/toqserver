@@ -71,6 +71,8 @@ export function CoachListingsPage() {
       item.title.toLowerCase().includes(q) ||
       item.description.toLowerCase().includes(q) ||
       item.price_label.toLowerCase().includes(q) ||
+      (item.club_name ?? "").toLowerCase().includes(q) ||
+      (item.location_label ?? "").toLowerCase().includes(q) ||
       user.includes(q)
     );
   });
@@ -118,7 +120,7 @@ export function CoachListingsPage() {
 
         <input
           type="search"
-          placeholder="Buscar por professor, título ou valor…"
+          placeholder="Buscar por professor, clube, local ou valor…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="toq-input mb-6 w-full px-4 py-2.5 text-sm"

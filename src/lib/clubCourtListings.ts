@@ -18,7 +18,8 @@ export function clubCourtFeedBody(
   _sizeLabel: string,
   clubName: string,
   minPrice: number | null,
-  visibility: CourtRentalVisibility
+  visibility: CourtRentalVisibility,
+  showPrices = true
 ) {
   const lines = [
     description.trim(),
@@ -26,7 +27,7 @@ export function clubCourtFeedBody(
       ? `Clube: ${clubName} — disponível para locação por terceiros.`
       : `Exclusivo para membros do clube ${clubName}.`,
   ];
-  if (minPrice != null && minPrice > 0) {
+  if (showPrices && minPrice != null && minPrice > 0) {
     lines.push(`A partir de ${formatClubPrice(minPrice)}`);
   }
   return lines.filter(Boolean).join("\n\n");
@@ -104,7 +105,8 @@ export async function syncClubCourtFeedPost(
       court.size_label,
       community.name,
       minPrice,
-      court.rental_visibility ?? "members_only"
+      court.rental_visibility ?? "members_only",
+      court.show_prices !== false
     ),
     postId: court.post_id ?? null,
     communityId,

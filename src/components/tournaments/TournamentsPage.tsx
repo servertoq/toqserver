@@ -1,18 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { fetchAllTournaments } from "@/lib/tournaments";
 import { matchesLocationSearch, LOCATION_SEARCH_PLACEHOLDER } from "@/lib/locationSearch";
+import { partitionByProximity } from "@/lib/nearbyLocation";
+import { useUserLocationAnchor } from "@/hooks/useUserLocationAnchor";
 import type { ClubTournament } from "@/types/clubFeatures";
 import { appContentClass } from "@/lib/layout";
 import { TournamentCard } from "./TournamentCard";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { NearbySection, OtherSection } from "@/components/shared/NearbySections";
 
 export function TournamentsPage() {
   const supabase = createClient();
   const profile = useAppProfile();
+  const { anchor } = useUserLocationAnchor(profile.id);
   const [tournaments, setTournaments] = useState<ClubTournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,16 +42,51 @@ export function TournamentsPage() {
     void load();
   }, [load]);
 
-  const filtered = tournaments.filter((t) =>
-    matchesLocationSearch(search, {
-      name: t.name,
-      description: `${t.description}\n${t.prizes}\n${t.community?.name ?? ""}`,
-      city: t.community?.address_city,
-      cep: t.community?.address_zip,
-      neighborhood: t.community?.address_neighborhood,
-      street: t.community?.address_street,
-    })
+  const filtered = useMemo(
+    () =>
+      tournaments.filter((t) =>
+        matchesLocationSearch(search, {
+          name: t.name,
+          description: `${t.description}\n${t.prizes}\n${t.community?.name ?? ""}`,
+          city: t.community?.address_city,
+          cep: t.community?.address_zip,
+          neighborhood: t.community?.address_neighborhood,
+          street: t.community?.address_street,
+        })
+      ),
+    [search, tournaments]
   );
+
+  const { nearby, others } = useMemo(
+    () =>
+      partitionByProximity(
+        filtered,
+        (t) => ({
+          city: t.community?.address_city,
+          state: t.community?.address_state,
+          cep: t.community?.address_zip,
+        }),
+        anchor
+      ),
+    [anchor, filtered]
+  );
+
+  function renderGrid(items: ClubTournament[]) {
+    return (
+      <div className="tournament-grid grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {items.map((t) => (
+          <TournamentCard
+            key={t.id}
+            tournament={t}
+            clubName={t.community?.name ?? "Clube"}
+            username={profile.username}
+            canSignup
+            canShare={t.is_active}
+          />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -85,19 +124,17 @@ export function TournamentsPage() {
               Os clubes publicam torneios na aba Torneios do perfil do clube.
             </p>
           </div>
-        ) : (
-          <div className="tournament-grid grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((t) => (
-              <TournamentCard
-                key={t.id}
-                tournament={t}
-                clubName={t.community?.name ?? "Clube"}
-                username={profile.username}
-                canSignup
-                canShare={t.is_active}
-              />
-            ))}
+        ) : nearby.length > 0 ? (
+          <div className="space-y-8">
+            <NearbySection title="Torneios perto de mim" anchor={anchor}>
+              {renderGrid(nearby)}
+            </NearbySection>
+            {others.length > 0 && (
+              <OtherSection title="Outros torneios">{renderGrid(others)}</OtherSection>
+            )}
           </div>
+        ) : (
+          renderGrid(filtered)
         )}
       </main>
     </>

@@ -2,8 +2,19 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ClubCourt } from "@/types/clubFeatures";
 
 export type BrowsableClubCourt = ClubCourt & {
-  community?: { id: string; name: string; slug: string } | null;
+  community?: {
+    id: string;
+    name: string;
+    slug: string;
+    address_city?: string | null;
+    address_zip?: string | null;
+    address_state?: string | null;
+    address_neighborhood?: string | null;
+    address_street?: string | null;
+  } | null;
   images?: { id: string; court_id: string; url: string; sort_order: number }[];
+  /** Usuário é membro do clube desta quadra */
+  is_member_club?: boolean;
 };
 
 export type CourtTakenRange = {
@@ -41,7 +52,7 @@ export async function fetchBrowsableClubCourts(
     .select(
       `
       *,
-      community:communities(id, name, slug),
+      community:communities(id, name, slug, address_city, address_zip, address_state, address_neighborhood, address_street),
       images:club_court_images(id, court_id, url, sort_order),
       plans:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order, applies_weekdays, applies_start_time, applies_end_time),
       hours:club_court_hours(id, court_id, weekday, start_time, end_time)
@@ -64,7 +75,14 @@ export async function fetchBrowsableClubCourts(
       const plans = Array.isArray(row.plans) ? row.plans : row.plans ? [row.plans] : [];
       const hours = Array.isArray(row.hours) ? row.hours : row.hours ? [row.hours] : [];
       const { community: _c, images: _i, plans: _p, hours: _h, ...court } = row;
-      return { ...court, community, images, plans, hours } as BrowsableClubCourt;
+      return {
+        ...court,
+        community,
+        images,
+        plans,
+        hours,
+        is_member_club: memberCommunityIds.has(row.community_id as string),
+      } as BrowsableClubCourt;
     });
 }
 
@@ -78,7 +96,7 @@ export async function fetchClubCourtDetail(
     .select(
       `
       *,
-      community:communities(id, name, slug),
+      community:communities(id, name, slug, address_city, address_zip, address_state, address_neighborhood, address_street),
       images:club_court_images(id, court_id, url, sort_order),
       plans:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order, applies_weekdays, applies_start_time, applies_end_time),
       hours:club_court_hours(id, court_id, weekday, start_time, end_time),

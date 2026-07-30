@@ -5358,9 +5358,44 @@ button {
   line-height: 1.6;
   color: var(--toq-text-muted);
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.coach-listing-card__meta {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.875rem;
+  background: color-mix(in srgb, var(--toq-navy) 4%, var(--toq-card));
+  border: 1px solid var(--toq-border);
+}
+
+.coach-listing-card__meta-row {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.coach-listing-card__meta-row dt {
+  margin: 0;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--toq-text-muted);
+}
+
+.coach-listing-card__meta-row dd {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--toq-navy);
+  line-height: 1.35;
 }
 
 .coach-listing-card__price {
@@ -5470,6 +5505,15 @@ button {
 [data-theme="dark"] .coach-listing-card__price {
   background: rgba(37, 99, 235, 0.12);
   border-color: rgba(37, 99, 235, 0.28);
+}
+
+[data-theme="dark"] .coach-listing-card__meta {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: #2a2a2a;
+}
+
+[data-theme="dark"] .coach-listing-card__meta-row dd {
+  color: #f1f5f9;
 }
 
 [data-theme="dark"] .coach-listing-card__price-value {

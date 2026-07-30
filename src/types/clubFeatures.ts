@@ -113,6 +113,8 @@ export type ClubCourt = {
   rental_visibility?: "members_only" | "public";
   rental_available?: boolean;
   rental_unavailable_note?: string | null;
+  /** Se false, oculta “A partir de …” no anúncio/listagem/feed */
+  show_prices?: boolean;
   post_id?: string | null;
   images?: ClubCourtImage[];
   plans?: ClubCourtPlan[];

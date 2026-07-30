@@ -62,5 +62,7 @@ export type CommunityMember = {
   user_id: string;
   role: CommunityMemberRole;
   joined_at: string;
+  /** Cargo de professor do clube (independente do plano professor). */
+  is_club_professor?: boolean;
   profile: { id: string; username: string; avatar_url: string | null };
 };

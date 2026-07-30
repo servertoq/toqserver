@@ -10,6 +10,13 @@ export function memberRoleLabel(role: CommunityMemberRole) {
   return "Membro";
 }
 
+/** Labels de cargo na lista de membros (role + professor do clube). */
+export function memberCargoLabels(member: Pick<CommunityMember, "role" | "is_club_professor">): string[] {
+  const labels = [memberRoleLabel(member.role)];
+  if (member.is_club_professor) labels.push("Professor");
+  return labels;
+}
+
 export function canModerate(role: CommunityMemberRole | null | undefined) {
   return role === "owner" || role === "moderator";
 }
@@ -64,5 +71,10 @@ export function sortMembers(members: CommunityMember[]) {
     moderator: 1,
     member: 2,
   };
-  return [...members].sort((a, b) => order[a.role] - order[b.role]);
+  return [...members].sort((a, b) => {
+    const byRole = order[a.role] - order[b.role];
+    if (byRole !== 0) return byRole;
+    if (a.is_club_professor !== b.is_club_professor) return a.is_club_professor ? -1 : 1;
+    return 0;
+  });
 }

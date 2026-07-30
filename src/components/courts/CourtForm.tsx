@@ -1,10 +1,13 @@
 ﻿"use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { courtToFormData, emptyCourtForm, formDataToInsert, normalizePhoneDigits } from "@/lib/courts";
+import { fetchManagedClubs, type ManagedClub } from "@/lib/courtManagement";
+import { groupDetailHref } from "@/lib/communityGroup";
 import type { Court, CourtFormData } from "@/types/courts";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { appContentClass } from "@/lib/layout";
@@ -22,6 +25,14 @@ export function CourtForm({ initial }: Props) {
   const [form, setForm] = useState<CourtFormData>(initial ? courtToFormData(initial) : emptyCourtForm());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [managedClubs, setManagedClubs] = useState<ManagedClub[]>([]);
+
+  useEffect(() => {
+    if (isEdit) return;
+    void fetchManagedClubs(supabase, profile.id)
+      .then(setManagedClubs)
+      .catch(() => setManagedClubs([]));
+  }, [isEdit, profile.id, supabase]);
 
   function patch(p: Partial<CourtFormData>) {
     setForm((prev) => ({ ...prev, ...p }));
@@ -91,11 +102,34 @@ export function CourtForm({ initial }: Props) {
       <FeedTopBar />
       <main className={appContentClass}>
         <h1 className="text-xl font-bold text-[var(--toq-navy)]">
-          {isEdit ? "Editar quadra" : "Cadastrar quadra"}
+          {isEdit ? "Editar quadra" : "Cadastrar quadra avulsa"}
         </h1>
         <p className="mt-1 text-sm text-[var(--toq-text-muted)]">
-          Informe os dados da quadra para outros jogadores encontrarem e entrarem em contato.
+          Anúncio simples com WhatsApp para contato. Para planos, preços, horários e agenda, cadastre no
+          clube.
         </p>
+
+        {!isEdit && managedClubs.length > 0 && (
+          <div className="mt-4 max-w-2xl rounded-xl border border-[var(--toq-accent)]/40 bg-[var(--toq-accent)]/10 px-4 py-3">
+            <p className="text-sm font-semibold text-[var(--toq-navy)]">
+              Você administra clube — use o cadastro completo
+            </p>
+            <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
+              Planos por horário, ocultar preços, funcionamento e agenda ficam no cadastro do clube.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {managedClubs.map((club) => (
+                <Link
+                  key={club.id}
+                  href={`${groupDetailHref("club", club.slug)}?tab=courts&action=nova`}
+                  className="inline-flex h-8 items-center rounded-lg toq-btn-primary px-3 text-xs font-bold text-white"
+                >
+                  + Nova em {club.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="mt-6 max-w-2xl space-y-5">
           {error && (

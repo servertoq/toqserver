@@ -45,6 +45,10 @@ export function CoachListingForm({ initial }: Props) {
       setError("A descrição precisa ter pelo menos 10 caracteres.");
       return;
     }
+    if (form.location_label.trim().length < 2) {
+      setError("Informe a localização das aulas (cidade, bairro ou endereço).");
+      return;
+    }
     if (!form.price_label.trim()) {
       setError("Informe o valor das aulas.");
       return;
@@ -129,9 +133,38 @@ export function CoachListingForm({ initial }: Props) {
               required
               rows={5}
               maxLength={2000}
-              placeholder="Conte sua experiência, tipos de aula, horários, local…"
+              placeholder="Conte sua experiência, tipos de aula, horários…"
               className="toq-input mt-1 w-full px-3 py-2.5 text-sm"
             />
+          </label>
+
+          <label className="block">
+            <span className="text-xs font-semibold text-[var(--toq-navy)]">Clube / academia</span>
+            <input
+              value={form.club_name}
+              onChange={(e) => patch({ club_name: e.target.value })}
+              maxLength={120}
+              placeholder="Ex.: Clube de Tênis Santa Isabel"
+              className="toq-input mt-1 w-full px-3 py-2.5 text-sm"
+            />
+            <p className="mt-1 text-[11px] text-[var(--toq-text-muted)]">
+              Onde você dá aulas (opcional, mas ajuda na busca).
+            </p>
+          </label>
+
+          <label className="block">
+            <span className="text-xs font-semibold text-[var(--toq-navy)]">Localização</span>
+            <input
+              value={form.location_label}
+              onChange={(e) => patch({ location_label: e.target.value })}
+              required
+              maxLength={160}
+              placeholder="Ex.: Santa Isabel — SP · Quadra do Centro"
+              className="toq-input mt-1 w-full px-3 py-2.5 text-sm"
+            />
+            <p className="mt-1 text-[11px] text-[var(--toq-text-muted)]">
+              Cidade, bairro, endereço ou região das aulas.
+            </p>
           </label>
 
           <label className="block">

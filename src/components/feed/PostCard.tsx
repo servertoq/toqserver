@@ -217,10 +217,14 @@ export function PostCard({
       )}
       {post.post_type === "poll" ? (
         post.body.trim() ? (
-          <p className="mb-1 text-base font-bold text-[var(--toq-navy)]">{post.body}</p>
+          <PostBody
+            body={post.body}
+            maxLines={4}
+            className="mb-1 whitespace-pre-wrap break-words text-base font-bold leading-snug text-[var(--toq-navy)]"
+          />
         ) : null
       ) : post.body.trim() ? (
-        <PostBody body={post.body} />
+        <PostBody body={post.body} maxLines={isCoachPost || isClubCourtPost ? 5 : 6} />
       ) : null}
       {post.coach_listing && (
         <CoachListingPostActions
