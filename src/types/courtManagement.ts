@@ -44,6 +44,13 @@ export type CourtBooking = {
   created_at: string;
 };
 
+export type CourtBookingPlayer = {
+  id: string;
+  user_id: string;
+  sort_order: number;
+  profile?: FeedProfile | null;
+};
+
 export type CourtBookingWithDetails = CourtBooking & {
   court?: {
     id: string;
@@ -53,6 +60,7 @@ export type CourtBookingWithDetails = CourtBooking & {
   } | null;
   plan?: ClubCourtPlan | null;
   requester?: FeedProfile | null;
+  players?: CourtBookingPlayer[];
 };
 
 export type CourtManagementStats = {

@@ -10,6 +10,11 @@ import { requestClubCourtBooking } from "@/lib/courtManagement";
 import type { ClubCourt } from "@/types/clubFeatures";
 import type { CourtTakenRange } from "@/lib/clubCourtBrowse";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { useAppProfile } from "@/components/app/AppShell";
+import {
+  UsernameSearchInput,
+  type UsernameSearchResult,
+} from "@/components/shared/UsernameSearchInput";
 
 type Props = {
   open: boolean;
@@ -18,6 +23,8 @@ type Props = {
   onClose: () => void;
   onSuccess?: () => void;
 };
+
+type PlayerSlot = { id: string; username: string };
 
 function toMinutes(hms: string) {
   const [h, m] = hms.split(":").map((n) => parseInt(n, 10));
@@ -44,6 +51,7 @@ function normalizePlanTime(raw: string | null | undefined): string | null {
 
 export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }: Props) {
   const supabase = createClient();
+  const profile = useAppProfile();
   const allPlans = (court.plans ?? [])
     .filter((p) => p.is_active !== false)
     .sort((a, b) => a.sort_order - b.sort_order);
@@ -53,10 +61,17 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
   const [startHHMM, setStartHHMM] = useState("07:00");
   const [planId, setPlanId] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [players, setPlayers] = useState<PlayerSlot[]>([]);
+  const [playerQuery, setPlayerQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [takenRanges, setTakenRanges] = useState<CourtTakenRange[]>([]);
   const { isSubmitting, guard } = useSingleSubmit();
+
+  const excludedPlayerIds = useMemo(
+    () => [profile.id, ...players.map((p) => p.id)],
+    [players, profile.id]
+  );
 
   const applicablePlans = useMemo(
     () => filterPlansForSlot(allPlans, dateISO, null),
@@ -204,7 +219,8 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
         selectedPlan.id,
         dateISO,
         startHHMM,
-        quantity
+        quantity,
+        players.map((p) => p.id)
       );
       if (bookingErr) {
         setError(bookingErr);
@@ -230,7 +246,7 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
       <div
         role="dialog"
         aria-modal="true"
-        className="w-full max-w-md overflow-hidden rounded-t-3xl border border-[var(--toq-border)] bg-white shadow-xl sm:rounded-3xl"
+        className="max-h-[92vh] w-full max-w-md overflow-y-auto overflow-x-visible rounded-t-3xl border border-[var(--toq-border)] bg-white shadow-xl sm:rounded-3xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="border-b border-slate-100 px-5 py-4">
@@ -344,6 +360,56 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
               )}
             </label>
 
+            <div>
+              <p className="text-xs font-semibold text-[var(--toq-navy)]">Quem reserva</p>
+              <p className="mt-1 text-sm font-bold text-[var(--toq-navy)]">@{profile.username}</p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-[var(--toq-navy)]">
+                Jogadores (opcional, até 3)
+              </p>
+              <p className="text-[11px] text-[var(--toq-text-muted)]">
+                Eles entram na partida e veem o horário na agenda do perfil.
+              </p>
+              {players.length > 0 && (
+                <ul className="flex flex-wrap gap-2">
+                  {players.map((p) => (
+                    <li
+                      key={p.id}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--toq-border)] bg-[var(--toq-card)] px-2.5 py-1 text-xs font-semibold text-[var(--toq-navy)]"
+                    >
+                      @{p.username}
+                      <button
+                        type="button"
+                        onClick={() => setPlayers((prev) => prev.filter((x) => x.id !== p.id))}
+                        className="text-[var(--toq-text-muted)] hover:text-red-600"
+                        aria-label={`Remover @${p.username}`}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {players.length < 3 && (
+                <UsernameSearchInput
+                  value={playerQuery}
+                  onChange={setPlayerQuery}
+                  excludeUserIds={excludedPlayerIds}
+                  placeholder="Buscar @jogador para adicionar"
+                  onPickUser={(user: UsernameSearchResult) => {
+                    setPlayers((prev) =>
+                      prev.some((p) => p.id === user.id)
+                        ? prev
+                        : [...prev, { id: user.id, username: user.username }].slice(0, 3)
+                    );
+                    setPlayerQuery("");
+                  }}
+                />
+              )}
+            </div>
+
             {selectedPlan && (
               <p className="text-sm font-bold text-[var(--toq-accent)]">
                 Total estimado: {formatClubPrice(totalPrice)}
@@ -351,7 +417,8 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
             )}
 
             <p className="text-[11px] text-[var(--toq-text-muted)]">
-              A reserva fica pendente até o proprietário aprovar e confirmar o pagamento.
+              A reserva fica pendente até o proprietário aprovar e confirmar o pagamento. O horário
+              já aparece na sua agenda e na dos jogadores convidados.
             </p>
 
             <div className="flex gap-2 pt-1">

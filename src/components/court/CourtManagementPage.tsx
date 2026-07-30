@@ -555,7 +555,16 @@ function BookingList({
   return (
     <ul className="space-y-3">
       {items.map((b) => {
-        const clientName = b.guest_name ?? b.requester?.username ?? "Cliente";
+        const clientName = b.guest_name
+          ? b.guest_name
+          : b.requester?.username
+            ? `@${b.requester.username}`
+            : "Cliente";
+        const playerLabels =
+          b.players
+            ?.map((p) => (p.profile?.username ? `@${p.profile.username}` : null))
+            .filter(Boolean)
+            .join(" · ") ?? "";
         return (
           <li key={b.id} className="rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
@@ -570,6 +579,9 @@ function BookingList({
             <p className="mt-2 text-sm text-[var(--toq-navy)]">
               {clientName} · {formatDateBR(b.booking_date)} · {formatTime(b.start_time)}–{formatTime(b.end_time)}
             </p>
+            {playerLabels ? (
+              <p className="mt-1 text-xs text-[var(--toq-text-muted)]">Jogadores: {playerLabels}</p>
+            ) : null}
             <p className="mt-1 text-sm font-semibold text-[var(--toq-accent)]">
               {formatClubPrice(Number(b.total_price))}
             </p>

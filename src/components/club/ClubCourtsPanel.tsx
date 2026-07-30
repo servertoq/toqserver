@@ -1034,12 +1034,14 @@ export function ClubCourtsPanel({
       ) : (
         <ul className="mt-4 grid gap-4 sm:grid-cols-2">
           {courts.map((court) => (
-            <li key={court.id} className="overflow-hidden toq-card-lg">
+            <li key={court.id} className="toq-card-lg overflow-visible">
               {court.images?.[0] && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={court.images[0].url} alt="" className="aspect-[4/3] w-full object-cover" />
+                <div className="overflow-hidden rounded-t-2xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={court.images[0].url} alt="" className="aspect-[4/3] w-full object-cover" />
+                </div>
               )}
-              <div className="p-4">
+              <div className="p-4 pb-5">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-bold text-[var(--toq-navy)]">{court.name}</h3>
                 </div>

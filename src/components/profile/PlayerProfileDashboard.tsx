@@ -17,6 +17,7 @@ import { ProfilePlayerLevelBadge } from "./ProfilePlayerLevelBadge";
 import { StaffBadge } from "@/components/shared/StaffBadge";
 import { PostCard } from "@/components/feed/PostCard";
 import { AgendaPage } from "@/components/agenda/AgendaPage";
+import { ProfileCourtMatchesPanel } from "@/components/profile/ProfileCourtMatchesPanel";
 
 export type ProfileTab =
   | "resumo"
@@ -363,16 +364,7 @@ export function PlayerProfileDashboard({
             {tab === "agenda" && isOwnProfile && <AgendaPage embedded />}
 
             {tab === "partidas" && (
-              <div className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--toq-profile-border)] bg-slate-50/80 px-6 text-center">
-                <div className="mb-4 text-[var(--toq-profile-accent)]">
-                  <TabIcon type="trophy" />
-                </div>
-                <p className="text-base font-bold text-[var(--toq-profile-navy)]">Partidas em breve</p>
-                <p className="mt-2 max-w-sm text-sm text-[var(--toq-profile-muted)]">
-                  O histórico de jogos, placares e adversários ficará disponível nesta aba quando o
-                  módulo de partidas for lançado.
-                </p>
-              </div>
+              <ProfileCourtMatchesPanel userId={profileId} isOwnProfile={isOwnProfile} />
             )}
 
             {tab === "publicacoes" && (

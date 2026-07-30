@@ -34,14 +34,22 @@ const BOOKING_SELECT = `
     community:communities(id, name, slug)
   ),
   plan:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order, applies_weekdays, applies_start_time, applies_end_time),
-  requester:profiles!club_court_bookings_requester_id_fkey(id, username, avatar_url)
+  requester:profiles!club_court_bookings_requester_id_fkey(id, username, avatar_url),
+  players:club_court_booking_players(
+    id,
+    user_id,
+    sort_order,
+    profile:profiles!club_court_booking_players_user_id_fkey(id, username, avatar_url)
+  )
 `;
 
 function mapBookingRow(row: Record<string, unknown>): CourtBookingWithDetails {
   const court = Array.isArray(row.court) ? row.court[0] : row.court;
   const plan = Array.isArray(row.plan) ? row.plan[0] : row.plan;
   const requester = Array.isArray(row.requester) ? row.requester[0] : row.requester;
-  const { court: _c, plan: _p, requester: _r, ...booking } = row;
+  const rawPlayers = row.players;
+  const playersRaw = Array.isArray(rawPlayers) ? rawPlayers : rawPlayers ? [rawPlayers] : [];
+  const { court: _c, plan: _p, requester: _r, players: _pl, ...booking } = row;
 
   const courtObj = court as Record<string, unknown> | null;
   const community = courtObj
@@ -49,6 +57,19 @@ function mapBookingRow(row: Record<string, unknown>): CourtBookingWithDetails {
       ? courtObj.community[0]
       : courtObj.community
     : null;
+
+  const players = playersRaw
+    .map((p) => {
+      const rowP = p as Record<string, unknown>;
+      const profile = Array.isArray(rowP.profile) ? rowP.profile[0] : rowP.profile;
+      return {
+        id: rowP.id as string,
+        user_id: rowP.user_id as string,
+        sort_order: Number(rowP.sort_order ?? 0),
+        profile: (profile as FeedProfile) ?? null,
+      };
+    })
+    .sort((a, b) => a.sort_order - b.sort_order);
 
   return {
     ...(booking as CourtBookingWithDetails),
@@ -66,6 +87,7 @@ function mapBookingRow(row: Record<string, unknown>): CourtBookingWithDetails {
       : null,
     plan: (plan as CourtBookingWithDetails["plan"]) ?? null,
     requester: (requester as FeedProfile) ?? null,
+    players,
   };
 }
 
@@ -163,13 +185,43 @@ export async function fetchManagedCourtBookings(
   return (data ?? []).map((row) => mapBookingRow(row as Record<string, unknown>));
 }
 
+/** Reservas do usuário (como solicitante ou jogador convidado) para a aba Partidas. */
+export async function fetchMyCourtBookings(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<CourtBookingWithDetails[]> {
+  const { data: asPlayer } = await supabase
+    .from("club_court_booking_players")
+    .select("booking_id")
+    .eq("user_id", userId);
+
+  const playerBookingIds = (asPlayer ?? []).map((r) => r.booking_id as string);
+
+  let query = supabase
+    .from("club_court_bookings")
+    .select(BOOKING_SELECT)
+    .order("booking_date", { ascending: false })
+    .limit(50);
+
+  if (playerBookingIds.length > 0) {
+    query = query.or(`requester_id.eq.${userId},id.in.(${playerBookingIds.join(",")})`);
+  } else {
+    query = query.eq("requester_id", userId);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => mapBookingRow(row as Record<string, unknown>));
+}
+
 export async function requestClubCourtBooking(
   supabase: SupabaseClient,
   courtId: string,
   planId: string,
   bookingDate: string,
   startTime: string,
-  quantity: number
+  quantity: number,
+  playerIds: string[] = []
 ): Promise<{ bookingId: string | null; error: string | null }> {
   const { data, error } = await supabase.rpc("request_club_court_booking", {
     p_court_id: courtId,
@@ -177,6 +229,7 @@ export async function requestClubCourtBooking(
     p_booking_date: bookingDate,
     p_start_time: `${startTime}:00`,
     p_quantity: quantity,
+    p_player_ids: playerIds.slice(0, 3),
   });
 
   if (error) return { bookingId: null, error: error.message };

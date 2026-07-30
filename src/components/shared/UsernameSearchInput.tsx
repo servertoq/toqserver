@@ -14,15 +14,20 @@ type SearchResult = {
 type Props = {
   value: string;
   onChange: (value: string) => void;
+  /** Quando o usuário escolhe um resultado da lista. */
+  onPickUser?: (user: SearchResult) => void;
   placeholder?: string;
   excludeUserIds?: string[];
   disabled?: boolean;
   id?: string;
 };
 
+export type UsernameSearchResult = SearchResult;
+
 export function UsernameSearchInput({
   value,
   onChange,
+  onPickUser,
   placeholder = "@usuario",
   excludeUserIds = [],
   disabled = false,
@@ -72,8 +77,9 @@ export function UsernameSearchInput({
     return () => clearTimeout(timer);
   }, [value, supabase, excludeUserIds]);
 
-  function pickUser(username: string) {
-    onChange(username);
+  function pickUser(user: SearchResult) {
+    onChange(user.username);
+    onPickUser?.(user);
     setOpen(false);
   }
 
@@ -108,7 +114,7 @@ export function UsernameSearchInput({
                   <button
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => pickUser(row.username)}
+                    onClick={() => pickUser(row)}
                     className="username-search-result"
                   >
                     <SearchAvatar src={row.avatar_url} name={name} />

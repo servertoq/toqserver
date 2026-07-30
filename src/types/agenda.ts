@@ -9,6 +9,7 @@ export type AgendaEvent = {
   title: string | null;
   notes: string | null;
   coach_lesson_id?: string | null;
+  club_court_booking_id?: string | null;
   created_at: string;
   updated_at: string;
 };
