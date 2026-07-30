@@ -15,7 +15,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.supabase.co https://maps.gstatic.com https://maps.googleapis.com https://*.googleapis.com https://*.ggpht.com https://*.google.com https://*.googleusercontent.com",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://maps.googleapis.com https://*.googleapis.com https://places.googleapis.com https://api.stripe.com https://viacep.com.br https://brasilapi.com.br https://api.bigdatacloud.net",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://maps.googleapis.com https://*.googleapis.com https://places.googleapis.com https://api.stripe.com https://viacep.com.br https://brasilapi.com.br https://api.bigdatacloud.net https://nominatim.openstreetmap.org",
   "frame-src 'self' https://www.google.com https://maps.google.com https://www.google.com/maps/ https://www.openstreetmap.org https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com",
   "worker-src 'self' blob:",
   "form-action 'self' https://checkout.stripe.com https://*.supabase.co https://accounts.google.com",

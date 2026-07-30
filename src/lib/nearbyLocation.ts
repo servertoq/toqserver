@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { normalizeCep } from "@/lib/address";
+import { toBrazilUf } from "@/lib/brazilStates";
 
 export type UserLocationAnchor = {
   latitude: number | null;
@@ -195,7 +196,28 @@ type BigDataCloudAdmin = {
   isoCode?: string;
 };
 
-export async function reverseGeocodeCity(
+async function reverseGeocodeViaOwnApi(
+  latitude: number,
+  longitude: number
+): Promise<{ city: string | null; state: string | null; cep: string | null } | null> {
+  if (typeof window === "undefined") return null;
+  try {
+    const url = new URL("/api/reverse-geocode", window.location.origin);
+    url.searchParams.set("lat", String(latitude));
+    url.searchParams.set("lng", String(longitude));
+    const res = await fetch(url.toString());
+    if (!res.ok) return null;
+    const data = (await res.json()) as { city?: string; state?: string; cep?: string | null };
+    const city = data.city?.trim() || null;
+    const state = toBrazilUf(data.state);
+    if (!city || !state) return null;
+    return { city, state, cep: data.cep ?? null };
+  } catch {
+    return null;
+  }
+}
+
+async function reverseGeocodeViaBigDataCloud(
   latitude: number,
   longitude: number
 ): Promise<{ city: string | null; state: string | null; cep: string | null }> {
@@ -222,27 +244,27 @@ export async function reverseGeocodeCity(
       null;
 
     const city = (data.city || data.locality || cityFromAdmin || "").trim() || null;
-    const stateCode = data.principalSubdivisionCode?.replace(/^BR-/i, "") || null;
-    let state =
-      stateCode && stateCode.length === 2
-        ? stateCode.toUpperCase()
-        : null;
-    if (!state) {
-      const isoFromAdmin = admins
-        .map((a) => a.isoCode?.replace(/^BR-/i, ""))
-        .find((code) => code && code.length === 2);
-      if (isoFromAdmin) state = isoFromAdmin.toUpperCase();
-    }
-    if (!state && data.principalSubdivision) {
-      const raw = data.principalSubdivision.trim();
-      if (/^[A-Za-z]{2}$/.test(raw)) state = raw.toUpperCase();
-    }
+    // Não usar o primeiro isoCode da lista (pode ser "BR" do país).
+    const state =
+      toBrazilUf(data.principalSubdivisionCode) ||
+      toBrazilUf(admins.find((a) => a.adminLevel === 4)?.isoCode) ||
+      toBrazilUf(data.principalSubdivision) ||
+      null;
 
     const cep = data.postcode ? normalizeCep(data.postcode) || null : null;
     return { city, state, cep: cep && cep.length === 8 ? cep : null };
   } catch {
     return { city: null, state: null, cep: null };
   }
+}
+
+export async function reverseGeocodeCity(
+  latitude: number,
+  longitude: number
+): Promise<{ city: string | null; state: string | null; cep: string | null }> {
+  const viaApi = await reverseGeocodeViaOwnApi(latitude, longitude);
+  if (viaApi?.city && viaApi.state) return viaApi;
+  return reverseGeocodeViaBigDataCloud(latitude, longitude);
 }
 
 export type DetectPlaceErrorCode =
