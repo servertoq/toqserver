@@ -168,7 +168,7 @@ export async function generateClubRankingReportFile(
     )
   );
 
-  let y = HEADER_H;
+  const y = HEADER_H;
   if (rows.length === 0) {
     ctx.fillStyle = COLORS.muted;
     ctx.font = "500 18px system-ui, sans-serif";

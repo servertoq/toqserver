@@ -36,27 +36,6 @@ function toMinutes(hms: string) {
   return (h || 0) * 60 + (m || 0);
 }
 
-function pad2(n: number) {
-  return String(n).padStart(2, "0");
-}
-
-function minutesToHHMM(min: number) {
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  return `${pad2(h)}:${pad2(m)}`;
-}
-
-function overlaps(aStart: number, aEnd: number, bStart: number, bEnd: number) {
-  return aStart < bEnd && bStart < aEnd;
-}
-
-function formatDateBR(iso: string) {
-  // iso: yyyy-mm-dd
-  const [y, m, d] = iso.split("-");
-  if (!y || !m || !d) return iso;
-  return `${d}/${m}/${y}`;
-}
-
 function defaultHours(): ClubCourtHours[] {
   // Seg-Sex 07:00-22:00, Sáb 08:00-18:00, Dom fechado
   const mk = (weekday: number, start: string, end: string): ClubCourtHours => ({

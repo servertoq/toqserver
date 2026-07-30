@@ -230,7 +230,7 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
   }, [court.id, onChanged, refreshLocalBlocks, supabase]);
 
   const weekDates = useMemo(() => weekDatesFromStart(weekStart), [weekStart]);
-  const hours = court.hours ?? [];
+  const hours = useMemo(() => court.hours ?? [], [court.hours]);
   const blocks = localBlocks;
 
   const weekSummary = useMemo(() => {

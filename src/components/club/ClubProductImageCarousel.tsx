@@ -22,10 +22,11 @@ export function ClubProductImageCarousel({
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const list = images.length > 0 ? images : [];
+  const imagesKey = list.map((i) => i.id).join("|");
 
   useEffect(() => {
     setIndex(0);
-  }, [list.map((i) => i.id).join("|")]);
+  }, [imagesKey]);
 
   useEffect(() => {
     if (list.length <= 1 || paused) return;
