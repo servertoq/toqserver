@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { canModerate } from "@/lib/community";
+import { ClubProductImageCarousel } from "@/components/club/ClubProductImageCarousel";
 import { formatClubPrice, hasShopWhatsApp, productDisplayPrice } from "@/lib/clubFeatures";
 import { cartItemCount, loadClubCart, saveClubCart } from "@/lib/clubCart";
 import type { CommunityMemberRole } from "@/types/community";
@@ -33,6 +34,7 @@ export function ClubShopPanel({
   const [editing, setEditing] = useState<ClubProduct | null | undefined>(undefined);
   const [viewing, setViewing] = useState<ClubProduct | null>(null);
   const [cart, setCart] = useState<ClubCartItem[]>([]);
+  const [cartOpen, setCartOpen] = useState(false);
 
   useEffect(() => {
     setCart(loadClubCart(communityId));
@@ -104,6 +106,7 @@ export function ClubShopPanel({
     } else {
       persistCart([...cart, item]);
     }
+    setCartOpen(true);
   }
 
   function updateCartQty(variantId: string, productId: string, qty: number) {
@@ -134,11 +137,33 @@ export function ClubShopPanel({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-bold text-[var(--toq-navy)]">Loja do clube</h2>
         <div className="flex items-center gap-2">
-          {cartCount > 0 && (
-            <span className="rounded-full bg-[var(--toq-navy)] px-2 py-0.5 text-[11px] font-bold text-white">
-              Carrinho: {cartCount}
-            </span>
-          )}
+          <button
+            type="button"
+            onClick={() => setCartOpen(true)}
+            className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--toq-border)] bg-[var(--toq-surface)] text-[var(--toq-navy)] transition hover:border-[var(--toq-accent)] hover:text-[var(--toq-accent)]"
+            aria-label={
+              cartCount > 0
+                ? `Abrir carrinho, ${cartCount} ${cartCount === 1 ? "item" : "itens"}`
+                : "Abrir carrinho"
+            }
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
+              <path
+                d="M3.5 5h1.6l1.2 10.2a1.5 1.5 0 0 0 1.5 1.3h9.4a1.5 1.5 0 0 0 1.5-1.2L20 8H7"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx="9.5" cy="19" r="1.3" fill="currentColor" />
+              <circle cx="17" cy="19" r="1.3" fill="currentColor" />
+            </svg>
+            {cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--toq-accent)] px-1 text-[10px] font-bold leading-none text-white">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
+          </button>
           {canManage && (
             <button
               type="button"
@@ -178,16 +203,11 @@ export function ClubShopPanel({
                   onClick={() => setViewing(product)}
                   className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition hover:border-[var(--toq-accent)]"
                 >
-                  {product.images && product.images[0] ? (
-                    <div className="club-product-media">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={product.images[0].url} alt="" />
-                    </div>
-                  ) : (
-                    <div className="club-product-media flex items-center justify-center text-2xl text-slate-300">
-                      🛍️
-                    </div>
-                  )}
+                  <ClubProductImageCarousel
+                    images={product.images ?? []}
+                    alt={product.name}
+                    variant="card"
+                  />
                   <div className="p-3 sm:p-4">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-sm font-bold leading-snug text-[var(--toq-navy)] sm:text-base">
@@ -232,10 +252,12 @@ export function ClubShopPanel({
       )}
 
       <ClubCartPanel
+        open={cartOpen}
         items={cart}
         clubName={clubName}
         shopWhatsapp={shopWhatsapp}
         buyerUsername={buyerUsername}
+        onClose={() => setCartOpen(false)}
         onUpdateQty={updateCartQty}
         onRemove={removeFromCart}
         onClear={() => persistCart([])}

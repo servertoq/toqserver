@@ -10,8 +10,6 @@ import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { appContentClass } from "@/lib/layout";
 import { profilePath } from "@/lib/publicProfile";
 
-const MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
-
 export function CourtDetailPage({ id }: { id: string }) {
   const supabase = createClient();
   const profile = useAppProfile();
@@ -50,9 +48,7 @@ export function CourtDetailPage({ id }: { id: string }) {
 
   const mapEmbedUrl =
     court?.latitude != null && court?.longitude != null
-      ? MAPS_KEY
-        ? `https://www.google.com/maps/embed/v1/place?key=${MAPS_KEY}&q=${court.latitude},${court.longitude}&zoom=16`
-        : `https://www.openstreetmap.org/export/embed.html?bbox=${court.longitude - 0.01}%2C${court.latitude - 0.01}%2C${court.longitude + 0.01}%2C${court.latitude + 0.01}&layer=mapnik&marker=${court.latitude}%2C${court.longitude}`
+      ? `https://www.openstreetmap.org/export/embed.html?bbox=${court.longitude - 0.01}%2C${court.latitude - 0.01}%2C${court.longitude + 0.01}%2C${court.latitude + 0.01}&layer=mapnik&marker=${court.latitude}%2C${court.longitude}`
       : null;
 
   const mapsLink =
@@ -98,7 +94,6 @@ export function CourtDetailPage({ id }: { id: string }) {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h1 className="text-xl font-bold text-[var(--toq-navy)]">{court.name}</h1>
-                <p className="mt-1 text-sm font-semibold text-[var(--toq-accent)]">{court.size_label}</p>
                 {court.owner && (
                   <Link
                     href={profilePath(court.owner.username)}

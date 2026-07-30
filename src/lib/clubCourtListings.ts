@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatClubPrice } from "@/lib/clubFeatures";
-import { courtSizeLabel } from "@/lib/courts";
 import type { ClubCourt } from "@/types/clubFeatures";
 import type { CourtRentalVisibility } from "@/types/courtManagement";
 
@@ -16,14 +15,13 @@ export function clubCourtFeedTitle(name: string) {
 
 export function clubCourtFeedBody(
   description: string,
-  sizeLabel: string,
+  _sizeLabel: string,
   clubName: string,
   minPrice: number | null,
   visibility: CourtRentalVisibility
 ) {
   const lines = [
     description.trim(),
-    `Tamanho: ${courtSizeLabel(sizeLabel)}`,
     visibility === "public"
       ? `Clube: ${clubName} — disponível para locação por terceiros.`
       : `Exclusivo para membros do clube ${clubName}.`,

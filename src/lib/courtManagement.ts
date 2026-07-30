@@ -33,7 +33,7 @@ const BOOKING_SELECT = `
     community_id,
     community:communities(id, name, slug)
   ),
-  plan:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order),
+  plan:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order, applies_weekdays, applies_start_time, applies_end_time),
   requester:profiles!club_court_bookings_requester_id_fkey(id, username, avatar_url)
 `;
 
@@ -91,7 +91,7 @@ export async function fetchManagedCourts(supabase: SupabaseClient, userId: strin
       `
       *,
       community:communities(id, name, slug),
-      plans:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order),
+      plans:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order, applies_weekdays, applies_start_time, applies_end_time),
       hours:club_court_hours(id, court_id, weekday, start_time, end_time)
     `
     )

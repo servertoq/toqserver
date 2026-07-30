@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
-import { courtSizeLabel } from "@/lib/courts";
 import { formatClubPrice } from "@/lib/clubFeatures";
 import { recordClubCourtListingView } from "@/lib/courtManagement";
 import { fetchClubCourtDetail, type BrowsableClubCourt } from "@/lib/clubCourtBrowse";
@@ -33,7 +32,6 @@ export function ClubCourtBrowseCard({ court }: { court: BrowsableClubCourt }) {
           Indisponível para locação
         </span>
       )}
-      <p className="mt-1 text-xs font-semibold text-[var(--toq-accent)]">{courtSizeLabel(court.size_label)}</p>
       <p className="mt-2 line-clamp-2 text-sm text-[var(--toq-text-muted)]">{court.description}</p>
       <p className="mt-3 text-xs text-[var(--toq-text-muted)]">
         {court.community?.name}
@@ -126,7 +124,6 @@ export function ClubCourtDetailPage({ court: initial }: { court: BrowsableClubCo
         )}
         <div className="p-5 sm:p-6">
           <h1 className="text-xl font-bold text-[var(--toq-navy)]">{court.name}</h1>
-          <p className="mt-1 text-sm font-semibold text-[var(--toq-accent)]">{courtSizeLabel(court.size_label)}</p>
           {court.community?.slug && (
             <Link
               href={groupDetailHref("club", court.community.slug)}

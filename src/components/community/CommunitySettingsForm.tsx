@@ -23,6 +23,10 @@ import {
   COMMUNITY_COVER_HINT,
   processCommunityCoverSelection,
 } from "@/lib/communityCoverImage";
+import {
+  formatClubWhatsappDisplay,
+  parseClubContactInputs,
+} from "@/lib/clubContact";
 
 type Props = {
   community: Community;
@@ -46,6 +50,12 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
   const [address, setAddress] = useState<AddressFields>(() => addressFromRow(community));
   const [hours, setHours] = useState<DayHours[]>(() =>
     parseOperatingHours(community.operating_hours)
+  );
+  const [instagram, setInstagram] = useState(community.instagram_url ?? "");
+  const [whatsapp, setWhatsapp] = useState(
+    community.contact_whatsapp
+      ? formatClubWhatsappDisplay(community.contact_whatsapp)
+      : ""
   );
   const [shopEnabled, setShopEnabled] = useState(community.shop_enabled ?? false);
   const [shopWhatsapp, setShopWhatsapp] = useState(community.shop_whatsapp ?? "");
@@ -81,6 +91,11 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
       setError("Informe o WhatsApp da loja para ativar a loja do clube.");
       return;
     }
+    const contact = isClub ? parseClubContactInputs(instagram, whatsapp) : null;
+    if (contact && !contact.ok) {
+      setError(contact.error);
+      return;
+    }
     setError(null);
 
     await guard(async () => {
@@ -105,11 +120,13 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
         cover_image_url: coverUrl,
       };
 
-      if (isClub) {
+      if (isClub && contact?.ok) {
         Object.assign(payload, addressToDbPayload(address));
         payload.operating_hours = operatingHoursToJson(hours);
         payload.shop_enabled = shopEnabled;
         payload.shop_whatsapp = shopWhatsapp.trim() || null;
+        payload.instagram_url = contact.value.instagram_url;
+        payload.contact_whatsapp = contact.value.contact_whatsapp;
       }
 
       const { error: updateErr } = await supabase
@@ -200,7 +217,31 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
             <>
               <AddressForm value={address} onChange={setAddress} />
               <OperatingHoursForm value={hours} onChange={setHours} />
-              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="space-y-3 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4">
+                <p className="text-xs font-semibold text-[var(--toq-navy)]">Contato do clube</p>
+                <label className="block">
+                  <span className="text-xs font-semibold text-[var(--toq-navy)]">Instagram</span>
+                  <input
+                    value={instagram}
+                    onChange={(e) => setInstagram(e.target.value)}
+                    placeholder="@seuclube ou link"
+                    maxLength={120}
+                    className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs font-semibold text-[var(--toq-navy)]">WhatsApp</span>
+                  <input
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                    placeholder="(11) 99999-9999"
+                    inputMode="tel"
+                    maxLength={20}
+                    className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
+                  />
+                </label>
+              </div>
+              <div className="space-y-3 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4">
                 <label className="flex cursor-pointer items-start gap-3">
                   <input
                     type="checkbox"
@@ -282,8 +323,8 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
           </button>
         </form>
 
-        <div className="mt-8 border-t border-slate-200 pt-6">
-          <h3 className="text-sm font-bold text-red-600">Zona de perigo</h3>
+        <div className="mt-8 border-t border-[var(--toq-border)] pt-6">
+          <h3 className="text-sm font-bold text-red-500">Zona de perigo</h3>
           <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
             Excluir permanentemente este {isClub ? "clube" : "comunidade"} e todos os posts,
             membros e convites associados. Esta ação não pode ser desfeita.

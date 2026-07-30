@@ -21,6 +21,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
   const [tab, setTab] = useState<"requests" | "members" | "invite">("requests");
   const [requests, setRequests] = useState<CommunityJoinRequest[]>([]);
   const [members, setMembers] = useState<CommunityMember[]>([]);
+  const [memberQuery, setMemberQuery] = useState("");
   const [pendingInvites, setPendingInvites] = useState<CommunityInvite[]>([]);
   const [inviteUsername, setInviteUsername] = useState("");
   const [inviteMessage, setInviteMessage] = useState<string | null>(null);
@@ -36,6 +37,16 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
     ],
     [members, pendingInvites]
   );
+
+  const filteredMembers = useMemo(() => {
+    const q = memberQuery.trim().replace(/^@/, "").toLowerCase();
+    if (!q) return members;
+    return members.filter((m) => {
+      const username = m.profile.username.toLowerCase();
+      const role = memberRoleLabel(m.role).toLowerCase();
+      return username.includes(q) || role.includes(q);
+    });
+  }, [members, memberQuery]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -240,7 +251,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
               : "bg-slate-100 text-[var(--toq-text-muted)]"
           }`}
         >
-          Membros
+          Membros ({members.length})
         </button>
       </div>
 
@@ -328,8 +339,31 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
           {kickMessage && (
             <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-[var(--toq-navy)]">{kickMessage}</p>
           )}
+          <label className="block">
+            <span className="sr-only">Buscar membros</span>
+            <input
+              type="search"
+              value={memberQuery}
+              onChange={(e) => setMemberQuery(e.target.value)}
+              placeholder="Buscar membro por @usuário…"
+              className="w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)] outline-none focus:border-[var(--toq-accent)]"
+            />
+          </label>
+          {memberQuery.trim() && (
+            <p className="text-[10px] text-[var(--toq-text-muted)]">
+              {filteredMembers.length} de {members.length} membro
+              {members.length === 1 ? "" : "s"}
+            </p>
+          )}
           <ul className="space-y-2">
-          {members.map((m) => (
+          {filteredMembers.length === 0 ? (
+            <li className="text-xs text-[var(--toq-text-muted)]">
+              {members.length === 0
+                ? "Nenhum membro."
+                : "Nenhum membro encontrado com essa busca."}
+            </li>
+          ) : (
+            filteredMembers.map((m) => (
             <li
               key={m.user_id}
               className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2"
@@ -375,7 +409,8 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
                 )}
               </div>
             </li>
-          ))}
+          ))
+          )}
           </ul>
         </div>
       )}

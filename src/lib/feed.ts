@@ -22,7 +22,7 @@ type RawPostRow = {
   id: string;
   body: string;
   title: string | null;
-  post_type: "player" | "event" | "poll" | "coach" | "court";
+  post_type: "player" | "event" | "poll" | "coach" | "court" | "partida";
   created_at: string;
   community_id: string | null;
   visibility?: "public" | "private";
@@ -43,6 +43,7 @@ type RawPostRow = {
       }[]
     | null;
   poll_options?: { id: string; label: string; sort_order: number }[] | null;
+  match?: { capacity: number } | { capacity: number }[] | null;
 };
 
 function one<T>(value: T | T[] | null | undefined): T | null {
@@ -78,6 +79,7 @@ export function mapPostRow(
   const community = one(row.communities);
   const pollRow = one(row.poll);
   const pollOptions = (row.poll_options ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
+  const matchRow = one(row.match);
   const coachListing = coachListingsByPostId?.get(row.id) ?? null;
   const clubCourt = clubCourtsByPostId?.get(row.id) ?? null;
   const isCoachListing =
@@ -115,6 +117,7 @@ export function mapPostRow(
           options: pollOptions,
         }
       : null,
+    match_capacity: matchRow?.capacity ?? null,
     is_coach_listing: isCoachListing,
     coach_listing: coachListing,
     is_club_court: isClubCourtPost,
@@ -210,6 +213,7 @@ export function postTypeLabel(type: FeedPost["post_type"]) {
   if (type === "poll") return "Enquete";
   if (type === "coach") return "Professor";
   if (type === "court") return "Quadra";
+  if (type === "partida") return "Partida";
   return "Post";
 }
 

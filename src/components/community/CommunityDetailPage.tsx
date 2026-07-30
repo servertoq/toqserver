@@ -32,6 +32,9 @@ import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { addressFromRow, formatAddressLines, hasAddress } from "@/lib/address";
 import { parseOperatingHours } from "@/lib/operatingHours";
 import { OperatingHoursSummary } from "@/components/shared/OperatingHoursSummary";
+import { ClubContactLinks } from "@/components/club/ClubContactLinks";
+import { hasClubContact } from "@/lib/clubContact";
+import { ClubFavoriteButton } from "@/components/club/ClubFavoriteButton";
 
 export function CommunityDetailPage({
   slug,
@@ -52,6 +55,7 @@ export function CommunityDetailPage({
   const [myRole, setMyRole] = useState<CommunityMemberRole | null>(null);
   const [pendingRequest, setPendingRequest] = useState(false);
   const [pendingInviteId, setPendingInviteId] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const { isSubmitting: posting, guard: guardPost } = useSingleSubmit();
@@ -95,6 +99,18 @@ export function CommunityDetailPage({
       .maybeSingle();
 
     setMyRole((membership?.role as CommunityMemberRole) ?? null);
+
+    if ((c.kind ?? groupKind) === "club" && membership) {
+      const { data: fav } = await supabase
+        .from("community_favorites")
+        .select("community_id")
+        .eq("user_id", user.id)
+        .eq("community_id", c.id)
+        .maybeSingle();
+      setIsFavorite(!!fav);
+    } else {
+      setIsFavorite(false);
+    }
 
     const { data: pending } = await supabase
       .from("community_join_requests")
@@ -294,6 +310,11 @@ export function CommunityDetailPage({
   const clubAddress = addressFromRow(community);
   const clubHours = parseOperatingHours(community.operating_hours);
   const showClubInfo = isMember && isClubPage;
+  const clubContact = {
+    instagram_url: community.instagram_url ?? null,
+    contact_whatsapp: community.contact_whatsapp ?? null,
+  };
+  const showClubContact = showClubInfo && hasClubContact(clubContact);
 
   return (
     <>
@@ -319,7 +340,7 @@ export function CommunityDetailPage({
           </div>
           <div className="p-4" style={{ borderTopWidth: 3, borderTopColor: community.accent_color }}>
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
+              <div className="min-w-0 flex-1">
                 <h1 className="text-xl font-bold text-[var(--toq-navy)]">{community.name}</h1>
                 <p className="mt-1 text-sm text-[var(--toq-text-muted)]">{community.description}</p>
                 <p className="mt-2 text-xs font-semibold text-[var(--toq-accent)]">
@@ -327,27 +348,15 @@ export function CommunityDetailPage({
                   {groupVisibilityLabel(community.kind ?? groupKind, community.is_private)}
                   {myRole && ` · ${memberRoleLabel(myRole)}`}
                 </p>
-                {showClubInfo && (
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {hasAddress(clubAddress) && (
-                      <div className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)]/70 px-3 py-3">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--toq-text-muted)]">
-                          Endereço
-                        </p>
-                        <address className="mt-2 space-y-0.5 text-xs not-italic leading-relaxed text-[var(--toq-navy)]">
-                          {formatAddressLines(clubAddress).map((line) => (
-                            <span key={line} className="block">
-                              {line}
-                            </span>
-                          ))}
-                        </address>
-                      </div>
-                    )}
-                    <OperatingHoursSummary hours={clubHours} />
-                  </div>
-                )}
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                {isClubPage && isMember && (
+                  <ClubFavoriteButton
+                    communityId={community.id}
+                    favorited={isFavorite}
+                    onChange={setIsFavorite}
+                  />
+                )}
                 <ReportButton
                   userId={profile.id}
                   target={{
@@ -377,13 +386,36 @@ export function CommunityDetailPage({
                   <button
                     type="button"
                     onClick={handleLeave}
-                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-[var(--toq-text-muted)]"
+                    className="rounded-lg border border-[var(--toq-border)] px-3 py-1.5 text-xs font-semibold text-[var(--toq-text-muted)]"
                   >
                     Sair
                   </button>
                 )}
               </div>
             </div>
+
+            {showClubInfo && (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {hasAddress(clubAddress) && (
+                  <div className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)]/70 px-3 py-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--toq-text-muted)]">
+                      Endereço
+                    </p>
+                    <address className="mt-2 space-y-0.5 text-xs not-italic leading-relaxed text-[var(--toq-navy)]">
+                      {formatAddressLines(clubAddress).map((line) => (
+                        <span key={line} className="block">
+                          {line}
+                        </span>
+                      ))}
+                    </address>
+                  </div>
+                )}
+                <OperatingHoursSummary hours={clubHours} />
+                {showClubContact && (
+                  <ClubContactLinks clubName={community.name} contact={clubContact} />
+                )}
+              </div>
+            )}
 
             {!isMember && (
               <div className="mt-4 space-y-2">

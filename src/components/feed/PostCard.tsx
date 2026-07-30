@@ -16,6 +16,7 @@ import { CommentsPanel } from "./CommentsPanel";
 import { PostBody } from "./PostBody";
 import { PostMediaGrid } from "./PostMediaGrid";
 import { PollBlock } from "./PollBlock";
+import { MatchInterestBlock } from "./MatchInterestBlock";
 import { PostOwnerMenu } from "./PostOwnerMenu";
 import { ReportButton } from "@/components/report/ReportButton";
 import { PlanBadge } from "@/components/shared/PlanBadge";
@@ -204,16 +205,23 @@ export function PostCard({
       {post.title && (
         <h3 className="mb-2 text-base font-bold text-[var(--toq-navy)]">{post.title}</h3>
       )}
-      {post.post_type === "event" && (post.event_date || post.event_time) && (
+      {(post.post_type === "event" || post.post_type === "partida") &&
+        (post.event_date || post.event_time) && (
         <p className="mb-2 text-xs font-semibold text-[var(--toq-sky)]">
-          📅 {formatEventSchedule(post.event_date, post.event_time)}
+          {post.post_type === "partida" ? "🎾" : "📅"}{" "}
+          {formatEventSchedule(post.event_date, post.event_time)}
+          {post.post_type === "partida" && post.match_capacity != null
+            ? ` · ${post.match_capacity} vaga${post.match_capacity === 1 ? "" : "s"}`
+            : null}
         </p>
       )}
       {post.post_type === "poll" ? (
-        <p className="mb-1 text-base font-bold text-[var(--toq-navy)]">{post.body}</p>
-      ) : (
+        post.body.trim() ? (
+          <p className="mb-1 text-base font-bold text-[var(--toq-navy)]">{post.body}</p>
+        ) : null
+      ) : post.body.trim() ? (
         <PostBody body={post.body} />
-      )}
+      ) : null}
       {post.coach_listing && (
         <CoachListingPostActions
           listing={post.coach_listing}
@@ -225,6 +233,9 @@ export function PostCard({
       {post.club_court && <CourtListingPostActions court={post.club_court} />}
       {post.post_type === "poll" && (
         <PollBlock postId={post.id} isAuthor={post.author.id === currentUserId} />
+      )}
+      {post.post_type === "partida" && (
+        <MatchInterestBlock postId={post.id} capacityHint={post.match_capacity} />
       )}
       {post.mentions.length > 0 && (
         <p className="mt-2 text-[10px] text-[var(--toq-text-muted)]">

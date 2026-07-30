@@ -5,8 +5,9 @@ import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import { formatClubPrice } from "@/lib/clubFeatures";
 import { fetchClubCourtTakenRanges } from "@/lib/clubCourtBrowse";
+import { filterPlansForSlot, planAppliesToSlot, planScopeLabel } from "@/lib/clubCourtPlans";
 import { requestClubCourtBooking } from "@/lib/courtManagement";
-import type { ClubCourt, ClubCourtPlan } from "@/types/clubFeatures";
+import type { ClubCourt } from "@/types/clubFeatures";
 import type { CourtTakenRange } from "@/lib/clubCourtBrowse";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
@@ -35,19 +36,44 @@ function overlaps(aStart: number, aEnd: number, bStart: number, bEnd: number) {
   return aStart < bEnd && bStart < aEnd;
 }
 
+function normalizePlanTime(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const t = raw.slice(0, 5);
+  return /^\d{2}:\d{2}$/.test(t) ? t : null;
+}
+
 export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }: Props) {
   const supabase = createClient();
-  const plans = (court.plans ?? []).filter((p) => p.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
+  const allPlans = (court.plans ?? [])
+    .filter((p) => p.is_active !== false)
+    .sort((a, b) => a.sort_order - b.sort_order);
   const hours = (court.hours ?? []).slice();
 
-  const [planId, setPlanId] = useState(plans[0]?.id ?? "");
   const [dateISO, setDateISO] = useState(() => new Date().toISOString().slice(0, 10));
   const [startHHMM, setStartHHMM] = useState("07:00");
+  const [planId, setPlanId] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [takenRanges, setTakenRanges] = useState<CourtTakenRange[]>([]);
   const { isSubmitting, guard } = useSingleSubmit();
+
+  const applicablePlans = useMemo(
+    () => filterPlansForSlot(allPlans, dateISO, null),
+    [allPlans, dateISO]
+  );
+
+  const selectedPlan = applicablePlans.find((p) => p.id === planId) ?? null;
+
+  useEffect(() => {
+    if (applicablePlans.length === 0) {
+      setPlanId("");
+      return;
+    }
+    if (!applicablePlans.some((p) => p.id === planId)) {
+      setPlanId(applicablePlans[0]!.id);
+    }
+  }, [applicablePlans, planId]);
 
   const refreshTakenRanges = useCallback(async () => {
     try {
@@ -99,8 +125,6 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
     };
   }, [court.id, open, refreshTakenRanges, supabase]);
 
-  const selectedPlan = plans.find((p) => p.id === planId) ?? null;
-
   const weekday = useMemo(() => {
     const d = new Date(`${dateISO}T12:00:00`);
     return Number.isNaN(d.getTime()) ? 0 : d.getDay();
@@ -116,6 +140,11 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
       .map((h) => ({ start: toMinutes(h.start_time), end: toMinutes(h.end_time) }))
       .filter((w) => w.end > w.start);
     if (windowIntervals.length === 0) return [];
+
+    const planStart = normalizePlanTime(selectedPlan.applies_start_time);
+    const planEnd = normalizePlanTime(selectedPlan.applies_end_time);
+    const planStartMin = planStart != null ? toMinutes(planStart) : null;
+    const planEndMin = planEnd != null ? toMinutes(planEnd) : null;
 
     const dayStart = new Date(`${dateISO}T00:00:00`).getTime();
     const dayEnd = new Date(`${dateISO}T23:59:59`).getTime();
@@ -135,6 +164,9 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
     for (const w of windowIntervals) {
       for (let t = w.start; t + dur <= w.end; t += step) {
         const end = t + dur;
+        if (planStartMin != null && t < planStartMin) continue;
+        if (planEndMin != null && t >= planEndMin) continue;
+        if (!planAppliesToSlot(selectedPlan, dateISO, minutesToHHMM(t))) continue;
         if (!dayBlocks.some((b) => overlaps(t, end, b.start, b.end))) {
           out.push(minutesToHHMM(t));
         }
@@ -155,7 +187,7 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedPlan) {
-      setError("Selecione um plano.");
+      setError("Nenhum plano válido para esta data. Escolha outro dia.");
       return;
     }
     if (!availableStartTimes.includes(startHHMM)) {
@@ -245,21 +277,6 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
             )}
 
             <label className="block">
-              <span className="text-xs font-semibold text-[var(--toq-navy)]">Plano</span>
-              <select
-                value={planId}
-                onChange={(e) => setPlanId(e.target.value)}
-                className="toq-input mt-1 w-full px-3 py-2.5 text-sm"
-              >
-                {plans.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.label} — {formatClubPrice(Number(p.price))}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="block">
               <span className="text-xs font-semibold text-[var(--toq-navy)]">Data</span>
               <input
                 type="date"
@@ -268,6 +285,30 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
                 onChange={(e) => setDateISO(e.target.value)}
                 className="toq-input mt-1 w-full px-3 py-2.5 text-sm"
               />
+            </label>
+
+            <label className="block">
+              <span className="text-xs font-semibold text-[var(--toq-navy)]">Plano</span>
+              {applicablePlans.length === 0 ? (
+                <p className="mt-1 text-xs text-red-600">
+                  Nenhum plano de aluguel vale neste dia. Escolha outra data ou peça ao clube para configurar tarifas.
+                </p>
+              ) : (
+                <select
+                  value={planId}
+                  onChange={(e) => setPlanId(e.target.value)}
+                  className="toq-input mt-1 w-full px-3 py-2.5 text-sm"
+                >
+                  {applicablePlans.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.label} — {formatClubPrice(Number(p.price))} ({planScopeLabel(p)})
+                    </option>
+                  ))}
+                </select>
+              )}
+              {selectedPlan && (
+                <p className="mt-1 text-[11px] text-[var(--toq-text-muted)]">{planScopeLabel(selectedPlan)}</p>
+              )}
             </label>
 
             <label className="block">
@@ -284,8 +325,10 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
 
             <label className="block">
               <span className="text-xs font-semibold text-[var(--toq-navy)]">Horário de início</span>
-              {availableStartTimes.length === 0 ? (
-                <p className="mt-1 text-xs text-red-600">Sem horários livres neste dia.</p>
+              {applicablePlans.length === 0 ? (
+                <p className="mt-1 text-xs text-[var(--toq-text-muted)]">Selecione uma data com plano disponível.</p>
+              ) : availableStartTimes.length === 0 ? (
+                <p className="mt-1 text-xs text-red-600">Sem horários livres neste plano/dia.</p>
               ) : (
                 <select
                   value={startHHMM}
@@ -322,7 +365,7 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || availableStartTimes.length === 0}
+                disabled={isSubmitting || applicablePlans.length === 0 || availableStartTimes.length === 0}
                 className="flex-1 rounded-xl toq-btn-primary py-2.5 text-sm font-bold text-white disabled:opacity-50"
               >
                 {isSubmitting ? "Enviando…" : "Solicitar agendamento"}

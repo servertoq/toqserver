@@ -43,7 +43,7 @@ export async function fetchBrowsableClubCourts(
       *,
       community:communities(id, name, slug),
       images:club_court_images(id, court_id, url, sort_order),
-      plans:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order),
+      plans:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order, applies_weekdays, applies_start_time, applies_end_time),
       hours:club_court_hours(id, court_id, weekday, start_time, end_time)
     `
     )
@@ -80,7 +80,7 @@ export async function fetchClubCourtDetail(
       *,
       community:communities(id, name, slug),
       images:club_court_images(id, court_id, url, sort_order),
-      plans:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order),
+      plans:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order, applies_weekdays, applies_start_time, applies_end_time),
       hours:club_court_hours(id, court_id, weekday, start_time, end_time),
       blocks:club_court_blocks(id, court_id, start_ts, end_ts, reason)
     `

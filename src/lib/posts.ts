@@ -16,6 +16,7 @@ export type CreatePostInput = {
   pollOptions?: string[];
   pollAllowMultiple?: boolean;
   pollShowResultsToAll?: boolean;
+  matchCapacity?: number | null;
 };
 
 const POST_SELECT = `
@@ -35,7 +36,8 @@ const POST_SELECT = `
     mentioned_user:profiles!post_mentions_mentioned_user_id_fkey(id, username, display_name, avatar_url)
   ),
   poll:post_polls(allow_multiple, show_results_to_all),
-  poll_options:post_poll_options(id, label, sort_order)
+  poll_options:post_poll_options(id, label, sort_order),
+  match:post_matches(capacity)
 `;
 
 export { POST_SELECT };
@@ -46,18 +48,22 @@ export async function createPostWithMedia(
 ): Promise<{ postId: string | null; error: string | null }> {
   const mentionIds = await resolveMentionUserIds(supabase, input.body, input.authorId);
 
+  const usesSchedule = input.postType === "event" || input.postType === "partida";
+  const visibility =
+    input.postType === "partida" ? ("private" as const) : input.visibility;
+
   const { data: newPost, error: insertErr } = await supabase
     .from("posts")
     .insert({
       author_id: input.authorId,
       body: input.body,
       post_type: input.postType,
-      title: input.title,
-      visibility: input.visibility,
+      title: input.postType === "event" ? input.title : null,
+      visibility,
       community_id: input.communityId,
-      event_date: input.postType === "event" && input.eventDate ? input.eventDate : null,
+      event_date: usesSchedule && input.eventDate ? input.eventDate : null,
       event_time:
-        input.postType === "event" && input.eventTime
+        usesSchedule && input.eventTime
           ? input.eventTime.length === 5
             ? `${input.eventTime}:00`
             : input.eventTime
@@ -68,6 +74,23 @@ export async function createPostWithMedia(
 
   if (insertErr || !newPost) {
     return { postId: null, error: insertErr?.message ?? "Não foi possível publicar." };
+  }
+
+  if (input.postType === "partida") {
+    const capacity = Math.round(Number(input.matchCapacity));
+    if (!Number.isFinite(capacity) || capacity < 1 || capacity > 64) {
+      return { postId: null, error: "Informe quantas pessoas quer na partida (1 a 64)." };
+    }
+    if (!input.eventDate || !input.eventTime) {
+      return { postId: null, error: "Informe data e horário da partida." };
+    }
+    const { error: matchErr } = await supabase.from("post_matches").insert({
+      post_id: newPost.id,
+      capacity,
+    });
+    if (matchErr) {
+      return { postId: null, error: matchErr.message ?? "Não foi possível salvar a partida." };
+    }
   }
 
   if (input.postType === "poll") {
@@ -140,6 +163,7 @@ export type UpdatePostInput = {
   removedImageUrls: string[];
   pollAllowMultiple?: boolean;
   pollShowResultsToAll?: boolean;
+  matchCapacity?: number | null;
 };
 
 export async function updatePostWithMedia(
@@ -147,17 +171,19 @@ export async function updatePostWithMedia(
   input: UpdatePostInput
 ): Promise<{ error: string | null }> {
   const mentionIds = await resolveMentionUserIds(supabase, input.body, input.authorId);
+  const usesSchedule = input.postType === "event" || input.postType === "partida";
+  const visibility =
+    input.postType === "partida" ? ("private" as const) : input.visibility;
 
   const { error: updateErr } = await supabase
     .from("posts")
     .update({
       body: input.body,
       title: input.postType === "event" ? input.title : null,
-      visibility: input.visibility,
-      event_date:
-        input.postType === "event" && input.eventDate ? input.eventDate : null,
+      visibility,
+      event_date: usesSchedule && input.eventDate ? input.eventDate : null,
       event_time:
-        input.postType === "event" && input.eventTime
+        usesSchedule && input.eventTime
           ? input.eventTime.length === 5
             ? `${input.eventTime}:00`
             : input.eventTime
@@ -168,6 +194,22 @@ export async function updatePostWithMedia(
 
   if (updateErr) {
     return { error: updateErr.message ?? "Não foi possível salvar as alterações." };
+  }
+
+  if (input.postType === "partida") {
+    const capacity = Math.round(Number(input.matchCapacity));
+    if (!Number.isFinite(capacity) || capacity < 1 || capacity > 64) {
+      return { error: "Informe quantas pessoas quer na partida (1 a 64)." };
+    }
+    if (!input.eventDate || !input.eventTime) {
+      return { error: "Informe data e horário da partida." };
+    }
+    const { error: matchErr } = await supabase
+      .from("post_matches")
+      .upsert({ post_id: input.postId, capacity }, { onConflict: "post_id" });
+    if (matchErr) {
+      return { error: matchErr.message ?? "Não foi possível atualizar a partida." };
+    }
   }
 
   if (input.postType === "poll") {

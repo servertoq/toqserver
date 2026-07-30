@@ -14,7 +14,7 @@ export function OperatingHoursForm({ value, onChange }: Props) {
   }
 
   return (
-    <fieldset className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+    <fieldset className="space-y-2 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4">
       <legend className="px-1 text-xs font-semibold text-[var(--toq-navy)]">
         Horário de funcionamento
       </legend>
@@ -26,7 +26,7 @@ export function OperatingHoursForm({ value, onChange }: Props) {
         {value.map((row) => (
           <li
             key={row.day}
-            className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2"
+            className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--toq-border)] bg-[var(--toq-input-bg)] px-3 py-2"
           >
             <span className="w-28 shrink-0 text-xs font-semibold text-[var(--toq-navy)] sm:w-32">
               {WEEKDAY_LABELS[row.day]}
@@ -45,14 +45,14 @@ export function OperatingHoursForm({ value, onChange }: Props) {
                   type="time"
                   value={row.open}
                   onChange={(e) => updateDay(row.day, { open: e.target.value })}
-                  className="rounded border border-slate-200 px-2 py-1 text-xs text-[var(--toq-navy)]"
+                  className="rounded-lg toq-input px-2 py-1 text-xs text-[var(--toq-navy)]"
                 />
                 <span className="text-xs text-[var(--toq-text-muted)]">até</span>
                 <input
                   type="time"
                   value={row.close}
                   onChange={(e) => updateDay(row.day, { close: e.target.value })}
-                  className="rounded border border-slate-200 px-2 py-1 text-xs text-[var(--toq-navy)]"
+                  className="rounded-lg toq-input px-2 py-1 text-xs text-[var(--toq-navy)]"
                 />
               </>
             )}

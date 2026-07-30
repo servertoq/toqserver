@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { canModerate } from "@/lib/community";
 import { fetchClubTournaments } from "@/lib/tournaments";
@@ -23,6 +24,8 @@ export function ClubTournamentsPanel({
   myRole,
 }: Props) {
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("torneio");
   const canManage = canModerate(myRole);
   const isMember = myRole !== null;
 
@@ -50,6 +53,18 @@ export function ClubTournamentsPanel({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!highlightId || loading) return;
+    const el = document.getElementById(`torneio-${highlightId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("ring-2", "ring-[var(--toq-accent)]", "ring-offset-2");
+    const t = window.setTimeout(() => {
+      el.classList.remove("ring-2", "ring-[var(--toq-accent)]", "ring-offset-2");
+    }, 2500);
+    return () => window.clearTimeout(t);
+  }, [highlightId, loading, tournaments]);
 
   async function deactivate(tournament: ClubTournament) {
     if (!confirm(`Remover o torneio "${tournament.name}" da listagem?`)) return;
@@ -102,7 +117,7 @@ export function ClubTournamentsPanel({
           )}
         </div>
       ) : (
-        <div className="mt-4 grid gap-5 sm:grid-cols-2">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {tournaments.map((t) => (
             <div key={t.id} className="relative">
               <TournamentCard
@@ -111,6 +126,7 @@ export function ClubTournamentsPanel({
                 username={buyerUsername}
                 showClubLink={false}
                 canSignup={isMember || !t.is_private}
+                canShare={t.is_active}
               />
               {canManage && (
                 <div className="mt-2 flex flex-wrap gap-2">

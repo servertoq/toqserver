@@ -10,16 +10,11 @@ import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { AvatarCropModal } from "@/components/profile/AvatarCropModal";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { GENDER_OPTIONS, type GenderType } from "@/lib/profile";
 
 type View = "login" | "register" | "forgot" | "reset" | "complete";
 type Screen = "splash" | "auth";
-type Gender = "masculino" | "feminino" | "outro";
-
-const GENDER_OPTIONS: { value: Gender; label: string }[] = [
-  { value: "masculino", label: "Masculino" },
-  { value: "feminino", label: "Feminino" },
-  { value: "outro", label: "Outro" },
-];
+type Gender = GenderType;
 
 function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);

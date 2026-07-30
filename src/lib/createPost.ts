@@ -13,6 +13,7 @@ export type CreatePostSubmitData = {
   pollOptions?: string[];
   pollAllowMultiple?: boolean;
   pollShowResultsToAll?: boolean;
+  matchCapacity?: number | null;
 };
 
 export type EditPostSubmitData = CreatePostSubmitData & {
@@ -37,6 +38,7 @@ export function toCreatePostInput(
     pollOptions: data.pollOptions,
     pollAllowMultiple: data.pollAllowMultiple,
     pollShowResultsToAll: data.pollShowResultsToAll,
+    matchCapacity: data.matchCapacity ?? null,
   };
 }
 
@@ -58,6 +60,7 @@ export function toUpdatePostInput(
     removedImageUrls: data.removedImageUrls ?? [],
     pollAllowMultiple: data.pollAllowMultiple,
     pollShowResultsToAll: data.pollShowResultsToAll,
+    matchCapacity: data.matchCapacity ?? null,
   };
 }
 

@@ -27,6 +27,8 @@ export type ClubProduct = {
   price: number;
   is_active: boolean;
   sort_order: number;
+  /** Público-alvo: define opções de tamanho/numeração no cadastro. */
+  age_group?: "adulto" | "infantil" | null;
   images?: ClubProductImage[];
   variants?: ClubProductVariant[];
 };
@@ -77,6 +79,10 @@ export type ClubCourtPlan = {
   price: number;
   is_active: boolean;
   sort_order: number;
+  /** NULL = todos os dias; 0=dom … 6=sáb */
+  applies_weekdays?: number[] | null;
+  applies_start_time?: string | null;
+  applies_end_time?: string | null;
 };
 
 export type ClubCourtHours = {
@@ -133,6 +139,11 @@ export type ClubTournament = {
     name: string;
     slug: string;
     cover_image_url: string | null;
+    address_city?: string | null;
+    address_zip?: string | null;
+    address_neighborhood?: string | null;
+    address_street?: string | null;
+    address_state?: string | null;
   };
 };
 

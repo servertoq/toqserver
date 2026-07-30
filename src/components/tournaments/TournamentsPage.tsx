@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { fetchAllTournaments } from "@/lib/tournaments";
+import { matchesLocationSearch, LOCATION_SEARCH_PLACEHOLDER } from "@/lib/locationSearch";
 import type { ClubTournament } from "@/types/clubFeatures";
 import { appContentClass } from "@/lib/layout";
 import { TournamentCard } from "./TournamentCard";
@@ -37,17 +38,16 @@ export function TournamentsPage() {
     void load();
   }, [load]);
 
-  const filtered = tournaments.filter((t) => {
-    const q = search.trim().toLowerCase();
-    if (!q) return true;
-    const club = t.community?.name?.toLowerCase() ?? "";
-    return (
-      t.name.toLowerCase().includes(q) ||
-      t.description.toLowerCase().includes(q) ||
-      club.includes(q) ||
-      t.prizes.toLowerCase().includes(q)
-    );
-  });
+  const filtered = tournaments.filter((t) =>
+    matchesLocationSearch(search, {
+      name: t.name,
+      description: `${t.description}\n${t.prizes}\n${t.community?.name ?? ""}`,
+      city: t.community?.address_city,
+      cep: t.community?.address_zip,
+      neighborhood: t.community?.address_neighborhood,
+      street: t.community?.address_street,
+    })
+  );
 
   return (
     <>
@@ -55,15 +55,15 @@ export function TournamentsPage() {
         <PageHeader
           kicker=""
           title="Torneios"
-          subtitle="Torneios cadastrados pelos clubes. Inscreva-se pelo WhatsApp do organizador."
+          subtitle="Torneios cadastrados pelos clubes. Busque por nome, cidade ou CEP e compartilhe no chat."
         />
 
         <input
           type="search"
-          placeholder="Buscar por torneio, clube ou premiação…"
+          placeholder={LOCATION_SEARCH_PLACEHOLDER}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="toq-input mb-6 w-full px-4 py-2.5 text-sm"
+          className="toq-input mb-4 w-full px-4 py-2 text-sm"
         />
 
         {error && (
@@ -86,7 +86,7 @@ export function TournamentsPage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="tournament-grid grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {filtered.map((t) => (
               <TournamentCard
                 key={t.id}
@@ -94,6 +94,7 @@ export function TournamentsPage() {
                 clubName={t.community?.name ?? "Clube"}
                 username={profile.username}
                 canSignup
+                canShare={t.is_active}
               />
             ))}
           </div>

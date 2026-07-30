@@ -25,6 +25,8 @@ type Props = {
   mode?: "create" | "edit";
   initialPost?: FeedPost;
   inModal?: boolean;
+  /** Só no feed do clube: habilita a aba Partida (sempre privada). */
+  allowMatch?: boolean;
   onSubmit: (data: CreatePostSubmitData | EditPostSubmitData) => Promise<void>;
 };
 
@@ -43,6 +45,7 @@ export function CreatePostBox({
   mode = "create",
   initialPost,
   inModal = false,
+  allowMatch = false,
   onSubmit,
 }: Props) {
   const isEdit = mode === "edit" && !!initialPost;
@@ -54,6 +57,10 @@ export function CreatePostBox({
   );
   const [eventDate, setEventDate] = useState(initialPost?.event_date ?? "");
   const [eventTime, setEventTime] = useState(eventTimeInputValue(initialPost?.event_time ?? null));
+  const [matchCapacity, setMatchCapacity] = useState(
+    initialPost?.match_capacity != null ? String(initialPost.match_capacity) : "4"
+  );
+  const [matchError, setMatchError] = useState<string | null>(null);
   const [pollOptions, setPollOptions] = useState(
     initialPost?.poll?.options.map((o) => o.label) ?? ["", ""]
   );
@@ -123,12 +130,32 @@ export function CreatePostBox({
     setMediaError(null);
   }
 
+  const hasMedia =
+    postType !== "poll" && (files.length > 0 || (isEdit && existingMedia.length > 0));
+  const matchCapacityNum = Math.round(Number(matchCapacity));
+  const matchReady =
+    postType === "partida" &&
+    !!eventDate &&
+    !!eventTime &&
+    Number.isFinite(matchCapacityNum) &&
+    matchCapacityNum >= 1 &&
+    matchCapacityNum <= 64;
+  const canPublish =
+    !loading &&
+    !isSubmitting &&
+    (postType === "poll"
+      ? body.trim().length > 0
+      : postType === "partida"
+        ? matchReady
+        : body.trim().length > 0 || hasMedia);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = body.trim();
-    if (!trimmed || loading || isSubmitting) return;
+    if (!canPublish) return;
 
     if (postType === "poll") {
+      if (!trimmed) return;
       if (!isEdit) {
         const options = pollOptions.map((opt) => opt.trim()).filter(Boolean);
         if (options.length < 2) {
@@ -141,15 +168,29 @@ export function CreatePostBox({
         }
       }
       setPollError(null);
+    } else if (postType === "partida") {
+      if (!eventDate || !eventTime) {
+        setMatchError("Informe data e horário da partida.");
+        return;
+      }
+      if (!Number.isFinite(matchCapacityNum) || matchCapacityNum < 1 || matchCapacityNum > 64) {
+        setMatchError("Quantidade de pessoas deve ser entre 1 e 64.");
+        return;
+      }
+      setMatchError(null);
+    } else if (!trimmed && !hasMedia) {
+      return;
     }
 
     const submitPayload = {
       body: trimmed,
       postType,
       title: postType === "event" ? title.trim() || null : null,
-      visibility,
-      eventDate: postType === "event" && eventDate ? eventDate : null,
-      eventTime: postType === "event" && eventTime ? eventTime : null,
+      visibility: postType === "partida" ? ("private" as const) : visibility,
+      eventDate:
+        (postType === "event" || postType === "partida") && eventDate ? eventDate : null,
+      eventTime:
+        (postType === "event" || postType === "partida") && eventTime ? eventTime : null,
       files: postType === "poll" ? [] : files,
       pollOptions:
         postType === "poll" && !isEdit
@@ -157,6 +198,7 @@ export function CreatePostBox({
           : undefined,
       pollAllowMultiple: postType === "poll" ? pollAllowMultiple : undefined,
       pollShowResultsToAll: postType === "poll" ? pollShowResultsToAll : undefined,
+      matchCapacity: postType === "partida" ? matchCapacityNum : null,
       ...(isEdit ? { removedImageUrls } : {}),
     };
 
@@ -169,6 +211,8 @@ export function CreatePostBox({
       setTitle("");
       setEventDate("");
       setEventTime("");
+      setMatchCapacity("4");
+      setMatchError(null);
       setPollOptions(["", ""]);
       setPollAllowMultiple(false);
       setPollShowResultsToAll(true);
@@ -197,27 +241,42 @@ export function CreatePostBox({
                   ? "Editar publicação"
                   : postType === "poll"
                     ? "Nova enquete"
-                    : "Novo post"}
+                    : postType === "partida"
+                      ? "Nova partida"
+                      : "Novo post"}
               </p>
             </div>
           </div>
           {!isEdit && (
           <div className="mt-2 flex flex-wrap gap-2">
-            {(["player", "event", "poll"] as PostType[]).map((t) => (
+            {([
+              "player",
+              "event",
+              "poll",
+              ...(allowMatch ? (["partida"] as const) : []),
+            ] as PostType[]).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => {
                   setPostType(t);
                   setPollError(null);
+                  setMatchError(null);
+                  if (t === "partida") setVisibility("private");
                 }}
                 className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                   postType === t
                     ? "toq-btn-primary text-white"
-                    : "bg-slate-100 text-[var(--toq-text-muted)] hover:bg-slate-200"
+                    : "bg-[var(--toq-surface)] text-[var(--toq-text-muted)] hover:bg-[var(--toq-input-bg)]"
                 }`}
               >
-                {t === "event" ? "Evento" : t === "poll" ? "Enquete" : "Post"}
+                {t === "event"
+                  ? "Evento"
+                  : t === "poll"
+                    ? "Enquete"
+                    : t === "partida"
+                      ? "Partida"
+                      : "Post"}
               </button>
             ))}
           </div>
@@ -225,39 +284,72 @@ export function CreatePostBox({
         </div>
       </div>
 
-      {postType === "event" && (
+      {(postType === "event" || postType === "partida") && (
         <div className="mb-2 space-y-2">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Título do evento (opcional)"
-            className="w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)] outline-none focus:border-[var(--toq-accent)]"
-          />
+          {postType === "event" && (
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Título do evento (opcional)"
+              className="w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)] outline-none focus:border-[var(--toq-accent)]"
+            />
+          )}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <label className="min-w-0">
               <span className="mb-1 block text-[10px] font-semibold text-[var(--toq-text-muted)]">
-                Data (opcional)
+                Data{postType === "partida" ? "" : " (opcional)"}
               </span>
               <input
                 type="date"
                 value={eventDate}
-                onChange={(e) => setEventDate(e.target.value)}
+                onChange={(e) => {
+                  setEventDate(e.target.value);
+                  setMatchError(null);
+                }}
+                required={postType === "partida"}
                 className="create-post-datetime-input w-full min-w-0 rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
               />
             </label>
             <label className="min-w-0">
               <span className="mb-1 block text-[10px] font-semibold text-[var(--toq-text-muted)]">
-                Horário (opcional)
+                Horário{postType === "partida" ? "" : " (opcional)"}
               </span>
               <input
                 type="time"
                 value={eventTime}
-                onChange={(e) => setEventTime(e.target.value)}
+                onChange={(e) => {
+                  setEventTime(e.target.value);
+                  setMatchError(null);
+                }}
+                required={postType === "partida"}
                 className="create-post-datetime-input w-full min-w-0 rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
               />
             </label>
           </div>
+          {postType === "partida" && (
+            <label className="block max-w-xs">
+              <span className="mb-1 block text-[10px] font-semibold text-[var(--toq-text-muted)]">
+                Quantidade de pessoas
+              </span>
+              <input
+                type="number"
+                min={1}
+                max={64}
+                value={matchCapacity}
+                onChange={(e) => {
+                  setMatchCapacity(e.target.value);
+                  setMatchError(null);
+                }}
+                className="w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
+              />
+            </label>
+          )}
+          {matchError && (
+            <p className="text-xs font-medium text-red-500" role="alert">
+              {matchError}
+            </p>
+          )}
         </div>
       )}
 
@@ -267,9 +359,11 @@ export function CreatePostBox({
         placeholder={
           postType === "poll"
             ? "Qual é a sua pergunta?"
-            : "O que você quer compartilhar? 🎾"
+            : postType === "partida"
+              ? "Detalhes da partida (opcional)…"
+              : "O que você quer compartilhar? 🎾"
         }
-        required
+        required={false}
       />
 
       {postType === "poll" && (
@@ -508,14 +602,20 @@ export function CreatePostBox({
         </div>
       )}
       <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-        <VisibilityToggle
-          options={visOptions}
-          value={visibility}
-          onChange={setVisibility}
-        />
+        {postType === "partida" ? (
+          <span className="mr-auto text-[10px] font-semibold uppercase tracking-wide text-[var(--toq-text-muted)]">
+            Privada · só membros do clube
+          </span>
+        ) : (
+          <VisibilityToggle
+            options={visOptions}
+            value={visibility}
+            onChange={setVisibility}
+          />
+        )}
         <button
           type="submit"
-          disabled={loading || isSubmitting || !body.trim()}
+          disabled={!canPublish}
           className={`rounded-lg toq-btn-primary px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--toq-accent-hover)] disabled:opacity-50 ${
             inModal ? "min-w-[7.5rem]" : ""
           }`}

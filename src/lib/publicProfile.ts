@@ -3,7 +3,7 @@ import type { GenderType } from "@/lib/profile";
 export function genderLabel(gender: GenderType) {
   if (gender === "masculino") return "Masculino";
   if (gender === "feminino") return "Feminino";
-  return "Outro";
+  return "Prefiro não responder";
 }
 
 export function formatMemberSince(iso: string) {

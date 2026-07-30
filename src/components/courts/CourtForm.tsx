@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { courtToFormData, emptyCourtForm, formDataToInsert, normalizePhoneDigits } from "@/lib/courts";
 import type { Court, CourtFormData } from "@/types/courts";
-import { COURT_SIZE_OPTIONS } from "@/types/courts";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { appContentClass } from "@/lib/layout";
 import { CourtLocationPicker } from "./CourtLocationPicker";
@@ -44,6 +43,15 @@ export function CourtForm({ initial }: Props) {
     }
     if (normalizePhoneDigits(form.contact_phone).length < 10) {
       setError("Informe um WhatsApp válido com DDD.");
+      return;
+    }
+    if (
+      form.latitude == null ||
+      form.longitude == null ||
+      !Number.isFinite(form.latitude) ||
+      !Number.isFinite(form.longitude)
+    ) {
+      setError("Informe a localização (usar localização atual ou latitude/longitude).");
       return;
     }
 
@@ -109,21 +117,6 @@ export function CourtForm({ initial }: Props) {
           </label>
 
           <label className="block">
-            <span className="text-xs font-semibold text-[var(--toq-navy)]">Tamanho</span>
-            <select
-              value={form.size_label}
-              onChange={(e) => patch({ size_label: e.target.value })}
-              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm"
-            >
-              {COURT_SIZE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block">
             <span className="text-xs font-semibold text-[var(--toq-navy)]">Descrição</span>
             <textarea
               value={form.description}
@@ -164,7 +157,7 @@ export function CourtForm({ initial }: Props) {
             <button
               type="button"
               onClick={() => router.back()}
-              className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-semibold text-[var(--toq-text-muted)]"
+              className="rounded-lg border border-[var(--toq-border)] bg-[var(--toq-card)] px-5 py-2.5 text-sm font-semibold text-[var(--toq-text-muted)]"
             >
               Cancelar
             </button>

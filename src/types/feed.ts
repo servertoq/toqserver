@@ -1,6 +1,6 @@
 import type { FeedClubCourt } from "@/types/courtManagement";
 
-export type PostType = "player" | "event" | "poll" | "coach" | "court";
+export type PostType = "player" | "event" | "poll" | "coach" | "court" | "partida";
 
 export type PostVisibility = "public" | "private";
 
@@ -69,6 +69,7 @@ export type FeedPost = {
   comments_count: number;
   liked_by_me: boolean;
   poll: PostPollMeta | null;
+  match_capacity: number | null;
   is_boosted?: boolean;
   is_coach_listing?: boolean;
   coach_listing?: FeedCoachListing | null;

@@ -146,7 +146,7 @@ export function formDataToInsert(
   data: CourtFormData,
   ownerId: string
 ): Omit<Court, "id" | "created_at" | "updated_at" | "country"> & { owner_id: string; country: string } {
-  const sizeLabel = courtSizeLabel(data.size_label);
+  const sizeLabel = "Padrão";
   return {
     owner_id: ownerId,
     name: data.name.trim(),
@@ -190,7 +190,7 @@ export function mapCourtRow(
 
 export const emptyCourtForm = (): CourtFormData => ({
   name: "",
-  size_label: "individual",
+  size_label: "padrão",
   description: "",
   cep: "",
   street: "",

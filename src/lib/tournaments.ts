@@ -23,12 +23,22 @@ type RawTournamentRow = {
         name: string;
         slug: string;
         cover_image_url: string | null;
+        address_city?: string | null;
+        address_zip?: string | null;
+        address_neighborhood?: string | null;
+        address_street?: string | null;
+        address_state?: string | null;
       }
     | {
         id: string;
         name: string;
         slug: string;
         cover_image_url: string | null;
+        address_city?: string | null;
+        address_zip?: string | null;
+        address_neighborhood?: string | null;
+        address_street?: string | null;
+        address_state?: string | null;
       }[]
     | null;
 };
@@ -56,7 +66,47 @@ export function mapTournamentRow(row: RawTournamentRow): ClubTournament {
 
 export function tournamentClubHref(tournament: ClubTournament): string | null {
   if (!tournament.community?.slug) return null;
-  return groupDetailHref("club", tournament.community.slug);
+  const base = groupDetailHref("club", tournament.community.slug);
+  // Privados: página inicial do clube (pedir acesso). Públicos: aba Torneios.
+  if (tournament.is_private) return base;
+  return `${base}?tab=tournaments`;
+}
+
+export function tournamentShareHref(tournament: ClubTournament, origin?: string): string | null {
+  if (!tournament.community?.slug) return null;
+  const base = origin ?? (typeof window !== "undefined" ? window.location.origin : "");
+  const path = groupDetailHref("club", tournament.community.slug);
+  const url = new URL(path, base || "https://www.toqtennis.com.br");
+
+  if (!tournament.is_private) {
+    url.searchParams.set("tab", "tournaments");
+    url.searchParams.set("torneio", tournament.id);
+  }
+
+  return url.toString();
+}
+
+export function tournamentShareMessage(tournament: ClubTournament): string {
+  const club = tournament.community?.name ?? "Clube";
+  const cityParts = [
+    tournament.community?.address_city,
+    tournament.community?.address_state,
+  ].filter(Boolean);
+  const location = cityParts.length > 0 ? cityParts.join(" / ") : null;
+  const link = tournamentShareHref(tournament) ?? tournamentClubHref(tournament) ?? "";
+
+  const lines = [
+    `🏆 Torneio: ${tournament.name}`,
+    `Clube: ${club}`,
+    location ? `Local: ${location}` : null,
+    tournament.is_private
+      ? "🔒 Torneio privado — se você ainda não é membro, abra o link e solicite entrada no clube para ver."
+      : null,
+    "",
+    link,
+  ];
+
+  return lines.filter((line) => line !== null).join("\n");
 }
 
 export function tournamentSignupMessage(
@@ -80,10 +130,12 @@ export function formatTournamentDateRange(startsAt: string | null, endsAt: strin
   if (!startsAt && !endsAt) return null;
 
   const fmt = (iso: string) =>
-    new Date(iso).toLocaleDateString("pt-BR", {
+    new Date(iso).toLocaleString("pt-BR", {
       day: "2-digit",
       month: "short",
-      year: "numeric",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
     });
 
   if (startsAt && endsAt) return `${fmt(startsAt)} — ${fmt(endsAt)}`;
@@ -105,7 +157,18 @@ const TOURNAMENT_SELECT = `
   sort_order,
   starts_at,
   ends_at,
-  community:communities!inner(id, name, slug, cover_image_url, kind)
+  community:communities!inner(
+    id,
+    name,
+    slug,
+    cover_image_url,
+    kind,
+    address_city,
+    address_zip,
+    address_neighborhood,
+    address_street,
+    address_state
+  )
 `;
 
 export async function fetchClubTournaments(

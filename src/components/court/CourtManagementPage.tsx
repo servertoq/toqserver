@@ -24,6 +24,7 @@ import type { CourtBookingWithDetails } from "@/types/courtManagement";
 import { appContentClass } from "@/lib/layout";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { filterPlansForSlot, planAppliesToSlot, planScopeLabel } from "@/lib/clubCourtPlans";
 
 type Tab = "dashboard" | "pending" | "bookings" | "manual";
 
@@ -123,8 +124,28 @@ export function CourtManagementPage() {
   );
 
   const selectedCourt = courts.find((c) => c.id === manualForm.court_id);
-  const courtPlans = (selectedCourt?.plans?.filter((p: ClubCourtPlan) => p.is_active !== false) ??
-    []) as ClubCourtPlan[];
+  const courtPlans = useMemo(
+    () =>
+      (selectedCourt?.plans?.filter((p: ClubCourtPlan) => p.is_active !== false) ??
+        []) as ClubCourtPlan[],
+    [selectedCourt?.plans]
+  );
+  const applicableManualPlans = useMemo(
+    () =>
+      filterPlansForSlot(
+        courtPlans,
+        manualForm.booking_date,
+        manualForm.start_time || null
+      ),
+    [courtPlans, manualForm.booking_date, manualForm.start_time]
+  );
+
+  useEffect(() => {
+    if (applicableManualPlans.length === 0) return;
+    if (!applicableManualPlans.some((p) => p.id === manualForm.plan_id)) {
+      setManualForm((f) => ({ ...f, plan_id: applicableManualPlans[0]!.id }));
+    }
+  }, [applicableManualPlans, manualForm.plan_id]);
 
   async function runAction(fn: () => Promise<{ error: string | null }>, okMsg: string) {
     const { error: err } = await fn();
@@ -412,21 +433,6 @@ export function CourtManagementPage() {
                 </select>
               </label>
 
-              <label className="block">
-                <span className="text-xs font-semibold text-[var(--toq-navy)]">Plano</span>
-                <select
-                  value={manualForm.plan_id}
-                  onChange={(e) => setManualForm((f) => ({ ...f, plan_id: e.target.value }))}
-                  className="toq-input mt-1 w-full px-3 py-2 text-sm"
-                >
-                  {courtPlans.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.label} — {formatClubPrice(Number(p.price))}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block">
                   <span className="text-xs font-semibold text-[var(--toq-navy)]">Data</span>
@@ -447,6 +453,38 @@ export function CourtManagementPage() {
                   />
                 </label>
               </div>
+
+              <label className="block">
+                <span className="text-xs font-semibold text-[var(--toq-navy)]">Plano</span>
+                {applicableManualPlans.length === 0 ? (
+                  <p className="mt-1 text-xs text-red-600">
+                    Nenhum plano válido para esta data/horário.
+                  </p>
+                ) : (
+                  <select
+                    value={manualForm.plan_id}
+                    onChange={(e) => setManualForm((f) => ({ ...f, plan_id: e.target.value }))}
+                    className="toq-input mt-1 w-full px-3 py-2 text-sm"
+                  >
+                    {applicableManualPlans.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.label} — {formatClubPrice(Number(p.price))} ({planScopeLabel(p)})
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {manualForm.plan_id &&
+                  courtPlans.some((p) => p.id === manualForm.plan_id) &&
+                  !planAppliesToSlot(
+                    courtPlans.find((p) => p.id === manualForm.plan_id)!,
+                    manualForm.booking_date,
+                    manualForm.start_time
+                  ) && (
+                    <p className="mt-1 text-xs text-amber-700">
+                      Ajuste a data/horário ou escolha outro plano.
+                    </p>
+                  )}
+              </label>
 
               <label className="block">
                 <span className="text-xs font-semibold text-[var(--toq-navy)]">Nome do cliente</span>
@@ -478,7 +516,7 @@ export function CourtManagementPage() {
 
               <button
                 type="submit"
-                disabled={savingManual}
+                disabled={savingManual || applicableManualPlans.length === 0}
                 className="w-full rounded-xl toq-btn-primary py-2.5 text-sm font-bold text-white disabled:opacity-50"
               >
                 {savingManual ? "Salvando…" : "Registrar agendamento"}

@@ -16,7 +16,8 @@ export type NotificationType =
   | "staff_support_resolved"
   | "coach_new_enrollment"
   | "coach_lesson_scheduled"
-  | "court_booking_request";
+  | "court_booking_request"
+  | "match_interest";
 
 export type AppNotification = {
   id: string;

@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { ClubRankingEntry } from "@/types/clubFeatures";
 
 const TOP_N = 5;
@@ -16,6 +19,7 @@ type SlotProps = {
   tier: "gold" | "silver" | "bronze" | "default";
   canManage: boolean;
   onRemove: (entryId: string) => void;
+  compact?: boolean;
 };
 
 function rankLabel(rank: number) {
@@ -52,12 +56,16 @@ function RankingAvatar({
   );
 }
 
-function PodiumSlot({ rank, entry, unitLabel, tier, canManage, onRemove }: SlotProps) {
+function PodiumSlot({ rank, entry, unitLabel, tier, canManage, onRemove, compact }: SlotProps) {
   const username = entry.profile?.username ?? "jogador";
-  const size = rank === 1 ? "lg" : rank <= 3 ? "md" : "sm";
+  const size = compact ? "sm" : rank === 1 ? "lg" : rank <= 3 ? "md" : "sm";
 
   return (
-    <div className={`club-ranking-slot club-ranking-slot--${tier}`}>
+    <div
+      className={`club-ranking-slot club-ranking-slot--${tier}${
+        compact ? " club-ranking-slot--compact" : ""
+      }`}
+    >
       <div className="club-ranking-slot-body">
         <span className={`club-ranking-rank club-ranking-rank--${tier}`}>{rankLabel(rank)}</span>
         <RankingAvatar src={entry.profile?.avatar_url} name={username} size={size} />
@@ -81,16 +89,20 @@ function PodiumSlot({ rank, entry, unitLabel, tier, canManage, onRemove }: SlotP
           </button>
         )}
       </div>
-      <div className={`club-ranking-pedestal club-ranking-pedestal--rank-${rank}`} aria-hidden />
+      {!compact && (
+        <div className={`club-ranking-pedestal club-ranking-pedestal--rank-${rank}`} aria-hidden />
+      )}
     </div>
   );
 }
 
 export function ClubRankingPodium({ entries, unitLabel, canManage, onRemove }: Props) {
+  const [expanded, setExpanded] = useState(false);
   const top = entries.slice(0, TOP_N);
+  const rest = entries.slice(TOP_N);
   const [first, second, third, fourth, fifth] = top;
 
-  if (top.length === 0) {
+  if (entries.length === 0) {
     return (
       <p className="px-4 py-8 text-center text-xs text-[var(--toq-text-muted)]">
         Nenhum jogador nesta categoria ainda.
@@ -163,10 +175,38 @@ export function ClubRankingPodium({ entries, unitLabel, canManage, onRemove }: P
         </div>
       )}
 
-      {entries.length > TOP_N && (
-        <p className="club-ranking-top-note">
-          Exibindo os {TOP_N} melhores de {entries.length} jogadores
-        </p>
+      {rest.length > 0 && (
+        <div className="club-ranking-more">
+          {expanded && (
+            <ul className="club-ranking-more-list">
+              {rest.map((entry, i) => {
+                const rank = TOP_N + i + 1;
+                return (
+                  <li key={entry.id}>
+                    <PodiumSlot
+                      rank={rank}
+                      entry={entry}
+                      unitLabel={unitLabel}
+                      tier="default"
+                      canManage={canManage}
+                      onRemove={onRemove}
+                      compact
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <button
+            type="button"
+            className="club-ranking-more-btn"
+            onClick={() => setExpanded((v) => !v)}
+          >
+            {expanded
+              ? "Ver menos"
+              : `Ver mais (+${rest.length} ${rest.length === 1 ? "jogador" : "jogadores"})`}
+          </button>
+        </div>
       )}
     </div>
   );

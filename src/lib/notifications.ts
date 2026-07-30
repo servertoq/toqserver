@@ -40,6 +40,8 @@ export function notificationMessage(n: AppNotification): string {
       return `${name} agendou uma aula com você`;
     case "court_booking_request":
       return `${name} solicitou agendamento de uma quadra`;
+    case "match_interest":
+      return `${name} tem interesse em ir na sua partida`;
     default:
       return "Nova notificação";
   }
@@ -65,6 +67,14 @@ export function notificationHref(n: AppNotification): string | null {
 
   if (n.type === "court_booking_request") {
     return "/inicio/gestao-de-quadras";
+  }
+
+  if (n.type === "match_interest") {
+    const slug = n.community?.slug;
+    const kind = n.community?.kind ?? "club";
+    const base = slug ? groupDetailHref(kind, slug) : "/inicio/clubes";
+    if (!n.post_id) return base;
+    return `${base}?post=${encodeURIComponent(n.post_id)}`;
   }
 
   if (n.type === "community_invite") {

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { canModerate } from "@/lib/community";
-import { courtSizeLabel, normalizePhoneDigits } from "@/lib/courts";
+import { normalizePhoneDigits } from "@/lib/courts";
 import { formatClubPrice, parsePriceInput } from "@/lib/clubFeatures";
 import type { CommunityMemberRole } from "@/types/community";
 import type {
@@ -78,17 +78,24 @@ function defaultHours(): ClubCourtHours[] {
 
 type PlanKind = "hour" | "day" | "week" | "month";
 
+type PlanDraftRow = {
+  key: string;
+  kind: PlanKind;
+  label: string;
+  priceStr: string;
+  /** null = todos os dias */
+  weekdays: number[] | null;
+  /** só para HORA; vazio = sem limite */
+  appliesStart: string;
+  appliesEnd: string;
+};
+
 type CourtDraft = {
   name: string;
-  size_label: string;
   description: string;
   contact_phone: string;
   rental_visibility: CourtRentalVisibility;
-  plans: Array<{
-    key: string;
-    kind: PlanKind;
-    priceStr: string;
-  }>;
+  plans: PlanDraftRow[];
   hours: Array<{
     key: string;
     weekday: number;
@@ -112,22 +119,46 @@ function planKindFromUnitMinutes(unitMinutes: number): PlanKind {
   return "hour";
 }
 
-function newPlanRow() {
-  const row: CourtDraft["plans"][number] = {
+function isValidTimeHHMM(value: string) {
+  return /^\d{2}:\d{2}$/.test(value);
+}
+
+function normalizeWeekdays(days: number[] | null | undefined): number[] | null {
+  if (days == null || days.length === 0 || days.length === 7) return null;
+  return [...new Set(days.filter((d) => d >= 0 && d <= 6))].sort((a, b) => a - b);
+}
+
+function timeToDb(value: string): string | null {
+  if (!value.trim()) return null;
+  return isValidTimeHHMM(value) ? `${value}:00` : null;
+}
+
+function newPlanRow(): PlanDraftRow {
+  return {
     key: crypto.randomUUID(),
     kind: "hour",
+    label: "Hora",
     priceStr: "",
+    weekdays: null,
+    appliesStart: "",
+    appliesEnd: "",
   };
-  return row;
 }
 
 function fromCourt(court?: ClubCourt | null): CourtDraft {
   const plans: CourtDraft["plans"] = (court?.plans ?? []).length
-    ? (court?.plans ?? []).map((p) => ({
-        key: p.id,
-        kind: planKindFromUnitMinutes(p.unit_minutes),
-        priceStr: String(p.price),
-      }))
+    ? (court?.plans ?? []).map((p) => {
+        const kind = planKindFromUnitMinutes(p.unit_minutes);
+        return {
+          key: p.id,
+          kind,
+          label: p.label || planMeta(kind).label,
+          priceStr: String(p.price),
+          weekdays: normalizeWeekdays(p.applies_weekdays ?? null),
+          appliesStart: p.applies_start_time?.slice(0, 5) ?? "",
+          appliesEnd: p.applies_end_time?.slice(0, 5) ?? "",
+        };
+      })
     : [newPlanRow()];
 
   const hours = (court?.hours ?? []).length
@@ -146,17 +177,12 @@ function fromCourt(court?: ClubCourt | null): CourtDraft {
 
   return {
     name: court?.name ?? "",
-    size_label: court?.size_label ?? "dupla",
     description: court?.description ?? "",
     contact_phone: court?.contact_phone ?? "",
     rental_visibility: court?.rental_visibility ?? "members_only",
     plans,
     hours,
   };
-}
-
-function isValidTimeHHMM(value: string) {
-  return /^\d{2}:\d{2}$/.test(value);
 }
 
 function ClubCourtForm({
@@ -232,9 +258,28 @@ function ClubCourtForm({
       meta: planMeta(p.kind),
       price: parsePriceInput(p.priceStr),
     }));
-    if (parsedPlans.some((x) => x.price == null)) {
-      setError("Revise os planos: selecione HORA/DIA/SEMANA/MÊS e informe um preço válido.");
+    if (parsedPlans.some((x) => x.price == null || !x.p.label.trim())) {
+      setError("Revise os planos: nome, unidade (HORA/DIA/…) e preço válido.");
       return;
+    }
+    for (const { p } of parsedPlans) {
+      if (p.kind === "hour") {
+        const hasStart = !!p.appliesStart.trim();
+        const hasEnd = !!p.appliesEnd.trim();
+        if (hasStart !== hasEnd) {
+          setError("Em planos por hora, informe início e fim da faixa (ou deixe ambos vazios).");
+          return;
+        }
+        if (
+          hasStart &&
+          (!isValidTimeHHMM(p.appliesStart) ||
+            !isValidTimeHHMM(p.appliesEnd) ||
+            toMinutes(`${p.appliesStart}:00`) >= toMinutes(`${p.appliesEnd}:00`))
+        ) {
+          setError("Faixa horária do plano inválida (início deve ser antes do fim).");
+          return;
+        }
+      }
     }
 
     if (
@@ -261,7 +306,7 @@ function ClubCourtForm({
           .from("club_courts")
           .update({
             name: draft.name.trim(),
-            size_label: draft.size_label,
+            size_label: "Padrão",
             description: draft.description.trim(),
             contact_phone: draft.contact_phone.trim(),
             rental_visibility: draft.rental_visibility,
@@ -274,7 +319,7 @@ function ClubCourtForm({
           .insert({
             community_id: communityId,
             name: draft.name.trim(),
-            size_label: draft.size_label,
+            size_label: "Padrão",
             description: draft.description.trim(),
             contact_phone: draft.contact_phone.trim(),
             rental_visibility: draft.rental_visibility,
@@ -290,13 +335,17 @@ function ClubCourtForm({
       const keptPlanIds = new Set<string>();
       for (let i = 0; i < parsedPlans.length; i++) {
         const { p, meta, price } = parsedPlans[i];
+        const label = p.label.trim() || meta.label;
         const payload = {
-          label: meta.label,
+          label,
           unit_label: meta.unit_label,
           unit_minutes: meta.unit_minutes,
           price: price!,
           is_active: true,
           sort_order: i,
+          applies_weekdays: normalizeWeekdays(p.weekdays),
+          applies_start_time: p.kind === "hour" ? timeToDb(p.appliesStart) : null,
+          applies_end_time: p.kind === "hour" ? timeToDb(p.appliesEnd) : null,
         };
         if (existingPlanIds.has(p.key)) {
           keptPlanIds.add(p.key);
@@ -349,7 +398,7 @@ function ClubCourtForm({
         .select(
           `
           *,
-          plans:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order),
+          plans:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order, applies_weekdays, applies_start_time, applies_end_time),
           hours:club_court_hours(id, court_id, weekday, start_time, end_time)
         `
         )
@@ -394,7 +443,7 @@ function ClubCourtForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl">
+      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-5 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-[var(--toq-navy)]">{isEdit ? "Editar quadra" : "Nova quadra"}</h2>
           <button type="button" onClick={onClose} className="text-sm font-semibold text-[var(--toq-text-muted)]">
@@ -413,7 +462,7 @@ function ClubCourtForm({
                 onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
                 required
                 maxLength={120}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="toq-input mt-1 w-full px-3 py-2 text-sm"
               />
             </label>
             <label className="block">
@@ -423,26 +472,10 @@ function ClubCourtForm({
                 onChange={(e) => setDraft((d) => ({ ...d, contact_phone: e.target.value }))}
                 required
                 placeholder="(11) 99999-9999"
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="toq-input mt-1 w-full px-3 py-2 text-sm"
               />
             </label>
           </div>
-
-          <label className="block">
-            <span className="text-xs font-semibold text-[var(--toq-navy)]">Tamanho da quadra</span>
-            <select
-              value={draft.size_label}
-              onChange={(e) => setDraft((d) => ({ ...d, size_label: e.target.value }))}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            >
-              <option value="individual">Individual</option>
-              <option value="dupla">Dupla</option>
-              <option value="beach_tennis">Beach tennis</option>
-              <option value="padel">Padel</option>
-              <option value="outro">Outro</option>
-            </select>
-            <p className="mt-1 text-[11px] text-[var(--toq-text-muted)]">{courtSizeLabel(draft.size_label)}</p>
-          </label>
 
           <label className="block">
             <span className="text-xs font-semibold text-[var(--toq-navy)]">Descrição</span>
@@ -454,15 +487,15 @@ function ClubCourtForm({
               rows={3}
               maxLength={2000}
               placeholder="Ex.: Quadra de saibro coberta, iluminação noturna, vestiário no local."
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="toq-input mt-1 w-full px-3 py-2 text-sm"
             />
             <p className="mt-1 text-[11px] text-[var(--toq-text-muted)]">Mínimo de 10 caracteres.</p>
           </label>
 
-          <fieldset className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <legend className="px-1 text-sm font-bold text-[var(--toq-navy)]">Quem pode alugar?</legend>
-            <div className="mt-2 space-y-2">
-              <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 bg-white p-3">
+          <div className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4">
+            <h3 className="text-sm font-bold text-[var(--toq-navy)]">Quem pode alugar?</h3>
+            <div className="mt-3 space-y-2">
+              <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-[var(--toq-border)] bg-[var(--toq-card)] p-3">
                 <input
                   type="radio"
                   name="rental_visibility"
@@ -477,7 +510,7 @@ function ClubCourtForm({
                   </span>
                 </span>
               </label>
-              <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 bg-white p-3">
+              <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-[var(--toq-border)] bg-[var(--toq-card)] p-3">
                 <input
                   type="radio"
                   name="rental_visibility"
@@ -493,9 +526,9 @@ function ClubCourtForm({
                 </span>
               </label>
             </div>
-          </fieldset>
+          </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-sm font-bold text-[var(--toq-navy)]">Planos de aluguel</h3>
               <button type="button" onClick={addPlan} className="text-xs font-bold text-[var(--toq-sky)]">
@@ -503,11 +536,14 @@ function ClubCourtForm({
               </button>
             </div>
             <p className="mt-1 text-[11px] text-[var(--toq-text-muted)]">
-              Selecione HORA, DIA, SEMANA ou MÊS e informe o preço.
+              Crie um plano por tarifa (diurno, noturno, fim de semana). Cada um com preço e quando vale.
             </p>
             <div className="mt-3 space-y-3">
               {draft.plans.map((p, idx) => (
-                <div key={p.key} className="rounded-xl border border-slate-200 bg-white p-3">
+                <div
+                  key={p.key}
+                  className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-3"
+                >
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-[11px] font-bold text-[var(--toq-navy)]">Plano {idx + 1}</span>
                     {draft.plans.length > 1 && (
@@ -516,11 +552,28 @@ function ClubCourtForm({
                       </button>
                     )}
                   </div>
+                  <label className="mb-2 block">
+                    <span className="text-[11px] font-medium text-[var(--toq-text-muted)]">Nome</span>
+                    <input
+                      value={p.label}
+                      onChange={(e) => updatePlan(p.key, { label: e.target.value })}
+                      placeholder="Ex.: Hora noturna (iluminação)"
+                      className="toq-input mt-0.5 w-full px-2 py-1.5 text-sm"
+                    />
+                  </label>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <select
                       value={p.kind}
-                      onChange={(e) => updatePlan(p.key, { kind: e.target.value as PlanKind })}
-                      className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                      onChange={(e) => {
+                        const kind = e.target.value as PlanKind;
+                        const meta = planMeta(kind);
+                        updatePlan(p.key, {
+                          kind,
+                          label: p.label.trim() === planMeta(p.kind).label ? meta.label : p.label,
+                          ...(kind !== "hour" ? { appliesStart: "", appliesEnd: "" } : {}),
+                        });
+                      }}
+                      className="toq-input px-2 py-1.5 text-sm"
                     >
                       <option value="hour">HORA</option>
                       <option value="day">DIA</option>
@@ -531,11 +584,110 @@ function ClubCourtForm({
                       value={p.priceStr}
                       onChange={(e) => updatePlan(p.key, { priceStr: e.target.value })}
                       placeholder="Preço (R$)"
-                      className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                      className="toq-input px-2 py-1.5 text-sm"
                     />
                   </div>
+
+                  <div className="mt-3">
+                    <span className="text-[11px] font-medium text-[var(--toq-text-muted)]">Válido em</span>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => updatePlan(p.key, { weekdays: null })}
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                          p.weekdays == null
+                            ? "bg-[var(--toq-accent)] text-white"
+                            : "border border-[var(--toq-border)] bg-[var(--toq-surface)] text-[var(--toq-text)]"
+                        }`}
+                      >
+                        Todos
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updatePlan(p.key, { weekdays: [1, 2, 3, 4, 5] })}
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                          p.weekdays?.join(",") === "1,2,3,4,5"
+                            ? "bg-[var(--toq-accent)] text-white"
+                            : "border border-[var(--toq-border)] bg-[var(--toq-surface)] text-[var(--toq-text)]"
+                        }`}
+                      >
+                        Dias úteis
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updatePlan(p.key, { weekdays: [0, 6] })}
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                          p.weekdays?.join(",") === "0,6"
+                            ? "bg-[var(--toq-accent)] text-white"
+                            : "border border-[var(--toq-border)] bg-[var(--toq-surface)] text-[var(--toq-text)]"
+                        }`}
+                      >
+                        Fim de semana
+                      </button>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {[0, 1, 2, 3, 4, 5, 6].map((d) => {
+                        const selected = p.weekdays == null || p.weekdays.includes(d);
+                        return (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => {
+                              if (p.weekdays == null) {
+                                updatePlan(p.key, {
+                                  weekdays: [0, 1, 2, 3, 4, 5, 6].filter((x) => x !== d),
+                                });
+                                return;
+                              }
+                              const next = p.weekdays.includes(d)
+                                ? p.weekdays.filter((x) => x !== d)
+                                : [...p.weekdays, d].sort((a, b) => a - b);
+                              updatePlan(p.key, {
+                                weekdays: next.length === 0 || next.length === 7 ? null : next,
+                              });
+                            }}
+                            className={`rounded-lg px-2.5 py-1 text-[10px] font-bold ${
+                              selected
+                                ? "bg-[var(--toq-accent)] text-white"
+                                : "border border-[var(--toq-border)] bg-[var(--toq-surface)] text-[var(--toq-text-muted)]"
+                            }`}
+                          >
+                            {weekdayLabel(d)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {p.kind === "hour" && (
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <label>
+                        <span className="text-[11px] font-medium text-[var(--toq-text-muted)]">
+                          Horário início (opcional)
+                        </span>
+                        <input
+                          value={p.appliesStart}
+                          onChange={(e) => updatePlan(p.key, { appliesStart: e.target.value })}
+                          placeholder="06:00"
+                          className="toq-input mt-0.5 w-full px-2 py-1.5 text-sm"
+                        />
+                      </label>
+                      <label>
+                        <span className="text-[11px] font-medium text-[var(--toq-text-muted)]">
+                          Horário fim (opcional)
+                        </span>
+                        <input
+                          value={p.appliesEnd}
+                          onChange={(e) => updatePlan(p.key, { appliesEnd: e.target.value })}
+                          placeholder="18:00"
+                          className="toq-input mt-0.5 w-full px-2 py-1.5 text-sm"
+                        />
+                      </label>
+                    </div>
+                  )}
+
                   {parsePriceInput(p.priceStr) != null && (
-                    <p className="mt-1 text-[11px] text-[var(--toq-text-muted)]">
+                    <p className="mt-2 text-[11px] text-[var(--toq-text-muted)]">
                       {(() => {
                         const meta = planMeta(p.kind);
                         return `${formatClubPrice(parsePriceInput(p.priceStr)!)} por ${meta.unit_label}`;
@@ -547,7 +699,7 @@ function ClubCourtForm({
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-sm font-bold text-[var(--toq-navy)]">Funcionamento</h3>
               <button type="button" onClick={addHourRow} className="text-xs font-bold text-[var(--toq-sky)]">
@@ -560,11 +712,14 @@ function ClubCourtForm({
 
             <div className="mt-3 space-y-2">
               {draft.hours.map((h) => (
-                <div key={h.key} className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3">
+                <div
+                  key={h.key}
+                  className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-3"
+                >
                   <select
                     value={h.weekday}
                     onChange={(e) => updateHour(h.key, { weekday: parseInt(e.target.value, 10) })}
-                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                    className="toq-input px-2 py-1.5 text-sm"
                   >
                     {[0, 1, 2, 3, 4, 5, 6].map((d) => (
                       <option key={d} value={d}>
@@ -576,14 +731,14 @@ function ClubCourtForm({
                     value={h.start}
                     onChange={(e) => updateHour(h.key, { start: e.target.value })}
                     placeholder="Início (07:00)"
-                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                    className="toq-input px-2 py-1.5 text-sm"
                   />
                   <span className="text-xs text-[var(--toq-text-muted)]">até</span>
                   <input
                     value={h.end}
                     onChange={(e) => updateHour(h.key, { end: e.target.value })}
                     placeholder="Fim (22:00)"
-                    className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                    className="toq-input px-2 py-1.5 text-sm"
                   />
                   <button type="button" onClick={() => removeHourRow(h.key)} className="ml-auto text-xs font-semibold text-red-600">
                     Remover
@@ -620,7 +775,7 @@ function ClubCourtForm({
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="mt-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-[var(--toq-navy)]"
+                  className="mt-2 rounded-lg border border-[var(--toq-border)] bg-[var(--toq-surface)] px-3 py-2 text-xs font-bold text-[var(--toq-navy)]"
                 >
                   Adicionar foto ({totalImages}/3)
                 </button>
@@ -697,7 +852,7 @@ export function ClubCourtsPanel({ communityId, clubName, clubSlug, myRole }: Pro
         `
         *,
         images:club_court_images(id, court_id, url, sort_order),
-        plans:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order),
+        plans:club_court_plans(id, court_id, label, unit_label, unit_minutes, price, is_active, sort_order, applies_weekdays, applies_start_time, applies_end_time),
         hours:club_court_hours(id, court_id, weekday, start_time, end_time),
         blocks:club_court_blocks(id, court_id, start_ts, end_ts, reason)
       `
@@ -791,7 +946,7 @@ export function ClubCourtsPanel({ communityId, clubName, clubSlug, myRole }: Pro
           <div className="flex flex-wrap gap-2">
             <Link
               href="/inicio/gestao-de-quadras"
-              className="rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white"
+              className="inline-flex h-8 items-center justify-center rounded-lg toq-btn-primary px-3 text-xs font-bold leading-none text-white"
             >
               Gestão de Quadras
             </Link>
@@ -800,14 +955,14 @@ export function ClubCourtsPanel({ communityId, clubName, clubSlug, myRole }: Pro
               onClick={openAgendaManager}
               disabled={courts.length === 0}
               title={courts.length === 0 ? "Cadastre uma quadra antes" : "Abrir agenda para marcar locações"}
-              className="rounded-lg toq-btn-outline px-3 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-8 items-center justify-center rounded-lg toq-btn-outline px-3 text-xs font-bold leading-none disabled:cursor-not-allowed disabled:opacity-40"
             >
               Gerenciar agenda
             </button>
             <button
               type="button"
               onClick={() => setEditing(null)}
-              className="rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white"
+              className="inline-flex h-8 items-center justify-center rounded-lg toq-btn-primary px-3 text-xs font-bold leading-none text-white"
             >
               + Nova quadra
             </button>
@@ -854,9 +1009,6 @@ export function ClubCourtsPanel({ communityId, clubName, clubSlug, myRole }: Pro
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-bold text-[var(--toq-navy)]">{court.name}</h3>
-                  <span className="shrink-0 text-[11px] font-bold text-[var(--toq-sky)]">
-                    {courtSizeLabel(court.size_label)}
-                  </span>
                 </div>
                 <p className="mt-1 line-clamp-2 text-xs text-[var(--toq-text-muted)]">{court.description}</p>
                 {court.rental_available === false && (
@@ -929,7 +1081,7 @@ export function ClubCourtsPanel({ communityId, clubName, clubSlug, myRole }: Pro
 
       {agendaPickerOpen && courts.length > 1 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+          <div className="w-full max-w-sm rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-5 shadow-xl">
             <h3 className="text-sm font-bold text-[var(--toq-navy)]">Escolha a quadra</h3>
             <ul className="mt-3 space-y-2">
               {courts.map((c) => (
@@ -940,7 +1092,7 @@ export function ClubCourtsPanel({ communityId, clubName, clubSlug, myRole }: Pro
                       setAgendaCourtId(c.id);
                       setAgendaPickerOpen(false);
                     }}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-left text-sm font-semibold text-[var(--toq-navy)] hover:bg-slate-50"
+                    className="w-full rounded-lg border border-[var(--toq-border)] bg-[var(--toq-surface)] px-3 py-2.5 text-left text-sm font-semibold text-[var(--toq-navy)] hover:border-[var(--toq-accent)]"
                   >
                     {c.name}
                   </button>

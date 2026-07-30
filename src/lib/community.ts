@@ -33,13 +33,15 @@ export type CommunityWithMembership = Community & {
   my_role: CommunityMemberRole | null;
   pending_request: boolean;
   pending_invite: boolean;
+  is_favorite: boolean;
 };
 
 export function mapCommunityRow(
   row: Community,
   myRole: CommunityMemberRole | null,
   pendingRequest: boolean,
-  pendingInvite = false
+  pendingInvite = false,
+  isFavorite = false
 ): CommunityWithMembership {
   return {
     ...row,
@@ -47,6 +49,7 @@ export function mapCommunityRow(
     my_role: myRole,
     pending_request: pendingRequest,
     pending_invite: pendingInvite,
+    is_favorite: isFavorite,
   };
 }
 

@@ -3,7 +3,8 @@
 import { useAppProfile } from "@/components/app/AppShell";
 import { CreatePostBox } from "@/components/feed/CreatePostBox";
 import { PostCard } from "@/components/feed/PostCard";
-import type { FeedPost, PostType, PostVisibility } from "@/types/feed";
+import type { CreatePostSubmitData } from "@/lib/createPost";
+import type { FeedPost } from "@/types/feed";
 
 type Props = {
   posts: FeedPost[];
@@ -13,15 +14,7 @@ type Props = {
   posting: boolean;
   highlightPostId: string | null;
   highlightCommentId: string | null;
-  onSubmitPost: (data: {
-    body: string;
-    postType: PostType;
-    title: string | null;
-    visibility: PostVisibility;
-    eventDate: string | null;
-    eventTime: string | null;
-    files: File[];
-  }) => void | Promise<void>;
+  onSubmitPost: (data: CreatePostSubmitData) => void | Promise<void>;
   onLikeToggle: (postId: string, liked: boolean) => void | Promise<void>;
   onEditPost?: (post: FeedPost) => void;
   onDeletePost?: (post: FeedPost) => void;
@@ -50,6 +43,7 @@ export function ClubFeedPanel({
         displayName={display_name}
         loading={posting}
         context="community"
+        allowMatch
         onSubmit={async (data) => {
           await onSubmitPost(data);
         }}

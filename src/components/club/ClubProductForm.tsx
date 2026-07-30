@@ -3,7 +3,15 @@
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
-import { formatClubPrice, parsePriceInput, productDisplayPrice } from "@/lib/clubFeatures";
+import {
+  CLUB_PRODUCT_AGE_OPTIONS,
+  clubProductNumbersForAge,
+  clubProductSizesForAge,
+  formatClubPrice,
+  parsePriceInput,
+  productDisplayPrice,
+  type ClubProductAgeGroup,
+} from "@/lib/clubFeatures";
 import type { ClubProduct, VariantDraft } from "@/types/clubFeatures";
 
 type Props = {
@@ -42,6 +50,9 @@ function variantsFromProduct(product: ClubProduct | null | undefined): VariantDr
   return [newVariantRow()];
 }
 
+const selectClass =
+  "mt-0.5 w-full rounded-lg toq-input px-2 py-1.5 text-sm text-[var(--toq-navy)]";
+
 export function ClubProductForm({ communityId, product, onSaved, onClose }: Props) {
   const supabase = createClient();
   const profile = useAppProfile();
@@ -50,6 +61,9 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
 
   const [name, setName] = useState(product?.name ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
+  const [ageGroup, setAgeGroup] = useState<ClubProductAgeGroup>(
+    product?.age_group === "infantil" ? "infantil" : "adulto"
+  );
   const [variantRows, setVariantRows] = useState<VariantDraft[]>(() => variantsFromProduct(product));
   const [files, setFiles] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState(product?.images ?? []);
@@ -57,6 +71,8 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
   const [error, setError] = useState<string | null>(null);
 
   const totalImages = existingImages.length + files.length;
+  const sizeOptions = clubProductSizesForAge(ageGroup);
+  const numberOptions = clubProductNumbersForAge(ageGroup);
 
   function updateVariant(key: string, patch: Partial<VariantDraft>) {
     setVariantRows((rows) => rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -68,6 +84,19 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
 
   function removeVariantRow(key: string) {
     setVariantRows((rows) => (rows.length <= 1 ? rows : rows.filter((r) => r.key !== key)));
+  }
+
+  function handleAgeChange(next: ClubProductAgeGroup) {
+    setAgeGroup(next);
+    const sizes = new Set(clubProductSizesForAge(next));
+    const numbers = new Set(clubProductNumbersForAge(next));
+    setVariantRows((rows) =>
+      rows.map((row) => ({
+        ...row,
+        size_label: row.size_label && sizes.has(row.size_label as never) ? row.size_label : "",
+        numbering: row.numbering && numbers.has(row.numbering as never) ? row.numbering : "",
+      }))
+    );
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -101,6 +130,7 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
           .update({
             name: name.trim(),
             description: description.trim(),
+            age_group: ageGroup,
             size_label: null,
             color: null,
             numbering: null,
@@ -115,6 +145,7 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
             community_id: communityId,
             name: name.trim(),
             description: description.trim(),
+            age_group: ageGroup,
             size_label: null,
             color: null,
             numbering: null,
@@ -211,18 +242,24 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-xl">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-[var(--toq-card)] p-5 text-[var(--toq-text)] shadow-xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-[var(--toq-navy)]">
             {isEdit ? "Editar produto" : "Novo produto"}
           </h2>
-          <button type="button" onClick={onClose} className="text-sm font-semibold text-[var(--toq-text-muted)]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-sm font-semibold text-[var(--toq-text-muted)]"
+          >
             Fechar
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          {error && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600">{error}</p>}
+          {error && (
+            <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500">{error}</p>
+          )}
 
           <label className="block">
             <span className="text-xs font-semibold text-[var(--toq-navy)]">Nome</span>
@@ -231,7 +268,7 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
               onChange={(e) => setName(e.target.value)}
               required
               maxLength={120}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm"
             />
           </label>
 
@@ -243,9 +280,32 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
               required
               rows={3}
               maxLength={2000}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm"
             />
           </label>
+
+          <fieldset>
+            <legend className="text-xs font-semibold text-[var(--toq-navy)]">Público</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {CLUB_PRODUCT_AGE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handleAgeChange(opt.value)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                    ageGroup === opt.value
+                      ? "toq-btn-primary text-white"
+                      : "border border-[var(--toq-border)] bg-[var(--toq-surface)] text-[var(--toq-text-muted)]"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-[11px] text-[var(--toq-text-muted)]">
+              Define as opções de tamanho e numeração disponíveis abaixo.
+            </p>
+          </fieldset>
 
           <div>
             <div className="flex items-center justify-between gap-2">
@@ -261,51 +321,93 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
               </button>
             </div>
             <p className="mt-1 text-[11px] text-[var(--toq-text-muted)]">
-              Cadastre cada combinação disponível. Ex.: M + Azul + 42 com um preço; G + Preto + 44 com
-              outro.
+              Cadastre cada combinação. Deixe tamanho ou numeração em branco se não se aplicar.
             </p>
             <div className="mt-2 space-y-3">
               {variantRows.map((row, idx) => (
-                <div key={row.key} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div
+                  key={row.key}
+                  className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-3"
+                >
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-[var(--toq-navy)]">Opção {idx + 1}</span>
+                    <span className="text-[11px] font-bold text-[var(--toq-navy)]">
+                      Opção {idx + 1}
+                    </span>
                     {variantRows.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeVariantRow(row.key)}
-                        className="text-[11px] font-semibold text-red-600"
+                        className="text-[11px] font-semibold text-red-500"
                       >
                         Remover
                       </button>
                     )}
                   </div>
                   <div className="grid gap-2 sm:grid-cols-3">
-                    <input
-                      value={row.size_label}
-                      onChange={(e) => updateVariant(row.key, { size_label: e.target.value })}
-                      placeholder="Tamanho (P, M…)"
-                      className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-                    />
-                    <input
-                      value={row.color}
-                      onChange={(e) => updateVariant(row.key, { color: e.target.value })}
-                      placeholder="Cor"
-                      className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-                    />
-                    <input
-                      value={row.numbering}
-                      onChange={(e) => updateVariant(row.key, { numbering: e.target.value })}
-                      placeholder="Numeração"
-                      className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-                    />
+                    <label className="block min-w-0">
+                      <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">
+                        Tamanho
+                      </span>
+                      <select
+                        value={row.size_label}
+                        onChange={(e) => updateVariant(row.key, { size_label: e.target.value })}
+                        className={selectClass}
+                      >
+                        <option value="">Sem tamanho</option>
+                        {sizeOptions.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                        {row.size_label && !sizeOptions.includes(row.size_label as never) && (
+                          <option value={row.size_label}>{row.size_label}</option>
+                        )}
+                      </select>
+                    </label>
+                    <label className="block min-w-0">
+                      <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">
+                        Cor
+                      </span>
+                      <input
+                        value={row.color}
+                        onChange={(e) => updateVariant(row.key, { color: e.target.value })}
+                        placeholder="Ex.: Azul"
+                        className={selectClass}
+                      />
+                    </label>
+                    <label className="block min-w-0">
+                      <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">
+                        Numeração
+                      </span>
+                      <select
+                        value={row.numbering}
+                        onChange={(e) => updateVariant(row.key, { numbering: e.target.value })}
+                        className={selectClass}
+                      >
+                        <option value="">Sem numeração</option>
+                        {numberOptions.map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                        {row.numbering && !numberOptions.includes(row.numbering as never) && (
+                          <option value={row.numbering}>{row.numbering}</option>
+                        )}
+                      </select>
+                    </label>
                   </div>
-                  <input
-                    value={row.priceStr}
-                    onChange={(e) => updateVariant(row.key, { priceStr: e.target.value })}
-                    required
-                    placeholder="Preço (R$)"
-                    className="mt-2 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-                  />
+                  <label className="mt-2 block">
+                    <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">
+                      Preço (R$)
+                    </span>
+                    <input
+                      value={row.priceStr}
+                      onChange={(e) => updateVariant(row.key, { priceStr: e.target.value })}
+                      required
+                      placeholder="0,00"
+                      className={selectClass}
+                    />
+                  </label>
                 </div>
               ))}
             </div>
@@ -320,7 +422,10 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
             <span className="text-xs font-semibold text-[var(--toq-navy)]">Fotos (até 3)</span>
             <div className="mt-2 flex flex-wrap gap-2">
               {existingImages.map((img) => (
-                <div key={img.id} className="relative h-16 w-16 overflow-hidden rounded-lg bg-slate-100">
+                <div
+                  key={img.id}
+                  className="relative h-16 w-16 overflow-hidden rounded-lg bg-[var(--toq-surface)]"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={img.url} alt="" className="h-full w-full object-cover" />
                   <button
@@ -333,7 +438,10 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
                 </div>
               ))}
               {files.map((f, i) => (
-                <span key={i} className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] text-[var(--toq-navy)]">
+                <span
+                  key={i}
+                  className="rounded-lg bg-[var(--toq-surface)] px-2 py-1 text-[10px] text-[var(--toq-navy)]"
+                >
                   {f.name}
                 </span>
               ))}
@@ -343,7 +451,7 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="mt-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-[var(--toq-navy)]"
+                  className="mt-2 rounded-lg toq-btn-outline px-3 py-2 text-xs font-bold"
                 >
                   Adicionar foto ({totalImages}/3)
                 </button>

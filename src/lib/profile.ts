@@ -11,7 +11,7 @@ export const PROFILE_BIO_MAX_LENGTH = 280;
 export const GENDER_OPTIONS: { value: GenderType; label: string }[] = [
   { value: "masculino", label: "Masculino" },
   { value: "feminino", label: "Feminino" },
-  { value: "outro", label: "Outro" },
+  { value: "outro", label: "Prefiro não responder" },
 ];
 
 export const PLAYER_LEVEL_OPTIONS: { value: PlayerLevelType; label: string }[] = [

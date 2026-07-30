@@ -58,6 +58,7 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
     const roleByCommunity: Record<string, CommunityMemberRole> = {};
     const pendingByCommunity = new Set<string>();
     const inviteByCommunity = new Set<string>();
+    const favoriteByCommunity = new Set<string>();
 
     if (ids.length > 0) {
       const { data: memberships } = await supabase
@@ -91,18 +92,38 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
       for (const inv of invites ?? []) {
         inviteByCommunity.add(inv.community_id);
       }
+
+      if (groupKind === "club") {
+        const { data: favorites } = await supabase
+          .from("community_favorites")
+          .select("community_id")
+          .eq("user_id", user.id)
+          .in("community_id", ids);
+
+        for (const f of favorites ?? []) {
+          favoriteByCommunity.add(f.community_id);
+        }
+      }
     }
 
-    setCommunities(
-      comms.map((c) =>
-        mapCommunityRow(
-          c,
-          roleByCommunity[c.id] ?? null,
-          pendingByCommunity.has(c.id),
-          inviteByCommunity.has(c.id)
-        )
+    const mapped = comms.map((c) =>
+      mapCommunityRow(
+        c,
+        roleByCommunity[c.id] ?? null,
+        pendingByCommunity.has(c.id),
+        inviteByCommunity.has(c.id),
+        favoriteByCommunity.has(c.id) && roleByCommunity[c.id] != null
       )
     );
+
+    if (groupKind === "club") {
+      mapped.sort((a, b) => {
+        if (a.is_favorite !== b.is_favorite) return a.is_favorite ? -1 : 1;
+        return b.member_count - a.member_count;
+      });
+    }
+
+    setCommunities(mapped);
     setLoading(false);
   }, [groupKind, supabase]);
 
@@ -138,6 +159,19 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
       c.description.toLowerCase().includes(q)
     );
   });
+
+  function handleFavoriteChange(communityId: string, favorited: boolean) {
+    setCommunities((prev) => {
+      const next = prev.map((c) =>
+        c.id === communityId ? { ...c, is_favorite: favorited } : c
+      );
+      if (groupKind !== "club") return next;
+      return [...next].sort((a, b) => {
+        if (a.is_favorite !== b.is_favorite) return a.is_favorite ? -1 : 1;
+        return b.member_count - a.member_count;
+      });
+    });
+  }
 
   return (
     <>
@@ -209,7 +243,7 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {filtered.map((c) => (
               <li key={c.id}>
-                <CommunityCard community={c} />
+                <CommunityCard community={c} onFavoriteChange={handleFavoriteChange} />
               </li>
             ))}
           </ul>

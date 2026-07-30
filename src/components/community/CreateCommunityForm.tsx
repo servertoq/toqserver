@@ -22,6 +22,7 @@ import {
   COMMUNITY_COVER_HINT,
   processCommunityCoverSelection,
 } from "@/lib/communityCoverImage";
+import { parseClubContactInputs } from "@/lib/clubContact";
 
 export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: CommunityGroupKind }) {
   const config = COMMUNITY_GROUP_CONFIG[groupKind];
@@ -39,6 +40,8 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
   const [coverProcessing, setCoverProcessing] = useState(false);
   const [address, setAddress] = useState<AddressFields>(EMPTY_ADDRESS);
   const [hours, setHours] = useState<DayHours[]>(defaultOperatingHours);
+  const [instagram, setInstagram] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const { isSubmitting: loading, guard } = useSingleSubmit();
   const [error, setError] = useState<string | null>(null);
   const [planUsage, setPlanUsage] = useState<PlanUsage | null>(null);
@@ -89,6 +92,12 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
       return;
     }
 
+    const contact = isClub ? parseClubContactInputs(instagram, whatsapp) : null;
+    if (contact && !contact.ok) {
+      setError(contact.error);
+      return;
+    }
+
     if (loading) return;
     setError(null);
 
@@ -103,6 +112,7 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
       }
 
       const addrDb = isClub ? addressToDbPayload(address) : null;
+      const contactValue = contact && contact.ok ? contact.value : null;
       const { data: created, error: insertErr } = await supabase.rpc("create_community", {
         p_name: trimmedName,
         p_slug: slug,
@@ -132,6 +142,25 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
             "Não foi possível criar. Execute as migrations 020 e 021 no Supabase."
         );
         return;
+      }
+
+      if (isClub && contactValue && (contactValue.instagram_url || contactValue.contact_whatsapp)) {
+        const { error: contactErr } = await supabase
+          .from("communities")
+          .update({
+            instagram_url: contactValue.instagram_url,
+            contact_whatsapp: contactValue.contact_whatsapp,
+          })
+          .eq("id", community.id);
+        if (contactErr) {
+          setError(
+            contactErr.message.includes("instagram_url") || contactErr.message.includes("contact_whatsapp")
+              ? "Clube criado, mas o contato não foi salvo. Rode a migration 069 no Supabase."
+              : contactErr.message
+          );
+          router.push(groupDetailHref(groupKind, community.slug));
+          return;
+        }
       }
 
       if (coverFile) {
@@ -230,7 +259,7 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
           </div>
 
           {!isClub && (
-          <fieldset className="rounded-xl border border-slate-200 bg-white p-4">
+          <fieldset className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4">
             <legend className="px-1 text-xs font-semibold text-[var(--toq-navy)]">Visibilidade</legend>
             <label className="mt-2 flex cursor-pointer items-start gap-3">
               <input
@@ -269,7 +298,33 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
             <>
               <AddressForm value={address} onChange={setAddress} />
               <OperatingHoursForm value={hours} onChange={setHours} />
-              <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-[var(--toq-text-muted)]">
+              <fieldset className="space-y-3 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4">
+                <legend className="px-1 text-xs font-semibold text-[var(--toq-navy)]">
+                  Contato <span className="font-normal text-[var(--toq-text-muted)]">(opcional)</span>
+                </legend>
+                <label className="block">
+                  <span className="text-xs font-semibold text-[var(--toq-navy)]">Instagram</span>
+                  <input
+                    value={instagram}
+                    onChange={(e) => setInstagram(e.target.value)}
+                    placeholder="@seuclube ou link"
+                    maxLength={120}
+                    className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs font-semibold text-[var(--toq-navy)]">WhatsApp</span>
+                  <input
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                    placeholder="(11) 99999-9999"
+                    inputMode="tel"
+                    maxLength={20}
+                    className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
+                  />
+                </label>
+              </fieldset>
+              <p className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] px-4 py-3 text-xs text-[var(--toq-text-muted)]">
                 Este clube será privado. Entrada apenas com aprovação ou convite de admin/moderador.
               </p>
             </>

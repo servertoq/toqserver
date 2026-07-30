@@ -5,16 +5,24 @@ import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { canModerate } from "@/lib/community";
+import {
+  downloadClubRankingReport,
+  generateClubRankingReportFile,
+} from "@/lib/clubRankingReport";
+import { createPostWithMedia } from "@/lib/posts";
+import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import type { CommunityMember, CommunityMemberRole } from "@/types/community";
 import type { ClubRankingCategory, ClubRankingEntry } from "@/types/clubFeatures";
 import { ClubRankingPodium } from "./ClubRankingPodium";
 
 type Props = {
   communityId: string;
+  clubName: string;
   myRole: CommunityMemberRole | null;
+  onPublished?: () => void;
 };
 
-export function ClubRankingPanel({ communityId, myRole }: Props) {
+export function ClubRankingPanel({ communityId, clubName, myRole, onPublished }: Props) {
   const supabase = createClient();
   const profile = useAppProfile();
   const canManage = canModerate(myRole);
@@ -29,6 +37,10 @@ export function ClubRankingPanel({ communityId, myRole }: Props) {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ClubRankingCategory | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [reportBusyId, setReportBusyId] = useState<string | null>(null);
+  const [reportMessage, setReportMessage] = useState<string | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const { isSubmitting: reporting, guard: guardReport } = useSingleSubmit();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -146,29 +158,116 @@ export function ClubRankingPanel({ communityId, myRole }: Props) {
     await load();
   }
 
+  async function buildReport(cat: ClubRankingCategory) {
+    const entries = entriesByCategory[cat.id] ?? [];
+    if (entries.length === 0) {
+      throw new Error("Adicione pontuações antes de gerar o relatório.");
+    }
+    return generateClubRankingReportFile({
+      clubName,
+      categoryName: cat.name,
+      unitLabel: cat.unit_label,
+      entries,
+    });
+  }
+
+  async function handleDownloadReport(cat: ClubRankingCategory) {
+    if (reporting) return;
+    setReportMessage(null);
+    setReportError(null);
+    setReportBusyId(cat.id);
+    await guardReport(async () => {
+      try {
+        const file = await buildReport(cat);
+        downloadClubRankingReport(file);
+        setReportMessage(`Relatório de "${cat.name}" baixado.`);
+      } catch (err) {
+        setReportError(err instanceof Error ? err.message : "Não foi possível gerar o relatório.");
+      } finally {
+        setReportBusyId(null);
+      }
+    });
+  }
+
+  async function handlePublishReport(cat: ClubRankingCategory) {
+    if (reporting) return;
+    setReportMessage(null);
+    setReportError(null);
+    setReportBusyId(cat.id);
+    await guardReport(async () => {
+      try {
+        const file = await buildReport(cat);
+        const { error } = await createPostWithMedia(supabase, {
+          authorId: profile.id,
+          body: `🏆 Ranking — ${cat.name}\nMedido em: ${cat.unit_label}`,
+          postType: "player",
+          title: null,
+          visibility: "private",
+          communityId,
+          eventDate: null,
+          eventTime: null,
+          files: [file],
+        });
+        if (error) {
+          setReportError(error);
+          return;
+        }
+        setReportMessage(`Relatório de "${cat.name}" publicado no feed do clube.`);
+        onPublished?.();
+      } catch (err) {
+        setReportError(err instanceof Error ? err.message : "Não foi possível publicar o relatório.");
+      } finally {
+        setReportBusyId(null);
+      }
+    });
+  }
+
   if (loading) {
     return <p className="mt-4 text-sm text-[var(--toq-text-muted)]">Carregando ranking…</p>;
   }
 
   return (
     <div className="mt-4 space-y-6">
-      <h2 className="text-sm font-bold text-[var(--toq-navy)]">Ranking do clube</h2>
+      <div>
+        <h2 className="text-sm font-bold text-[var(--toq-navy)]">Ranking do clube</h2>
+        {canManage && (
+          <p className="mt-1 text-[11px] text-[var(--toq-text-muted)]">
+            Admin e moderadores podem gerar um banner com a logo Toq e publicar no feed.
+          </p>
+        )}
+      </div>
+
+      {(reportMessage || reportError) && (
+        <p
+          className={`rounded-lg px-3 py-2 text-xs ${
+            reportError
+              ? "bg-red-500/10 text-red-500"
+              : "bg-[var(--toq-accent)]/10 text-[var(--toq-accent)]"
+          }`}
+          role="status"
+        >
+          {reportError ?? reportMessage}
+        </p>
+      )}
 
       {canManage && (
-        <form onSubmit={addCategory} className="rounded-xl border border-slate-200 bg-white p-4">
+        <form
+          onSubmit={addCategory}
+          className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4"
+        >
           <p className="text-xs font-semibold text-[var(--toq-navy)]">Nova categoria</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <input
               value={newCatName}
               onChange={(e) => setNewCatName(e.target.value)}
               placeholder="Ex.: Pontos mensais, Jogos no clube…"
-              className="min-w-[180px] flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="min-w-[180px] flex-1 rounded-lg toq-input px-3 py-2 text-sm"
             />
             <input
               value={newCatUnit}
               onChange={(e) => setNewCatUnit(e.target.value)}
               placeholder="Unidade (pontos, jogos…)"
-              className="w-32 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="w-32 rounded-lg toq-input px-3 py-2 text-sm"
             />
             <button
               type="submit"
@@ -182,7 +281,7 @@ export function ClubRankingPanel({ communityId, myRole }: Props) {
       )}
 
       {categories.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+        <div className="rounded-2xl border border-dashed border-[var(--toq-border)] bg-[var(--toq-surface)] p-8 text-center">
           <p className="text-sm font-semibold text-[var(--toq-navy)]">Nenhuma categoria no ranking</p>
           {canManage && (
             <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
@@ -191,25 +290,28 @@ export function ClubRankingPanel({ communityId, myRole }: Props) {
           )}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
           {categories.map((cat) => {
             const entries = entriesByCategory[cat.id] ?? [];
+            const busy = reporting && reportBusyId === cat.id;
 
             return (
               <section
                 key={cat.id}
-                className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                className="flex flex-col overflow-hidden rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] shadow-sm"
               >
-                <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 bg-slate-50 px-4 py-3">
+                <div className="flex flex-wrap items-start justify-between gap-2 border-b border-[var(--toq-border)] bg-[var(--toq-surface)] px-4 py-3">
                   <div className="min-w-0">
                     <h3 className="truncate font-bold text-[var(--toq-navy)]">{cat.name}</h3>
-                    <p className="text-[11px] text-[var(--toq-text-muted)]">Medido em: {cat.unit_label}</p>
+                    <p className="text-[11px] text-[var(--toq-text-muted)]">
+                      Medido em: {cat.unit_label}
+                    </p>
                   </div>
                   {canManage && (
                     <button
                       type="button"
                       onClick={() => setDeleteTarget(cat)}
-                      className="shrink-0 text-xs font-semibold text-red-600"
+                      className="shrink-0 text-xs font-semibold text-red-500"
                     >
                       Excluir
                     </button>
@@ -223,14 +325,39 @@ export function ClubRankingPanel({ communityId, myRole }: Props) {
                   onRemove={(id) => void removeEntry(id)}
                 />
 
+                {canManage && (
+                  <div className="flex flex-wrap gap-2 border-t border-[var(--toq-border)] px-3 py-3">
+                    <button
+                      type="button"
+                      disabled={busy || entries.length === 0}
+                      onClick={() => void handleDownloadReport(cat)}
+                      className="rounded-lg toq-btn-outline px-3 py-1.5 text-[11px] font-bold disabled:opacity-50"
+                    >
+                      {busy ? "Gerando…" : "Baixar banner"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy || entries.length === 0}
+                      onClick={() => void handlePublishReport(cat)}
+                      className="rounded-lg toq-btn-primary px-3 py-1.5 text-[11px] font-bold text-white disabled:opacity-50"
+                    >
+                      {busy ? "Publicando…" : "Publicar no feed"}
+                    </button>
+                  </div>
+                )}
+
                 {canManage && members.length > 0 && (
-                  <div className="mt-auto flex flex-col gap-2 border-t border-slate-100 bg-slate-50/50 px-3 py-3">
+                  <div className="mt-auto flex flex-col gap-2 border-t border-[var(--toq-border)] bg-[var(--toq-surface)]/50 px-3 py-3">
                     <label className="block">
-                      <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">Membro</span>
+                      <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">
+                        Membro
+                      </span>
                       <select
                         value={addUserId[cat.id] ?? ""}
-                        onChange={(e) => setAddUserId((p) => ({ ...p, [cat.id]: e.target.value }))}
-                        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                        onChange={(e) =>
+                          setAddUserId((p) => ({ ...p, [cat.id]: e.target.value }))
+                        }
+                        className="mt-0.5 w-full rounded-lg toq-input px-2 py-1.5 text-sm"
                       >
                         <option value="">Selecionar…</option>
                         {members.map((m) => (
@@ -248,9 +375,11 @@ export function ClubRankingPanel({ communityId, myRole }: Props) {
                         <input
                           type="text"
                           value={addScore[cat.id] ?? ""}
-                          onChange={(e) => setAddScore((p) => ({ ...p, [cat.id]: e.target.value }))}
+                          onChange={(e) =>
+                            setAddScore((p) => ({ ...p, [cat.id]: e.target.value }))
+                          }
                           placeholder="0"
-                          className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                          className="mt-0.5 w-full rounded-lg toq-input px-2 py-1.5 text-sm"
                         />
                       </label>
                       <button

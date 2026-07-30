@@ -4,11 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useAppProfile } from "@/components/app/AppShell";
-import {
-  addMinutesToTimeInput,
-  formatTimeInputAsTyping,
-  parseTimeInputToMinutes,
-} from "@/lib/courts";
 import type { ClubCourt, ClubCourtBlock, ClubCourtHours } from "@/types/clubFeatures";
 
 const SLOT_STEP = 60;
@@ -188,8 +183,7 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
   const todayISO = toISODate(new Date());
   const [weekStart, setWeekStart] = useState(() => startOfWeekMonday(new Date()));
   const [selectedDate, setSelectedDate] = useState(todayISO);
-  const [formStart, setFormStart] = useState("08:00");
-  const [formEnd, setFormEnd] = useState("10:00");
+  const [selectedStarts, setSelectedStarts] = useState<number[]>([]);
   const [reason, setReason] = useState("Locado");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -261,6 +255,41 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
     [blocks, hours, selectedDate, selectedWeekday]
   );
 
+  useEffect(() => {
+    setSelectedStarts([]);
+    setError(null);
+  }, [selectedDate]);
+
+  const selectedSlots = useMemo(
+    () =>
+      daySlots.filter(
+        (s) => s.status === "available" && selectedStarts.includes(s.startMin)
+      ),
+    [daySlots, selectedStarts]
+  );
+
+  const selectedRanges = useMemo(() => {
+    if (selectedSlots.length === 0) return [] as Array<{ startMin: number; endMin: number }>;
+    const sorted = [...selectedSlots].sort((a, b) => a.startMin - b.startMin);
+    const ranges: Array<{ startMin: number; endMin: number }> = [];
+    for (const slot of sorted) {
+      const last = ranges[ranges.length - 1];
+      if (last && last.endMin === slot.startMin) {
+        last.endMin = slot.endMin;
+      } else {
+        ranges.push({ startMin: slot.startMin, endMin: slot.endMin });
+      }
+    }
+    return ranges;
+  }, [selectedSlots]);
+
+  const selectionSummary = useMemo(() => {
+    if (selectedRanges.length === 0) return null;
+    return selectedRanges
+      .map((r) => `${minutesToHHMM(r.startMin)}–${minutesToHHMM(r.endMin)}`)
+      .join(", ");
+  }, [selectedRanges]);
+
   const selectedDayFill = useMemo(() => {
     const blocked = countBlockedSlots(daySlots);
     return dayFillStatus(blocked, daySlots.length);
@@ -293,36 +322,42 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
     setSelectedDate(todayISO);
   }
 
-  async function createBlock(startMin: number, endMin: number) {
-    if (!canManage) return;
-    if (endMin <= startMin) {
-      setError("O horário final deve ser depois do inicial.");
-      return;
+  async function createBlocks(
+    ranges: Array<{ startMin: number; endMin: number }>
+  ) {
+    if (!canManage || ranges.length === 0) return;
+
+    for (const range of ranges) {
+      if (range.endMin <= range.startMin) {
+        setError("O horário final deve ser depois do inicial.");
+        return;
+      }
+      if (rangeOverlapsExistingBlocks(blocks, selectedDate, range.startMin, range.endMin)) {
+        setError("Um dos horários selecionados já está reservado neste dia.");
+        return;
+      }
     }
-    if (rangeOverlapsExistingBlocks(blocks, selectedDate, startMin, endMin)) {
-      setError("Este horário já está reservado neste dia para esta quadra.");
-      return;
-    }
+
     setSaving(true);
     setError(null);
     try {
-      const startTs = new Date(`${selectedDate}T${minutesToHHMM(startMin)}:00`);
-      const endTs = new Date(`${selectedDate}T${minutesToHHMM(endMin)}:00`);
-      const { error: blkErr } = await supabase.from("club_court_blocks").insert({
+      const rows = ranges.map((range) => ({
         court_id: court.id,
-        start_ts: startTs.toISOString(),
-        end_ts: endTs.toISOString(),
+        start_ts: new Date(`${selectedDate}T${minutesToHHMM(range.startMin)}:00`).toISOString(),
+        end_ts: new Date(`${selectedDate}T${minutesToHHMM(range.endMin)}:00`).toISOString(),
         reason: reason.trim() || null,
         created_by: profile.id,
-      });
+      }));
+      const { error: blkErr } = await supabase.from("club_court_blocks").insert(rows);
       if (blkErr) {
         setError(
           blkErr.message.includes("Horário já reservado")
-            ? "Este horário já está reservado neste dia para esta quadra."
+            ? "Um dos horários selecionados já está reservado neste dia."
             : blkErr.message
         );
         return;
       }
+      setSelectedStarts([]);
       await refreshLocalBlocks();
       onChanged();
     } finally {
@@ -348,18 +383,6 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
     }
   }
 
-  function handleFormStartChange(raw: string) {
-    const formatted = formatTimeInputAsTyping(raw);
-    setFormStart(formatted);
-    if (parseTimeInputToMinutes(formatted) !== null) {
-      setFormEnd(addMinutesToTimeInput(formatted, SLOT_STEP));
-    }
-  }
-
-  function handleFormEndChange(raw: string) {
-    setFormEnd(formatTimeInputAsTyping(raw));
-  }
-
   function handleSlotClick(slot: AgendaSlot) {
     if (saving) return;
 
@@ -374,9 +397,20 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
 
     if (!canManage) return;
 
-    setFormStart(slot.label);
-    setFormEnd(minutesToHHMM(slot.endMin));
-    void createBlock(slot.startMin, slot.endMin);
+    setError(null);
+    setSelectedStarts((prev) =>
+      prev.includes(slot.startMin)
+        ? prev.filter((m) => m !== slot.startMin)
+        : [...prev, slot.startMin].sort((a, b) => a - b)
+    );
+  }
+
+  async function handleSaveBooking() {
+    if (selectedRanges.length === 0) {
+      setError("Selecione um ou mais horários livres na grade.");
+      return;
+    }
+    await createBlocks(selectedRanges);
   }
 
   return (
@@ -502,52 +536,6 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
             </span>
           </div>
 
-          {canManage && daySlots.length > 0 && (
-            <div className="mt-3 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-3">
-              <p className="text-[11px] font-bold text-[var(--toq-navy)]">Marcar locação</p>
-              <div className="mt-2 flex flex-wrap items-end gap-2">
-                <label className="min-w-[5.5rem] flex-1">
-                  <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">Início</span>
-                  <input
-                    value={formStart}
-                    onChange={(e) => handleFormStartChange(e.target.value)}
-                    inputMode="numeric"
-                    placeholder="08:00"
-                    maxLength={5}
-                    className="toq-input mt-0.5 w-full px-2 py-1.5 text-sm"
-                  />
-                </label>
-                <label className="min-w-[5.5rem] flex-1">
-                  <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">Fim</span>
-                  <input
-                    value={formEnd}
-                    onChange={(e) => handleFormEndChange(e.target.value)}
-                    inputMode="numeric"
-                    placeholder="10:00"
-                    maxLength={5}
-                    className="toq-input mt-0.5 w-full px-2 py-1.5 text-sm"
-                  />
-                </label>
-                <button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => {
-                    const start = parseTimeInputToMinutes(formStart);
-                    const end = parseTimeInputToMinutes(formEnd);
-                    if (start === null || end === null) {
-                      setError("Use horários válidos (ex.: 08:00 ou 0800).");
-                      return;
-                    }
-                    void createBlock(start, end);
-                  }}
-                  className="toq-btn-primary shrink-0 rounded-lg px-4 py-1.5 text-xs font-bold disabled:opacity-50"
-                >
-                  Marcar locado
-                </button>
-              </div>
-            </div>
-          )}
-
           {daySlots.length === 0 ? (
             <p className="mt-3 rounded-xl border border-dashed border-[var(--toq-border)] bg-[var(--toq-surface)] p-4 text-center text-sm text-[var(--toq-text-muted)]">
               Quadra fechada neste dia.
@@ -556,6 +544,7 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
             <div className="mt-3 grid grid-cols-4 gap-1.5 sm:grid-cols-6 md:grid-cols-7">
               {daySlots.map((slot) => {
                 const blocked = slot.status === "blocked";
+                const selected = !blocked && selectedStarts.includes(slot.startMin);
                 return (
                   <button
                     key={slot.startMin}
@@ -565,7 +554,9 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
                     className={`rounded-md border px-1 py-1.5 text-[11px] font-bold transition disabled:cursor-default ${
                       blocked
                         ? "border-red-500/50 bg-red-500/20 text-red-800 dark:text-red-200 hover:bg-red-500/30"
-                        : "border-emerald-500/35 bg-emerald-500/10 text-[var(--toq-navy)] hover:border-emerald-500/60"
+                        : selected
+                          ? "border-[var(--toq-accent)] bg-[var(--toq-accent)] text-white"
+                          : "border-emerald-500/35 bg-emerald-500/10 text-[var(--toq-navy)] hover:border-emerald-500/60"
                     }`}
                   >
                     {slot.label}
@@ -575,9 +566,14 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
             </div>
           )}
 
-          {canManage && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <label className="min-w-[10rem] flex-1">
+          {canManage && daySlots.length > 0 && (
+            <div className="mt-3 space-y-2 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-3">
+              <p className="text-[11px] text-[var(--toq-text-muted)]">
+                {selectionSummary
+                  ? `${selectedSlots.length} horário(s): ${selectionSummary}`
+                  : "Clique nos horários livres para selecionar (pode marcar vários)."}
+              </p>
+              <label className="block">
                 <span className="text-[10px] font-semibold text-[var(--toq-text-muted)]">Motivo</span>
                 <input
                   value={reason}
@@ -586,6 +582,14 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
                   className="toq-input mt-0.5 w-full px-2 py-1.5 text-sm"
                 />
               </label>
+              <button
+                type="button"
+                disabled={saving || selectedRanges.length === 0}
+                onClick={() => void handleSaveBooking()}
+                className="toq-btn-primary w-full rounded-lg px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
+              >
+                {saving ? "Salvando…" : "Salvar agendamento"}
+              </button>
             </div>
           )}
 

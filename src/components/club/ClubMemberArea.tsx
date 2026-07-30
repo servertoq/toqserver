@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Community, CommunityMemberRole } from "@/types/community";
 import type { ClubTab } from "@/types/clubFeatures";
-import type { FeedPost, PostType, PostVisibility } from "@/types/feed";
+import type { FeedPost } from "@/types/feed";
+import type { CreatePostSubmitData } from "@/lib/createPost";
 import { ClubTabs } from "./ClubTabs";
 import { ClubFeedPanel } from "./ClubFeedPanel";
 import { ClubShopPanel } from "./ClubShopPanel";
@@ -22,16 +23,8 @@ type Props = {
   posting: boolean;
   highlightPostId: string | null;
   highlightCommentId: string | null;
-  onSubmitPost: (data: {
-    body: string;
-    postType: PostType;
-    title: string | null;
-    visibility: PostVisibility;
-    eventDate: string | null;
-    eventTime: string | null;
-    files: File[];
-  }) => void;
-  onLikeToggle: (postId: string, liked: boolean) => void;
+  onSubmitPost: (data: CreatePostSubmitData) => void | Promise<void>;
+  onLikeToggle: (postId: string, liked: boolean) => void | Promise<void>;
   onEditPost?: (post: FeedPost) => void;
   onDeletePost?: (post: FeedPost) => void;
 };
@@ -111,7 +104,13 @@ export function ClubMemberArea({
             myRole={myRole}
           />
         )}
-        {tab === "ranking" && <ClubRankingPanel communityId={community.id} myRole={myRole} />}
+        {tab === "ranking" && (
+          <ClubRankingPanel
+            communityId={community.id}
+            clubName={community.name}
+            myRole={myRole}
+          />
+        )}
         {tab === "courts" && (
           <ClubCourtsPanel
             communityId={community.id}

@@ -9,7 +9,6 @@ export function CourtCard({ court }: { court: CourtWithOwner }) {
       className="block overflow-hidden toq-card p-4 shadow-sm transition hover:border-[var(--toq-sky)]/40 hover:shadow-md"
     >
       <h3 className="font-bold text-[var(--toq-navy)]">{court.name}</h3>
-      <p className="mt-1 text-xs font-semibold text-[var(--toq-accent)]">{court.size_label}</p>
       <p className="mt-2 line-clamp-2 text-sm text-[var(--toq-text-muted)]">{court.description}</p>
       <p className="mt-3 text-xs text-[var(--toq-text-muted)]">{formatCourtAddress(court)}</p>
       {court.owner && (

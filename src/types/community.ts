@@ -24,6 +24,9 @@ export type Community = {
   kind: CommunityGroupKind;
   shop_enabled: boolean;
   shop_whatsapp: string | null;
+  /** Contato do clube (opcional). */
+  instagram_url?: string | null;
+  contact_whatsapp?: string | null;
   member_count: number;
   accent_color: string;
   created_by: string | null;
