@@ -914,8 +914,18 @@ export function ClubCourtsPanel({
   useEffect(() => {
     if (loading || !canManage || !autoOpen || autoOpenHandled.current) return;
     autoOpenHandled.current = true;
-    if (autoOpen === "nova") setEditing(null);
-    else if (autoOpen === "agenda") openAgendaManager(courts);
+    if (autoOpen === "nova") {
+      setEditing(null);
+    } else if (autoOpen === "agenda") {
+      setInfo(null);
+      if (courts.length === 0) {
+        setInfo("Cadastre uma quadra com o botão “+ Nova quadra” antes de gerenciar a agenda.");
+      } else if (courts.length === 1) {
+        setAgendaCourtId(courts[0].id);
+      } else {
+        setAgendaPickerOpen(true);
+      }
+    }
     onAutoOpenConsumed?.();
   }, [autoOpen, canManage, courts, loading, onAutoOpenConsumed]);
 

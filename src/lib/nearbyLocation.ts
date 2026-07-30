@@ -285,8 +285,8 @@ export async function resolveUserLocationAnchor(
   let longitude: number | null = device?.longitude ?? null;
   let city = profile.city;
   let state = profile.state;
-  let cep = profile.cep;
-  let source: UserLocationAnchor["source"] = device ? "device" : "profile";
+  const cep = profile.cep;
+  const source: UserLocationAnchor["source"] = device ? "device" : "profile";
 
   if (device && (!city || !state)) {
     const reversed = await reverseGeocodeCity(device.latitude, device.longitude);
