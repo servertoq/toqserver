@@ -985,7 +985,7 @@ export function ClubCourtsPanel({
             </Link>
             <button
               type="button"
-              onClick={openAgendaManager}
+              onClick={() => openAgendaManager()}
               disabled={courts.length === 0}
               title={courts.length === 0 ? "Cadastre uma quadra antes" : "Abrir agenda para marcar locações"}
               className="inline-flex h-8 items-center justify-center rounded-lg toq-btn-outline px-3 text-xs font-bold leading-none disabled:cursor-not-allowed disabled:opacity-40"
