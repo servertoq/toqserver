@@ -376,7 +376,7 @@ BEGIN
     END IF;
 
     v_notes := format(
-      'Professor: @%s%nFormato: %s%nDuração: %s min%nLocal: %s',
+      E'Professor: @%s\nFormato: %s\nDuração: %s min\nLocal: %s',
       COALESCE(v_coach_username, 'professor'),
       v_format_label,
       p_duration_minutes::TEXT,
