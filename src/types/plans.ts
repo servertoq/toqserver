@@ -11,6 +11,11 @@ export type UserPlan =
 
 export type PlanUsage = {
   plan: UserPlan;
+  stored_plan?: UserPlan;
+  plan_active?: boolean;
+  plan_activated_at?: string | null;
+  plan_expires_at?: string | null;
+  plan_billing_mode?: "pix" | "card_once" | "card_recurring" | null;
   show_plan_badge: boolean;
   communities_count: number;
   communities_max: number;

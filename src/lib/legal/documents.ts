@@ -55,7 +55,8 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
       {
         heading: "5. Planos e pagamentos",
         paragraphs: [
-          "Há um plano gratuito e planos pagos (por exemplo Professor, Proprietário e variantes). Upgrades cobram a diferença de valor de forma pontual via Stripe — não se trata, no modelo atual, de assinatura mensal automática recorrente.",
+          "Há um plano gratuito e planos pagos (Professor, Promotor, Proprietário e variantes), cada um válido por 30 dias. Pagamentos são processados pelo Mercado Pago (Pix e cartão). Cartão pode ser avulso ou com renovação automática; Pix exige renovação manual. Sem renovação/pagamento, as funções do plano são desligadas ao vencer.",
+          "Nos primeiros 15 dias do ciclo, upgrade para um plano superior cobra apenas a diferença de preço. Após 15 dias, o upgrade cobra o valor integral do novo plano (novo ciclo de 30 dias). Renovação antecipada soma 30 dias ao que ainda resta de validade.",
           "Preços e benefícios podem mudar; alterações valem para novas cobranças após a divulgação.",
           "Regras de reembolso estão em nossa Política de Reembolso.",
         ],
@@ -114,7 +115,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
           "Perfil e uso: posts, comentários, comunidades, mensagens, preferências (ex.: tema claro/escuro), cidade/UF do perfil",
           "Localização: coordenadas do dispositivo (GPS) quando você autoriza no navegador — para preencher cidade no perfil, ordenar conteúdo “perto de mim” e recursos de mapas; a permissão pode ser revogada a qualquer momento nas configurações do navegador",
           "Reservas de quadra: data/horário, quadra, clube, status da reserva, usuário que reservou e jogadores convidados (até 3), espelhados na agenda/partidas do perfil quando aplicável",
-          "Pagamentos: dados de cobrança processados pelo Stripe (nós não armazenamos número completo de cartão)",
+          "Pagamentos: dados de cobrança processados pelo Mercado Pago (Pix e cartão; nós não armazenamos número completo de cartão)",
           "Mapas: Google Maps ao cadastrar ou visualizar quadras, quando o recurso for utilizado",
           "Dados técnicos: IP, tipo de dispositivo/navegador, logs de segurança e cookies essenciais",
           "Login social: dados fornecidos pelo Google OAuth quando você escolhe essa opção",
@@ -135,7 +136,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
         ],
         bullets: [
           "Supabase — autenticação, banco de dados e armazenamento de arquivos",
-          "Stripe — processamento de pagamentos",
+          "Mercado Pago — processamento de pagamentos (Pix, cartão e assinaturas)",
           "Google — login OAuth e Maps (quando usados)",
           "Vercel e Cloudflare — hospedagem, CDN e proteção do site",
           "Resend — envio de e-mails transacionais de autenticação (quando configurado)",
@@ -216,7 +217,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
       {
         heading: "4. Terceiros",
         paragraphs: [
-          "Ao usar Google Login ou Google Maps, esses serviços podem definir cookies próprios conforme suas políticas. Recomendamos consultar as políticas do Google e do Stripe quando houver pagamento.",
+          "Ao usar Google Login, Google Maps ou Mercado Pago, esses serviços podem definir cookies próprios conforme suas políticas.",
         ],
       },
       {
@@ -234,7 +235,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
       {
         heading: "1. O que cobramos",
         paragraphs: [
-          `Na ${LEGAL_SITE.brand}, upgrades de plano são cobrados de forma pontual (pagamento único da diferença entre planos), processados pelo Stripe. Não há, no modelo atual, renovação automática mensal de assinatura.`,
+          `Na ${LEGAL_SITE.brand}, planos pagos têm ciclo de 30 dias. Cobranças (Pix, cartão avulso ou recorrente) são processadas pelo Mercado Pago. Sem renovação, o plano é desativado automaticamente ao vencer.`,
           disclaimer,
         ],
       },
@@ -255,7 +256,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
       {
         heading: "4. Como o estorno é feito",
         paragraphs: [
-          "Estornos aprovados são processados via Stripe, no mesmo meio de pagamento quando possível. O prazo de crédito na fatura/conta depende do banco ou cartão.",
+          "Estornos aprovados são processados via Mercado Pago, no mesmo meio de pagamento quando possível. O prazo de crédito na fatura/conta depende do banco, cartão ou provedor Pix.",
           "Após reembolso integral por arrependimento, o plano poderá retornar ao estado anterior.",
         ],
       },
@@ -280,7 +281,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
           "Conexões HTTPS e infraestrutura atrás de CDN/proxy (Cloudflare) quando em produção",
           "Cabeçalhos de segurança HTTP (CSP, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, HSTS)",
           "Autenticação e banco gerenciados por provedores especializados (Supabase)",
-          "Pagamentos processados pelo Stripe (dados sensíveis de cartão não ficam em nossos servidores)",
+          "Pagamentos processados pelo Mercado Pago (dados sensíveis de cartão não ficam em nossos servidores)",
           "Controles de acesso e regras no servidor para funções sensíveis (ex.: banimento, planos)",
         ],
       },

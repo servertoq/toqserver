@@ -10,8 +10,8 @@ export const LEGAL_SITE = {
   whatsappUrl: "https://wa.me/5511940873795",
   /** Operador atual: pessoa física sob a marca Toq Tennis (sem CNPJ). */
   operatorLabel: "pessoa física responsável pela marca Toq Tennis",
-  effectiveDate: "30 de julho de 2026",
-  effectiveDateIso: "2026-07-30",
+  effectiveDate: "31 de julho de 2026",
+  effectiveDateIso: "2026-07-31",
 } as const;
 
 export type LegalDocId =

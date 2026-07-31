@@ -16,3 +16,12 @@ export function createAdminClient() {
 export function isStripeConfigured() {
   return Boolean(process.env.STRIPE_SECRET_KEY);
 }
+
+export function isMercadoPagoConfigured() {
+  return Boolean(process.env.MERCADOPAGO_ACCESS_TOKEN);
+}
+
+/** Preferência: Mercado Pago (billing atual). */
+export function isBillingConfigured() {
+  return isMercadoPagoConfigured() || isStripeConfigured();
+}
