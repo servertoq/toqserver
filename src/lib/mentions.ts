@@ -1,7 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FeedProfile } from "@/types/feed";
 
-const MENTION_RE = /@([a-zA-Z0-9_]{3,})/g;
+/**
+ * Menção @usuario só vale se o @ não fizer parte de e-mail/palavra
+ * (ex.: suporte@toqtennis.com.br NÃO é menção).
+ * Exige início, espaço ou pontuação antes do @ — alinhado ao MentionTextarea.
+ */
+const MENTION_RE = /(?<![a-zA-Z0-9._%+-])@([a-zA-Z0-9_]{3,})\b/g;
 
 export function extractMentionUsernames(body: string): string[] {
   const found = new Set<string>();
