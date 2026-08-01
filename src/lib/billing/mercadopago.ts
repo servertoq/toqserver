@@ -14,6 +14,16 @@ export function getMercadoPagoClient() {
   return new MercadoPagoConfig({ accessToken, options: { timeout: 15000 } });
 }
 
+/** Preferência de checkout em modo teste (credenciais de teste no painel). */
+export function isMercadoPagoTestMode() {
+  const flag = process.env.MERCADOPAGO_TEST?.trim().toLowerCase();
+  if (flag === "1" || flag === "true" || flag === "yes") return true;
+  if (flag === "0" || flag === "false" || flag === "no") return false;
+  // Public Key de teste antiga começava com TEST-
+  const pk = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY ?? "";
+  return pk.startsWith("TEST-");
+}
+
 export function unitPriceFromCents(cents: number) {
   return Math.round(cents) / 100;
 }
@@ -39,6 +49,10 @@ export async function createCheckoutPreference(input: PreferenceInput) {
   const client = getMercadoPagoClient();
   const preference = new Preference(client);
 
+  const testMode = isMercadoPagoTestMode();
+  // Em teste, não amarra o e-mail real do Toq — o MP exige comprador de teste logado.
+  const testBuyerEmail = process.env.MERCADOPAGO_TEST_BUYER_EMAIL?.trim();
+
   const result = await preference.create({
     body: {
       items: [
@@ -51,7 +65,11 @@ export async function createCheckoutPreference(input: PreferenceInput) {
           currency_id: "BRL",
         },
       ],
-      payer: { email: input.email },
+      ...(testMode
+        ? testBuyerEmail
+          ? { payer: { email: testBuyerEmail } }
+          : {}
+        : { payer: { email: input.email } }),
       external_reference: input.changeId,
       metadata: {
         change_id: input.changeId,
