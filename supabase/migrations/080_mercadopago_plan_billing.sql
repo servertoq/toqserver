@@ -311,7 +311,7 @@ $$;
 REVOKE ALL ON FUNCTION public.mark_plan_renewal_reminder_sent(UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.mark_plan_renewal_reminder_sent(UUID) TO service_role;
 
--- Downgrade limpa expiração
+-- Downgrade: bloqueado no meio do ciclo; free só após vencimento (ou limpeza se já expirou)
 CREATE OR REPLACE FUNCTION public.downgrade_user_plan(p_target public.user_plan)
 RETURNS void
 LANGUAGE plpgsql
@@ -321,12 +321,17 @@ AS $$
 DECLARE
   v_uid UUID := auth.uid();
   v_current public.user_plan;
+  v_expires TIMESTAMPTZ;
 BEGIN
   IF v_uid IS NULL THEN
     RAISE EXCEPTION 'Não autenticado';
   END IF;
 
-  SELECT plan INTO v_current FROM public.profiles WHERE id = v_uid;
+  SELECT plan, plan_expires_at
+  INTO v_current, v_expires
+  FROM public.profiles
+  WHERE id = v_uid;
+
   IF v_current IS NULL THEN
     RAISE EXCEPTION 'Perfil não encontrado';
   END IF;
@@ -339,6 +344,17 @@ BEGIN
     RAISE EXCEPTION 'Use o checkout para fazer upgrade de plano';
   END IF;
 
+  IF v_current IS DISTINCT FROM 'free'::public.user_plan
+     AND (v_expires IS NULL OR v_expires > now()) THEN
+    RAISE EXCEPTION
+      'Seu plano atual ainda está ativo. Ele só volta para Usuário automaticamente se você não renovar após o vencimento.';
+  END IF;
+
+  IF p_target IS DISTINCT FROM 'free'::public.user_plan THEN
+    RAISE EXCEPTION
+      'Após o vencimento, assine o plano desejado pelo checkout. Sem renovação, a conta volta para Usuário.';
+  END IF;
+
   IF NOT public.can_downgrade_to_plan(v_uid, p_target) THEN
     RAISE EXCEPTION 'Reduza ou remova conteúdo extra antes de mudar para este plano (comunidades, clube, quadras ou anúncio de aulas)';
   END IF;
@@ -347,10 +363,10 @@ BEGIN
   UPDATE public.profiles
   SET
     plan = p_target,
-    plan_expires_at = CASE WHEN p_target = 'free'::public.user_plan THEN NULL ELSE plan_expires_at END,
-    plan_activated_at = CASE WHEN p_target = 'free'::public.user_plan THEN NULL ELSE plan_activated_at END,
-    plan_billing_mode = CASE WHEN p_target = 'free'::public.user_plan THEN NULL ELSE plan_billing_mode END,
-    mp_preapproval_id = CASE WHEN p_target = 'free'::public.user_plan THEN NULL ELSE mp_preapproval_id END
+    plan_expires_at = NULL,
+    plan_activated_at = NULL,
+    plan_billing_mode = NULL,
+    mp_preapproval_id = NULL
   WHERE id = v_uid;
 
   INSERT INTO public.plan_changes (user_id, from_plan, to_plan, amount_cents, status, completed_at, provider)

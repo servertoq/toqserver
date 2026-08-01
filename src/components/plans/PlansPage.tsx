@@ -101,27 +101,6 @@ export function PlansPage() {
     });
   }
 
-  async function handleDowngrade(target: UserPlan) {
-    await guard(async () => {
-      setError(null);
-      setMessage(null);
-
-      const { error: rpcErr } = await supabase.rpc("downgrade_user_plan", {
-        p_target: target,
-      });
-
-      if (rpcErr) {
-        setError(rpcErr.message);
-        return;
-      }
-
-      setMessage(`Plano alterado para ${planLabel(target)}.`);
-      setCheckoutTarget(null);
-      await load();
-      router.refresh();
-    });
-  }
-
   function renderAction(target: UserPlan) {
     if (target === currentPlan) {
       const quote = quotePlanCharge(currentPlan, target, activatedAt);
@@ -165,14 +144,11 @@ export function PlansPage() {
 
     if (isDowngrade(currentPlan, target)) {
       return (
-        <button
-          type="button"
-          disabled={processing}
-          onClick={() => handleDowngrade(target)}
-          className="w-full rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-[var(--toq-navy)] hover:border-[var(--toq-accent)] disabled:opacity-50"
-        >
-          {processing ? "Alterando…" : "Mudar para este plano"}
-        </button>
+        <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-center text-xs leading-snug text-[var(--toq-text-muted)]">
+          {target === "free"
+            ? "Você volta para Usuário automaticamente se não renovar após o vencimento."
+            : "Não é possível reduzir o plano no meio do ciclo. Ao vencer sem renovar, a conta volta para Usuário."}
+        </p>
       );
     }
 
@@ -189,7 +165,7 @@ export function PlansPage() {
         <PageHeader
           kicker=""
           title="Planos"
-          subtitle="Cada plano vale 30 dias. Pix é renovação manual (avisamos 3 dias antes). Cartão pode ser recorrente. Upgrade nos primeiros 15 dias cobra só a diferença."
+          subtitle="Cada plano vale 30 dias. Pix é renovação manual (avisamos 3 dias antes). Cartão pode ser recorrente. Upgrade nos primeiros 15 dias cobra só a diferença. Não dá para reduzir o plano no meio do ciclo — sem renovação, volta para Usuário."
         />
 
         {currentPlan !== "free" && expiresLabel && (

@@ -8,6 +8,7 @@ import { AuthSplash } from "@/components/auth/AuthSplash";
 import { TermsAcceptCheckbox } from "@/components/legal/TermsAcceptCheckbox";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { getPublicAppUrl } from "@/lib/siteUrl";
 import { AvatarCropModal } from "@/components/profile/AvatarCropModal";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { GENDER_OPTIONS, type GenderType } from "@/lib/profile";
@@ -94,6 +95,14 @@ export function AuthScreen() {
     if (searchParams.get("complete") === "1") {
       setView("complete");
       setScreen("auth");
+    }
+    if (searchParams.get("error") === "auth") {
+      setView("login");
+      setScreen("auth");
+      setMessage({
+        type: "error",
+        text: "Não foi possível entrar com o Google. Tente de novo.",
+      });
     }
   }, [searchParams]);
 
@@ -259,7 +268,7 @@ export function AuthScreen() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/inicio`,
+          redirectTo: `${getPublicAppUrl()}/auth/callback?next=/inicio`,
         },
       });
 
@@ -337,7 +346,7 @@ export function AuthScreen() {
       const { error } = await supabase.auth.resetPasswordForEmail(
         forgotEmail.trim().toLowerCase(),
         {
-          redirectTo: `${window.location.origin}/auth/callback?next=/?reset=1`,
+          redirectTo: `${getPublicAppUrl()}/auth/callback?next=/?reset=1`,
         }
       );
 
@@ -476,7 +485,7 @@ export function AuthScreen() {
             birth_date: birthDate,
             gender,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${getPublicAppUrl()}/auth/callback`,
         },
       });
 
