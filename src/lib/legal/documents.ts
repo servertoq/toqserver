@@ -398,7 +398,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
           "Conexões HTTPS e infraestrutura atrás de CDN/proxy (Cloudflare) quando em produção",
           "Cabeçalhos de segurança HTTP (CSP, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, HSTS)",
           "Autenticação e banco gerenciados por provedores especializados (Supabase)",
-          "Pagamentos processados pelo Mercado Pago (dados sensíveis de cartão não ficam em nossos servidores)",
+          "Pagamentos processados pelo Mercado Pago (dados sensíveis de cartão não ficam em nossos servidores); webhooks validados com assinatura secreta",
           "Controles de acesso e regras no servidor para funções sensíveis (ex.: banimento, planos)",
         ],
       },

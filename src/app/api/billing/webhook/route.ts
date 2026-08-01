@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import {
   fetchMercadoPagoPayment,
   fetchMercadoPagoPreapproval,
+  getMercadoPagoWebhookSecret,
   isMercadoPagoConfigured,
+  verifyMercadoPagoWebhookSignature,
 } from "@/lib/billing/mercadopago";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -169,6 +171,36 @@ function normalizeTopic(raw: string) {
   return t;
 }
 
+function assertWebhookSignature(request: Request, dataId: string) {
+  const secret = getMercadoPagoWebhookSecret();
+  if (!secret) {
+    const isProd =
+      process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production";
+    if (isProd) {
+      console.error("[mp-webhook] MERCADOPAGO_WEBHOOK_SECRET ausente em produção");
+      return NextResponse.json(
+        { error: "Webhook sem secret configurada" },
+        { status: 503 }
+      );
+    }
+    console.warn("[mp-webhook] secret ausente — validação desligada (dev)");
+    return null;
+  }
+
+  const ok = verifyMercadoPagoWebhookSignature({
+    xSignature: request.headers.get("x-signature"),
+    xRequestId: request.headers.get("x-request-id"),
+    dataId,
+  });
+
+  if (!ok) {
+    console.warn("[mp-webhook] assinatura inválida");
+    return NextResponse.json({ error: "Assinatura inválida" }, { status: 401 });
+  }
+
+  return null;
+}
+
 export async function POST(request: Request) {
   if (!isMercadoPagoConfigured()) {
     return NextResponse.json({ error: "MP não configurado" }, { status: 503 });
@@ -191,6 +223,14 @@ export async function POST(request: Request) {
         topic = body.type || body.action || topic;
         id = body.data?.id != null ? String(body.data.id) : body.id != null ? String(body.id) : id;
       }
+    }
+
+    // data.id da query é o usado no manifesto oficial do MP
+    const dataIdForSignature = url.searchParams.get("data.id") || id;
+
+    if (dataIdForSignature) {
+      const rejected = assertWebhookSignature(request, dataIdForSignature);
+      if (rejected) return rejected;
     }
 
     if (!topic || !id) {

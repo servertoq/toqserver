@@ -1,9 +1,60 @@
+import { createHmac, timingSafeEqual } from "crypto";
 import { MercadoPagoConfig, Preference, PreApproval, Payment } from "mercadopago";
 import type { PlanChargeKind, PlanPaymentMode } from "@/lib/billing/plans";
 import type { UserPlan } from "@/types/plans";
 
 export function isMercadoPagoConfigured() {
   return Boolean(process.env.MERCADOPAGO_ACCESS_TOKEN);
+}
+
+export function getMercadoPagoWebhookSecret() {
+  return process.env.MERCADOPAGO_WEBHOOK_SECRET?.trim() || "";
+}
+
+/**
+ * Valida x-signature do webhook MP.
+ * Manifesto: id:{data.id};request-id:{x-request-id};ts:{ts};
+ * data.id alfanumérico deve ir em minúsculas (docs MP).
+ */
+export function verifyMercadoPagoWebhookSignature(input: {
+  xSignature: string | null;
+  xRequestId: string | null;
+  dataId: string;
+}): boolean {
+  const secret = getMercadoPagoWebhookSecret();
+  if (!secret) return false;
+
+  const xSignature = input.xSignature?.trim();
+  if (!xSignature) return false;
+
+  const parts: Record<string, string> = {};
+  for (const part of xSignature.split(",")) {
+    const idx = part.indexOf("=");
+    if (idx <= 0) continue;
+    const key = part.slice(0, idx).trim();
+    const value = part.slice(idx + 1).trim();
+    if (key && value) parts[key] = value;
+  }
+
+  const ts = parts.ts;
+  const hash = parts.v1;
+  if (!ts || !hash) return false;
+
+  const rawId = input.dataId.trim();
+  const dataId = /[a-zA-Z]/.test(rawId) ? rawId.toLowerCase() : rawId;
+  const requestId = (input.xRequestId ?? "").trim();
+
+  const manifest = `id:${dataId};request-id:${requestId};ts:${ts};`;
+  const expected = createHmac("sha256", secret).update(manifest).digest("hex");
+
+  try {
+    const a = Buffer.from(hash, "utf8");
+    const b = Buffer.from(expected, "utf8");
+    if (a.length !== b.length) return false;
+    return timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
 }
 
 export function getMercadoPagoClient() {
