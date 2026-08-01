@@ -632,6 +632,31 @@ body {
   pointer-events: none;
 }
 
+.post-crop-viewport {
+  position: relative;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: #0f172a;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  border: 1px solid color-mix(in srgb, var(--toq-border) 80%, transparent);
+}
+
+.post-crop-viewport:active {
+  cursor: grabbing;
+}
+
+.post-crop-image {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  max-width: none;
+  height: auto;
+  pointer-events: none;
+}
+
 /* ?? Club ranking podium ?? */
 
 .club-ranking-podium {

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { MentionTextarea } from "@/components/feed/MentionTextarea";
+import { PostImageCropModal } from "@/components/feed/PostImageCropModal";
 import {
   MAX_POST_MEDIA,
   mergePostMediaFiles,
@@ -15,6 +16,14 @@ import type { CreatePostSubmitData, EditPostSubmitData } from "@/lib/createPost"
 import type { FeedPost, PostType, PostVisibility } from "@/types/feed";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
+type MediaPreview = { url: string; kind: "image" | "video" };
+
+type CropSession = {
+  /** Índice no array de arquivos já mesclados, ou null se ainda na fila */
+  replaceIndex: number | null;
+  sourceUrl: string;
+  sourceFile: File;
+};
 type Props = {
   avatarUrl: string | null;
   username: string;
@@ -72,7 +81,7 @@ export function CreatePostBox({
   );
   const [pollError, setPollError] = useState<string | null>(null);
   const [mediaError, setMediaError] = useState<string | null>(null);
-  const [previews, setPreviews] = useState<{ url: string; kind: "image" | "video" }[]>([]);
+  const [previews, setPreviews] = useState<MediaPreview[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [existingMedia, setExistingMedia] = useState(
     () =>
@@ -82,12 +91,14 @@ export function CreatePostBox({
       }))
   );
   const [removedImageUrls, setRemovedImageUrls] = useState<string[]>([]);
+  const [cropQueue, setCropQueue] = useState<CropSession[]>([]);
   const imageRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
   const { isSubmitting, guard } = useSingleSubmit();
 
   const visOptions = visibilityOptions(context);
   const shownName = profileDisplayName({ display_name: displayName, username });
+  const activeCrop = cropQueue[0] ?? null;
 
   function revokePreviews(items: { url: string }[]) {
     items.forEach((p) => URL.revokeObjectURL(p.url));
@@ -106,13 +117,73 @@ export function CreatePostBox({
 
   function handleFiles(list: FileList | null) {
     if (!list?.length) return;
-    const { files: next, error } = mergePostMediaFiles(files, Array.from(list));
+    const incoming = Array.from(list);
+    const { files: merged, error } = mergePostMediaFiles(files, incoming);
     if (error) {
       setMediaError(error);
       return;
     }
     setMediaError(null);
-    if (next) applyMedia(next);
+    if (!merged) return;
+
+    const newOnes = merged.slice(files.length);
+    const newImages = newOnes.filter((f) => mediaKindFromFile(f) === "image");
+    const newVideos = newOnes.filter((f) => mediaKindFromFile(f) === "video");
+
+    if (newVideos.length > 0) {
+      applyMedia([...files, ...newVideos]);
+    }
+
+    if (newImages.length > 0) {
+      setCropQueue((q) => [
+        ...q,
+        ...newImages.map((file) => ({
+          replaceIndex: null as number | null,
+          sourceUrl: URL.createObjectURL(file),
+          sourceFile: file,
+        })),
+      ]);
+    }
+  }
+
+  function finishCropSession(result: File | null) {
+    const current = cropQueue[0];
+    if (!current) return;
+
+    URL.revokeObjectURL(current.sourceUrl);
+
+    if (result) {
+      setFiles((prev) => {
+        const next =
+          current.replaceIndex != null
+            ? prev.map((f, i) => (i === current.replaceIndex ? result! : f))
+            : [...prev, result];
+        setPreviews((old) => {
+          old.forEach((p) => URL.revokeObjectURL(p.url));
+          return next.map((f) => ({
+            url: URL.createObjectURL(f),
+            kind: mediaKindFromFile(f),
+          }));
+        });
+        return next;
+      });
+    }
+
+    setCropQueue((q) => q.slice(1));
+    if (imageRef.current) imageRef.current.value = "";
+  }
+
+  function openAdjustPreview(index: number) {
+    const file = files[index];
+    if (!file || mediaKindFromFile(file) !== "image") return;
+    setCropQueue((q) => [
+      {
+        replaceIndex: index,
+        sourceUrl: URL.createObjectURL(file),
+        sourceFile: file,
+      },
+      ...q,
+    ]);
   }
 
   function removeMedia(index: number) {
@@ -476,7 +547,7 @@ export function CreatePostBox({
                 <video src={item.url} controls playsInline className="h-full w-full bg-black object-cover" />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.url} alt="" className="h-full w-full object-cover" />
+                <img src={item.url} alt="" className="h-full w-full bg-slate-950 object-contain" />
               )}
               <button
                 type="button"
@@ -495,10 +566,19 @@ export function CreatePostBox({
               }`}
             >
               {item.kind === "video" ? (
-                <video src={item.url} controls playsInline className="h-full w-full bg-black object-cover" />
+                <video src={item.url} controls playsInline className="h-full w-full bg-black object-contain" />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.url} alt="" className="h-full w-full object-cover" />
+                <img src={item.url} alt="" className="h-full w-full bg-slate-950 object-contain" />
+              )}
+              {item.kind === "image" && (
+                <button
+                  type="button"
+                  onClick={() => openAdjustPreview(i)}
+                  className="absolute bottom-1 left-1 rounded-md bg-black/65 px-2 py-0.5 text-[10px] font-bold text-white"
+                >
+                  Ajustar
+                </button>
               )}
               <button
                 type="button"
@@ -633,6 +713,7 @@ export function CreatePostBox({
   );
 
   return (
+    <>
     <form
       onSubmit={handleSubmit}
       className={
@@ -657,6 +738,20 @@ export function CreatePostBox({
         </>
       )}
     </form>
+
+    {activeCrop && (
+      <PostImageCropModal
+        open
+        imageSrc={activeCrop.sourceUrl}
+        onConfirm={(file, previewUrl) => {
+          URL.revokeObjectURL(previewUrl);
+          finishCropSession(file);
+        }}
+        onSkip={() => finishCropSession(activeCrop.sourceFile)}
+        onCancel={() => finishCropSession(null)}
+      />
+    )}
+    </>
   );
 }
 
