@@ -126,7 +126,11 @@ export function OnlineFriendsStrip({
   function scrollFriends(direction: -1 | 1) {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollBy({ left: direction * el.clientWidth, behavior: "smooth" });
+    // No desktop: avança alguns cards — não a largura inteira (evita “espaço preto”).
+    const step = (FRIEND_ITEM_WIDTH + FRIEND_GAP) * 3;
+    const maxLeft = Math.max(0, el.scrollWidth - el.clientWidth);
+    const next = Math.min(maxLeft, Math.max(0, el.scrollLeft + direction * step));
+    el.scrollTo({ left: next, behavior: "smooth" });
   }
 
   const otherFriends = friends.filter((friend) => friend.friend_id !== profile.id);
@@ -157,7 +161,9 @@ export function OnlineFriendsStrip({
       className={`online-friends-carousel ${edgeToEdge ? "online-friends-carousel--edge" : ""}`}
       style={{ maxWidth: edgeToEdge ? undefined : CAROUSEL_MAX_WIDTH }}
     >
-      {canScrollLeft && <ScrollButton direction="left" onClick={() => scrollFriends(-1)} />}
+      {canScrollLeft && (
+        <ScrollButton direction="left" onClick={() => scrollFriends(-1)} />
+      )}
       <div
         ref={scrollRef}
         className={`online-friends-scroll flex gap-5 overflow-x-auto py-3 ${

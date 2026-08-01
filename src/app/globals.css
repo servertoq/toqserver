@@ -4737,7 +4737,7 @@ button {
   position: absolute;
   top: calc(50% - 0.35rem);
   z-index: 2;
-  display: flex;
+  display: none;
   height: 1.75rem;
   width: 1.75rem;
   align-items: center;
@@ -4750,6 +4750,12 @@ button {
   cursor: pointer;
   transform: translateY(-50%);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+@media (min-width: 768px) {
+  .online-friends-nav {
+    display: flex;
+  }
 }
 
 .online-friends-nav:hover {
