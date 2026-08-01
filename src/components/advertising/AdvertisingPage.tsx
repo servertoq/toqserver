@@ -181,7 +181,7 @@ export function AdvertisingPage() {
                           src={article.card_image_url || article.cover_image_url}
                           alt=""
                           fill
-                          className="object-cover"
+                          className="object-contain"
                           unoptimized
                         />
                         {canManage && !article.is_published && (

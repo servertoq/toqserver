@@ -149,12 +149,20 @@ export function AdvertisingArticleForm({ article, userId, onSaved, onCancel }: P
       <div>
         <p className="text-sm font-semibold text-[var(--toq-navy)]">Imagem principal</p>
         <p className="mt-0.5 text-xs text-[var(--toq-text-muted)]">
-          Aparece no topo da página da notícia.
+          Aparece no topo da página da notícia (imagem inteira, sem corte). Prefira arte
+          horizontal ou vertical nítida.
         </p>
         <div className="mt-2 flex flex-wrap items-start gap-3">
           {coverUrl && (
-            <div className="relative h-32 w-48 overflow-hidden rounded-xl border border-slate-200">
-              <Image src={coverUrl} alt="" fill className="object-cover" unoptimized />
+            <div className="flex h-36 w-56 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+              <Image
+                src={coverUrl}
+                alt=""
+                width={224}
+                height={144}
+                className="max-h-36 w-auto object-contain"
+                unoptimized
+              />
             </div>
           )}
           <label className="inline-flex cursor-pointer rounded-xl border border-dashed border-slate-300 px-4 py-3 text-xs font-semibold text-[var(--toq-navy)] hover:bg-slate-50">
@@ -176,12 +184,20 @@ export function AdvertisingArticleForm({ article, userId, onSaved, onCancel }: P
         <div>
           <p className="text-sm font-semibold text-[var(--toq-navy)]">Imagem do card (publicidade)</p>
           <p className="mt-0.5 text-xs text-[var(--toq-text-muted)]">
-            Usada na barrinha rotativa da página inicial. Por padrão, copiamos a imagem principal.
+            Usada no carrossel da home. Ideal: proporção próxima de 4:3. O título fica{" "}
+            <strong>abaixo</strong> da imagem — não precisa colocar texto na arte.
           </p>
           <div className="mt-2 flex flex-wrap items-start gap-3">
             {cardUrl && (
-              <div className="relative aspect-square h-32 w-32 overflow-hidden rounded-xl border border-slate-200">
-                <Image src={cardUrl} alt="" fill className="object-cover" unoptimized />
+              <div className="relative flex aspect-[4/3] h-28 w-auto items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-950">
+                <Image
+                  src={cardUrl}
+                  alt=""
+                  width={160}
+                  height={120}
+                  className="max-h-full max-w-full object-contain"
+                  unoptimized
+                />
               </div>
             )}
             <label className="inline-flex cursor-pointer rounded-xl border border-dashed border-slate-300 px-4 py-3 text-xs font-semibold text-[var(--toq-navy)] hover:bg-slate-50">

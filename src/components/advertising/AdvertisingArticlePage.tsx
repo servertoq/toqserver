@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -58,14 +57,12 @@ export function AdvertisingArticlePage({ slug }: { slug: string }) {
           <p className="text-sm text-red-600">{error}</p>
         ) : article ? (
           <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="relative aspect-[21/9] bg-slate-100">
-              <Image
+            <div className="flex max-h-[min(70vh,36rem)] items-center justify-center bg-slate-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={article.cover_image_url}
                 alt=""
-                fill
-                className="object-cover"
-                priority
-                unoptimized
+                className="max-h-[min(70vh,36rem)] w-full object-contain"
               />
             </div>
             <div className="p-5 sm:p-8">
