@@ -229,28 +229,65 @@ export function OnlineFriendsStrip({
   );
 }
 
+function useIsCoarsePointer() {
+  const [coarse, setCoarse] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(hover: none), (max-width: 767px)");
+    const apply = () => setCoarse(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+  return coarse;
+}
+
 function useStoryMenu() {
   const [menuOpen, setMenuOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const sheet = useIsCoarsePointer();
 
   const updateMenuPos = useCallback(() => {
     const el = buttonRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    setMenuPos({
-      top: rect.bottom + 10,
-      left: rect.left + rect.width / 2,
-    });
+    const menuWidth = 176;
+    const menuHeight = menuRef.current?.offsetHeight || 108;
+    const gap = 8;
+    const pad = 10;
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+    const vw = window.visualViewport?.width ?? window.innerWidth;
+    const bottomSafe =
+      pad +
+      (typeof window !== "undefined"
+        ? Number.parseFloat(
+            getComputedStyle(document.documentElement).getPropertyValue("--app-mobile-bottom-nav-h")
+          ) || 64
+        : 64);
+
+    let top = rect.bottom + gap;
+    if (top + menuHeight > vh - bottomSafe) {
+      top = Math.max(pad, rect.top - menuHeight - gap);
+    }
+    top = Math.min(top, Math.max(pad, vh - bottomSafe - menuHeight));
+
+    let left = rect.left + rect.width / 2;
+    const half = menuWidth / 2;
+    left = Math.min(vw - half - pad, Math.max(half + pad, left));
+
+    setMenuPos({ top, left });
   }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
 
-    updateMenuPos();
+    const frame = requestAnimationFrame(() => {
+      updateMenuPos();
+      requestAnimationFrame(updateMenuPos);
+    });
 
-    function onPointerDown(event: MouseEvent) {
+    function onPointerDown(event: PointerEvent) {
       const target = event.target as Node;
       if (!buttonRef.current?.contains(target) && !menuRef.current?.contains(target)) {
         setMenuOpen(false);
@@ -259,12 +296,13 @@ function useStoryMenu() {
 
     window.addEventListener("resize", updateMenuPos);
     window.addEventListener("scroll", updateMenuPos, true);
-    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("pointerdown", onPointerDown);
 
     return () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener("resize", updateMenuPos);
       window.removeEventListener("scroll", updateMenuPos, true);
-      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("pointerdown", onPointerDown);
     };
   }, [menuOpen, updateMenuPos]);
 
@@ -275,26 +313,59 @@ function useStoryMenu() {
     });
   }
 
-  return { menuOpen, setMenuOpen, buttonRef, menuRef, menuPos, toggleMenu };
+  return { menuOpen, setMenuOpen, buttonRef, menuRef, menuPos, toggleMenu, sheet };
 }
 
 function StoryMenuShell({
   menuRef,
   menuPos,
+  sheet,
+  onClose,
   children,
 }: {
   menuRef: React.RefObject<HTMLDivElement | null>;
   menuPos: { top: number; left: number };
+  sheet: boolean;
+  onClose: () => void;
   children: React.ReactNode;
 }) {
   if (typeof document === "undefined") return null;
 
+  if (sheet) {
+    return createPortal(
+      <div className="fixed inset-0 z-[120]" role="presentation">
+        <button
+          type="button"
+          className="absolute inset-0 bg-black/45"
+          aria-label="Fechar menu"
+          onClick={onClose}
+        />
+        <div
+          ref={menuRef}
+          role="menu"
+          className="online-friend-self-menu absolute inset-x-0 bottom-0 overflow-hidden rounded-t-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_40px_rgba(5,16,36,0.28)]"
+          style={{ marginBottom: "var(--app-mobile-bottom-nav-h, 3.25rem)" }}
+        >
+          <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[var(--toq-border)]" aria-hidden />
+          {children}
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
   return createPortal(
     <div
       ref={menuRef}
-      style={{ top: menuPos.top, left: menuPos.left }}
-      className="online-friend-self-menu fixed z-[120] w-44 -translate-x-1/2 overflow-hidden rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] py-1.5 shadow-[0_16px_48px_rgba(5,16,36,0.2)]"
       role="menu"
+      className="online-friend-self-menu fixed z-[120] w-44 overflow-hidden rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] py-1.5 shadow-[0_16px_48px_rgba(5,16,36,0.2)]"
+      style={{
+        top: menuPos.top,
+        left: menuPos.left,
+        right: "auto",
+        bottom: "auto",
+        transform: "translateX(-50%)",
+      }}
     >
       {children}
     </div>,
@@ -315,7 +386,7 @@ function SelfStoryItem({
   avatarUrl: string | null;
   onOpenCreatePost: () => void;
 }) {
-  const { menuOpen, setMenuOpen, buttonRef, menuRef, menuPos, toggleMenu } = useStoryMenu();
+  const { menuOpen, setMenuOpen, buttonRef, menuRef, menuPos, toggleMenu, sheet } = useStoryMenu();
 
   return (
     <>
@@ -347,7 +418,12 @@ function SelfStoryItem({
         </button>
       </div>
       {menuOpen && (
-        <StoryMenuShell menuRef={menuRef} menuPos={menuPos}>
+        <StoryMenuShell
+          menuRef={menuRef}
+          menuPos={menuPos}
+          sheet={sheet}
+          onClose={() => setMenuOpen(false)}
+        >
           <Link
             href="/inicio/perfil"
             role="menuitem"
@@ -395,7 +471,7 @@ function FriendStoryItem({
   avatarUrl: string | null;
   online: boolean;
 }) {
-  const { menuOpen, setMenuOpen, buttonRef, menuRef, menuPos, toggleMenu } = useStoryMenu();
+  const { menuOpen, setMenuOpen, buttonRef, menuRef, menuPos, toggleMenu, sheet } = useStoryMenu();
 
   return (
     <>
@@ -427,7 +503,12 @@ function FriendStoryItem({
         </button>
       </div>
       {menuOpen && (
-        <StoryMenuShell menuRef={menuRef} menuPos={menuPos}>
+        <StoryMenuShell
+          menuRef={menuRef}
+          menuPos={menuPos}
+          sheet={sheet}
+          onClose={() => setMenuOpen(false)}
+        >
           <Link
             href={profileHref}
             role="menuitem"
