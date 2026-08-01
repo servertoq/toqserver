@@ -8,6 +8,7 @@ import { fetchClubTournaments } from "@/lib/tournaments";
 import type { CommunityMemberRole } from "@/types/community";
 import type { ClubTournament } from "@/types/clubFeatures";
 import { TournamentCard } from "@/components/tournaments/TournamentCard";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ClubTournamentForm } from "./ClubTournamentForm";
 
 type Props = {
@@ -33,6 +34,8 @@ export function ClubTournamentsPanel({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<ClubTournament | null | undefined>(undefined);
+  const [tournamentToRemove, setTournamentToRemove] = useState<ClubTournament | null>(null);
+  const [removingTournament, setRemovingTournament] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -66,9 +69,15 @@ export function ClubTournamentsPanel({
     return () => window.clearTimeout(t);
   }, [highlightId, loading, tournaments]);
 
-  async function deactivate(tournament: ClubTournament) {
-    if (!confirm(`Remover o torneio "${tournament.name}" da listagem?`)) return;
-    await supabase.from("club_tournaments").update({ is_active: false }).eq("id", tournament.id);
+  async function confirmDeactivate() {
+    if (!tournamentToRemove) return;
+    setRemovingTournament(true);
+    await supabase
+      .from("club_tournaments")
+      .update({ is_active: false })
+      .eq("id", tournamentToRemove.id);
+    setTournamentToRemove(null);
+    setRemovingTournament(false);
     await load();
   }
 
@@ -139,7 +148,7 @@ export function ClubTournamentsPanel({
                   </button>
                   <button
                     type="button"
-                    onClick={() => void deactivate(t)}
+                    onClick={() => setTournamentToRemove(t)}
                     className="rounded-lg border border-red-200 px-3 py-1 text-xs font-semibold text-red-600"
                   >
                     Remover
@@ -159,6 +168,23 @@ export function ClubTournamentsPanel({
           onClose={() => setEditing(undefined)}
         />
       )}
+
+      <ConfirmDialog
+        open={!!tournamentToRemove}
+        title="Remover torneio"
+        message={
+          tournamentToRemove
+            ? `Remover o torneio "${tournamentToRemove.name}" da listagem?`
+            : "Remover este torneio?"
+        }
+        confirmLabel="Remover"
+        variant="danger"
+        loading={removingTournament}
+        onConfirm={() => void confirmDeactivate()}
+        onCancel={() => {
+          if (!removingTournament) setTournamentToRemove(null);
+        }}
+      />
     </div>
   );
 }

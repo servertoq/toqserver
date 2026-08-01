@@ -41,7 +41,7 @@ export function ConfirmDialog({
   return (
     <div
       className={`fixed inset-0 flex items-center justify-center bg-black/40 p-4 ${
-        priority === "high" ? "z-[60]" : "z-50"
+        priority === "high" ? "z-[100]" : "z-50"
       }`}
       role="presentation"
       onMouseDown={(e) => {

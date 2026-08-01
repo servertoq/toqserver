@@ -17,6 +17,7 @@ import type {
 import { useAppProfile } from "@/components/app/AppShell";
 import { ClubCourtAgendaModal } from "./ClubCourtAgendaModal";
 import { CourtBookingDialog } from "@/components/court/CourtBookingDialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { syncClubCourtFeedPost } from "@/lib/clubCourtListings";
 import type { CourtRentalVisibility } from "@/types/courtManagement";
 
@@ -836,6 +837,8 @@ export function ClubCourtsPanel({
   const agendaCourt = courts.find((c) => c.id === agendaCourtId) ?? null;
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [courtToRemove, setCourtToRemove] = useState<ClubCourt | null>(null);
+  const [removingCourt, setRemovingCourt] = useState(false);
   const autoOpenHandled = useRef(false);
 
   async function handleCourtSaved(courtId: string) {
@@ -954,9 +957,12 @@ export function ClubCourtsPanel({
     };
   }, [communityId, load, supabase]);
 
-  async function removeCourt(court: ClubCourt) {
-    if (!confirm("Remover esta quadra?")) return;
-    await supabase.from("club_courts").update({ is_active: false }).eq("id", court.id);
+  async function confirmRemoveCourt() {
+    if (!courtToRemove) return;
+    setRemovingCourt(true);
+    await supabase.from("club_courts").update({ is_active: false }).eq("id", courtToRemove.id);
+    setCourtToRemove(null);
+    setRemovingCourt(false);
     await load();
   }
 
@@ -1083,7 +1089,7 @@ export function ClubCourtsPanel({
                       </button>
                       <button
                         type="button"
-                        onClick={() => void removeCourt(court)}
+                        onClick={() => setCourtToRemove(court)}
                         className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-600"
                       >
                         Remover
@@ -1162,6 +1168,23 @@ export function ClubCourtsPanel({
           onClose={() => setAgendaCourtId(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={!!courtToRemove}
+        title="Remover quadra"
+        message={
+          courtToRemove
+            ? `Remover a quadra "${courtToRemove.name}"? Ela sai da listagem e da agenda do clube.`
+            : "Remover esta quadra?"
+        }
+        confirmLabel="Remover"
+        variant="danger"
+        loading={removingCourt}
+        onConfirm={() => void confirmRemoveCourt()}
+        onCancel={() => {
+          if (!removingCourt) setCourtToRemove(null);
+        }}
+      />
     </div>
   );
 }

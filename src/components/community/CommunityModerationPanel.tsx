@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { UsernameSearchInput } from "@/components/shared/UsernameSearchInput";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { canExpelMember, canModerate, memberCargoLabels, sortMembers } from "@/lib/community";
 import type { CommunityGroupKind, CommunityInvite, CommunityJoinRequest, CommunityMember, CommunityMemberRole } from "@/types/community";
 
@@ -29,6 +30,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
   const [kickMessage, setKickMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [kickTarget, setKickTarget] = useState<{ userId: string; username: string } | null>(null);
   const { isSubmitting: inviting, guard: guardInvite } = useSingleSubmit();
 
   const excludedInviteUserIds = useMemo(
@@ -183,14 +185,9 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
     });
   }
 
-  async function kickMember(userId: string, username: string) {
-    if (
-      !confirm(
-        `Expulsar @${username} deste ${groupLabel}?\n\nAs publicações dele aqui serão excluídas permanentemente.`
-      )
-    ) {
-      return;
-    }
+  async function confirmKickMember() {
+    if (!kickTarget) return;
+    const { userId, username } = kickTarget;
     setKickMessage(null);
     setActionId(userId);
     const { error } = await supabase.rpc("remove_community_member", {
@@ -198,6 +195,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
       p_user_id: userId,
     });
     setActionId(null);
+    setKickTarget(null);
     if (error) {
       setKickMessage(error.message);
       return;
@@ -431,7 +429,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
                   <button
                     type="button"
                     disabled={actionId === m.user_id}
-                    onClick={() => kickMember(m.user_id, m.profile.username)}
+                    onClick={() => setKickTarget({ userId: m.user_id, username: m.profile.username })}
                     className="text-xs font-semibold text-red-600"
                   >
                     {actionId === m.user_id ? "Expulsando…" : "Expulsar"}
@@ -444,6 +442,23 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
           </ul>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!kickTarget}
+        title="Expulsar membro"
+        message={
+          kickTarget
+            ? `Expulsar @${kickTarget.username} deste ${groupLabel}? As publicações dele aqui serão excluídas permanentemente.`
+            : "Expulsar este membro?"
+        }
+        confirmLabel="Expulsar"
+        variant="danger"
+        loading={!!kickTarget && actionId === kickTarget.userId}
+        onConfirm={() => void confirmKickMember()}
+        onCancel={() => {
+          if (!actionId) setKickTarget(null);
+        }}
+      />
     </section>
   );
 }

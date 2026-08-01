@@ -10,6 +10,7 @@ import {
 } from "@/lib/agenda";
 import type { AgendaEvent, AgendaEventType } from "@/types/agenda";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export type AgendaEventFormValues = {
   event_type: AgendaEventType;
@@ -34,6 +35,7 @@ export function AgendaEventForm({ open, dateISO, initial, onClose, onSave, onDel
   const [notes, setNotes] = useState("");
   const [eventTime, setEventTime] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const { isSubmitting, guard } = useSingleSubmit();
   const isEdit = Boolean(initial);
 
@@ -48,6 +50,7 @@ export function AgendaEventForm({ open, dateISO, initial, onClose, onSave, onDel
     setNotes(initial?.notes ?? "");
     setEventTime(initial?.event_time?.slice(0, 5) ?? "");
     setError(null);
+    setDeleteConfirmOpen(false);
   }, [open, initial]);
 
   useEffect(() => {
@@ -55,14 +58,14 @@ export function AgendaEventForm({ open, dateISO, initial, onClose, onSave, onDel
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape" && !isSubmitting) onClose();
+      if (e.key === "Escape" && !isSubmitting && !deleteConfirmOpen) onClose();
     }
     document.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = previous;
       document.removeEventListener("keydown", onKey);
     };
-  }, [open, isSubmitting, onClose]);
+  }, [open, isSubmitting, onClose, deleteConfirmOpen]);
 
   if (!open || !mounted) return null;
 
@@ -83,20 +86,22 @@ export function AgendaEventForm({ open, dateISO, initial, onClose, onSave, onDel
     });
   }
 
-  async function handleDelete() {
+  async function confirmDelete() {
     if (!onDelete) return;
-    if (!confirm("Excluir este compromisso?")) return;
     setError(null);
     await guard(async () => {
       try {
         await onDelete();
+        setDeleteConfirmOpen(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Não foi possível excluir.");
+        setDeleteConfirmOpen(false);
       }
     });
   }
 
   return createPortal(
+    <>
     <div
       className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 sm:items-center sm:p-4"
       role="presentation"
@@ -204,7 +209,7 @@ export function AgendaEventForm({ open, dateISO, initial, onClose, onSave, onDel
           {isEdit && onDelete ? (
             <button
               type="button"
-              onClick={() => void handleDelete()}
+              onClick={() => setDeleteConfirmOpen(true)}
               disabled={isSubmitting}
               className="text-xs font-semibold text-red-600 disabled:opacity-50"
             >
@@ -222,7 +227,21 @@ export function AgendaEventForm({ open, dateISO, initial, onClose, onSave, onDel
           </button>
         </div>
       </form>
-    </div>,
+    </div>
+    <ConfirmDialog
+      open={deleteConfirmOpen}
+      title="Excluir compromisso"
+      message="Excluir este compromisso? Esta ação não pode ser desfeita."
+      confirmLabel="Excluir"
+      variant="danger"
+      loading={isSubmitting}
+      priority="high"
+      onConfirm={() => void confirmDelete()}
+      onCancel={() => {
+        if (!isSubmitting) setDeleteConfirmOpen(false);
+      }}
+    />
+    </>,
     document.body
   );
 }

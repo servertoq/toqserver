@@ -36,6 +36,7 @@ import { OperatingHoursSummary } from "@/components/shared/OperatingHoursSummary
 import { ClubContactLinks } from "@/components/club/ClubContactLinks";
 import { hasClubContact } from "@/lib/clubContact";
 import { ClubFavoriteButton } from "@/components/club/ClubFavoriteButton";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export function CommunityDetailPage({
   slug,
@@ -64,6 +65,8 @@ export function CommunityDetailPage({
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   const isMember = myRole !== null;
 
@@ -249,12 +252,15 @@ export function CommunityDetailPage({
     setJoining(false);
   }
 
-  async function handleLeave() {
-    if (!community || !confirm(config.leaveConfirm)) return;
+  async function confirmLeave() {
+    if (!community) return;
+    setLeaving(true);
     await supabase.rpc("remove_community_member", {
       p_community_id: community.id,
       p_user_id: profile.id,
     });
+    setLeaving(false);
+    setLeaveConfirmOpen(false);
     router.push(config.basePath);
   }
 
@@ -399,7 +405,7 @@ export function CommunityDetailPage({
                 {isMember && myRole !== "owner" && (
                   <button
                     type="button"
-                    onClick={handleLeave}
+                    onClick={() => setLeaveConfirmOpen(true)}
                     className="rounded-lg border border-[var(--toq-border)] px-3 py-1.5 text-xs font-semibold text-[var(--toq-text-muted)]"
                   >
                     Sair
@@ -590,6 +596,19 @@ export function CommunityDetailPage({
       )}
 
       {ownerActionUi}
+
+      <ConfirmDialog
+        open={leaveConfirmOpen}
+        title={groupKind === "club" ? "Sair do clube" : "Sair da comunidade"}
+        message={config.leaveConfirm}
+        confirmLabel="Sair"
+        variant="danger"
+        loading={leaving}
+        onConfirm={() => void confirmLeave()}
+        onCancel={() => {
+          if (!leaving) setLeaveConfirmOpen(false);
+        }}
+      />
     </>
   );
 }
