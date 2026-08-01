@@ -53,16 +53,90 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
         ],
       },
       {
-        heading: "5. Planos e pagamentos",
+        heading: "5. Planos disponíveis e ciclo de uso",
         paragraphs: [
-          "Há um plano gratuito e planos pagos (Professor, Promotor, Proprietário e variantes), cada um válido por 30 dias. Pagamentos são processados pelo Mercado Pago (Pix e cartão). Cartão pode ser avulso ou com renovação automática; Pix exige renovação manual. Sem renovação/pagamento, as funções do plano são desligadas ao vencer.",
-          "Nos primeiros 15 dias do ciclo, upgrade para um plano superior cobra apenas a diferença de preço. Após 15 dias, o upgrade cobra o valor integral do novo plano (novo ciclo de 30 dias). Renovação antecipada soma 30 dias ao que ainda resta de validade.",
-          "Preços e benefícios podem mudar; alterações valem para novas cobranças após a divulgação.",
-          "Regras de reembolso estão em nossa Política de Reembolso.",
+          `A ${LEGAL_SITE.brand} oferece um plano gratuito (“Usuário”) e planos pagos opcionais. Os planos pagos atuais e preços de referência por ciclo de 30 dias são:`,
+        ],
+        bullets: [
+          "Usuário (gratuito): uso básico da plataforma, com limites do plano (ex.: até 3 comunidades)",
+          "Professor — R$ 20 / 30 dias",
+          "Promotor — R$ 50 / 30 dias",
+          "Proprietário — R$ 99 / 30 dias",
+          "Proprietário Plus — R$ 189 / 30 dias",
         ],
       },
       {
-        heading: "6. Conduta e uso aceitável",
+        heading: "5.1. Validade e benefícios",
+        paragraphs: [
+          "Cada pagamento aprovado de plano pago concede (ou estende) um ciclo de 30 dias de uso das funções daquele plano, contados conforme as regras de renovação e upgrade abaixo.",
+          "Os benefícios (badges, limites de clube/quadras/anúncios, destaques no feed, painéis de gestão etc.) valem apenas enquanto o plano estiver ativo e dentro da validade. A lista detalhada de benefícios aparece na página de Planos do aplicativo e pode ser atualizada.",
+          "Funcionalidades entre usuários (aulas, reservas, torneios, vendas em clube etc.) continuam sendo relações entre as partes; o plano apenas libera recursos da plataforma.",
+        ],
+      },
+      {
+        heading: "6. Processador de pagamento (Mercado Pago)",
+        paragraphs: [
+          "Cobranças de planos são processadas pelo Mercado Pago (Checkout Pro / meios oferecidos por ele). Ao pagar, você também se sujeita aos termos e políticas do Mercado Pago.",
+          "Não armazenamos número completo de cartão nem dados sensíveis de pagamento em nossos servidores. Identificadores de pagamento, preferência, assinatura e status podem ser registrados para liberar o plano, suporte e auditoria.",
+          "A liberação do plano ocorre após confirmação do pagamento (incluindo notificação/webhook do Mercado Pago). Em Pix, a confirmação pode levar alguns minutos; a tela do Mercado Pago pode não redirecionar automaticamente — você pode voltar ao site; o plano deve ativar mesmo assim após a confirmação.",
+          "Pagamentos pendentes, recusados, cancelados ou expirados (ex.: Pix não pago no prazo) não liberam nem renovam o plano.",
+        ],
+      },
+      {
+        heading: "7. Formas de pagamento",
+        paragraphs: ["No checkout de planos, conforme disponibilidade no Mercado Pago e na plataforma:"],
+        bullets: [
+          "Pix — pagamento avulso; renovação é manual (você inicia novo pagamento antes ou após o vencimento)",
+          "Cartão (pagamento único / avulso) — cobra o ciclo atual; renovação também é manual",
+          "Cartão com renovação automática (assinatura/preapproval) — cobranças periódicas pelo Mercado Pago enquanto a assinatura estiver ativa",
+        ],
+      },
+      {
+        heading: "8. Nova assinatura e renovação (acúmulo de prazo)",
+        paragraphs: [
+          "Assinatura nova (conta no plano Usuário → plano pago): cobra o valor integral do plano escolhido e inicia um ciclo de 30 dias a partir da confirmação do pagamento.",
+          "Renovação do mesmo plano (antes ou depois do vencimento, conforme o caso): cobra o valor integral do plano. Se ainda houver validade restante, os novos 30 dias são somados ao vencimento atual (o prazo acumula). Exemplo: restam 14 dias e você renova → passa a ter aproximadamente 44 dias de validade.",
+          "Se o plano já tiver vencido e a conta tiver retornado ao Usuário, um novo pagamento de plano pago inicia um novo ciclo de 30 dias.",
+          "Em Pix e cartão avulso, enviamos lembrete de renovação por e-mail cerca de 3 dias antes do vencimento, quando configurado. A ausência do e-mail não isenta a responsabilidade de renovar a tempo se desejar manter o plano.",
+        ],
+      },
+      {
+        heading: "9. Upgrade (plano superior)",
+        paragraphs: [
+          "Upgrade é a mudança para um plano de ordem superior (ex.: Professor → Promotor → Proprietário → Proprietário Plus), mediante pagamento.",
+          "Nos primeiros 15 dias contados da ativação/renovação do ciclo atual (data de ativação do plano no perfil): o upgrade cobra apenas a diferença de preço entre o plano atual e o destino. Nesse caso, a data de vencimento do ciclo atual é mantida (não se somam 30 dias extras só pela diferença).",
+          "Após esses 15 dias (ex.: a partir do 16º dia do ciclo): o upgrade cobra o valor integral do plano de destino. Os 30 dias do novo pagamento são somados ao que ainda resta de validade do ciclo anterior. Exemplo: no dia 16, restando cerca de 14 dias, e upgrade com valor cheio → aproximadamente 14 + 30 dias no plano novo.",
+          "Não é permitido “pular” pagamento: upgrade só se conclui com pagamento aprovado no Mercado Pago.",
+        ],
+      },
+      {
+        heading: "10. Redução de plano, cancelamento e expiração",
+        paragraphs: [
+          "Não é possível reduzir o plano (downgrade) no meio do ciclo ativo pela própria conta — inclusive voltar imediatamente de um plano pago para Usuário ou para um plano inferior. O ciclo pago já adquirido permanece até o vencimento.",
+          "Ao vencer o prazo sem renovação ou pagamento de plano igual/superior, a conta retorna automaticamente ao plano Usuário (gratuito) e as funções exclusivas do plano pago são desligadas. Conteúdo criado sob o plano pago pode ficar sujeito aos limites do Usuário; pode ser necessário reduzir comunidades, clubes, quadras ou anúncios para voltar a operar dentro dos limites.",
+          "Cancelamento de renovação automática no cartão: você deve cancelar a assinatura/recorrência no ambiente do Mercado Pago e/ou solicitar apoio em nosso contato. O cancelamento da recorrência impede novas cobranças futuras; não encerra de imediato o período já pago, que segue até a data de vencimento, salvo regra legal de reembolso aplicável.",
+          "Cancelar ou não renovar Pix/cartão avulso simplesmente implica não iniciar novo pagamento; o plano segue até o vencimento e depois volta a Usuário.",
+          "Banimento, suspensão por violação destes Termos ou exclusão de conta podem interromper o acesso independentemente do ciclo pago, sem prejuízo de regras de reembolso quando a lei exigir.",
+        ],
+      },
+      {
+        heading: "11. Preços, impostos e alterações comerciais",
+        paragraphs: [
+          "Os preços exibidos na página de Planos e no checkout prevalecem no momento da cobrança. Valores neste documento são de referência e podem ser atualizados.",
+          "Podemos alterar preços, benefícios, nomes de planos e regras de ciclo. Mudanças passam a valer para novas cobranças e novos ciclos após divulgação na plataforma e/ou nestes Termos. Ciclos já pagos em geral mantêm os benefícios adquiridos até o vencimento, salvo ajuste legal ou técnico indispensável.",
+          "Tributos, tarifas do meio de pagamento ou encargos do Mercado Pago/banco podem ser aplicados conforme a legislação e as regras do processador.",
+        ],
+      },
+      {
+        heading: "12. Falhas, chargeback e uso indevido",
+        paragraphs: [
+          "Em caso de pagamento confirmado sem liberação do plano por falha nossa, corrigiremos a liberação e/ou trataremos reembolso conforme a Política de Reembolso.",
+          "Contestação indevida (chargeback) após uso do benefício, fraude ou abuso podem resultar em suspensão da conta e cobrança/recuperação pelos meios legais cabíveis.",
+          "Detalhes de arrependimento (CDC), estornos e prazos estão na Política de Reembolso e devolução.",
+        ],
+      },
+      {
+        heading: "13. Conduta e uso aceitável",
         paragraphs: [
           "Você concorda em não: tentar acessar áreas não autorizadas; interferir no funcionamento do serviço; coletar dados de outros usuários sem base legal; usar bots abusivos; ou praticar engenharia social.",
         ],
@@ -73,22 +147,23 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
         ],
       },
       {
-        heading: "7. Propriedade intelectual",
+        heading: "14. Propriedade intelectual",
         paragraphs: [
           `Marca, layout, código e materiais da ${LEGAL_SITE.brand} pertencem a nós ou a licenciadores. Uso não autorizado é vedado.`,
         ],
       },
       {
-        heading: "8. Limitação de responsabilidade",
+        heading: "15. Limitação de responsabilidade",
         paragraphs: [
           "O serviço é oferecido “como está”, dentro dos limites da lei. Não garantimos disponibilidade ininterrupta nem resultados específicos de partidas, aulas ou negócios entre usuários.",
           "Interações e contratos entre usuários (ex.: aulas, aluguel de quadras) são de responsabilidade das partes envolvidas, salvo quando a lei imponha obrigação diversa.",
+          "Não nos responsabilizamos por indisponibilidade, atrasos ou falhas do Mercado Pago, bancos, Pix ou operadoras de cartão, além do que a lei exigir.",
         ],
       },
       {
-        heading: "9. Alterações e contato",
+        heading: "16. Alterações e contato",
         paragraphs: [
-          `Podemos atualizar estes Termos. A data de vigência será atualizada nesta página. Dúvidas: ${LEGAL_SITE.contactEmail}.`,
+          `Podemos atualizar estes Termos. A data de vigência será atualizada nesta página. Dúvidas sobre uso, planos ou pagamentos: ${LEGAL_SITE.contactEmail}.`,
         ],
       },
     ],
@@ -115,7 +190,8 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
           "Perfil e uso: posts, comentários, comunidades, mensagens, preferências (ex.: tema claro/escuro), cidade/UF do perfil",
           "Localização: coordenadas do dispositivo (GPS) quando você autoriza no navegador — para preencher cidade no perfil, ordenar conteúdo “perto de mim” e recursos de mapas; a permissão pode ser revogada a qualquer momento nas configurações do navegador",
           "Reservas de quadra: data/horário, quadra, clube, status da reserva, usuário que reservou e jogadores convidados (até 3), espelhados na agenda/partidas do perfil quando aplicável",
-          "Pagamentos: dados de cobrança processados pelo Mercado Pago (Pix e cartão; nós não armazenamos número completo de cartão)",
+          "Pagamentos: dados de cobrança processados pelo Mercado Pago (Pix e cartão; nós não armazenamos número completo de cartão); identificadores de pagamento/assinatura, plano, datas de ativação/vencimento e histórico de mudanças de plano",
+          "Comunicações: e-mails transacionais (autenticação, lembrete de renovação de plano cerca de 3 dias antes do vencimento, quando configurado)",
           "Mapas: Google Maps ao cadastrar ou visualizar quadras, quando o recurso for utilizado",
           "Dados técnicos: IP, tipo de dispositivo/navegador, logs de segurança e cookies essenciais",
           "Login social: dados fornecidos pelo Google OAuth quando você escolhe essa opção",
@@ -124,7 +200,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
       {
         heading: "3. Finalidades e bases legais",
         paragraphs: [
-          "Tratamos dados para: prestar o serviço; autenticar contas; personalizar a experiência (incluindo proximidade geográfica quando autorizado); processar upgrades de plano; gerenciar reservas e agendas; moderar a comunidade; cumprir obrigações legais; e melhorar segurança e estabilidade.",
+          "Tratamos dados para: prestar o serviço; autenticar contas; personalizar a experiência (incluindo proximidade geográfica quando autorizado); processar assinaturas, renovações e upgrades de plano; enviar lembretes de vencimento; gerenciar reservas e agendas; moderar a comunidade; cumprir obrigações legais; e melhorar segurança e estabilidade.",
           "Bases típicas (LGPD): execução de contrato (art. 7º, V) para cadastro e uso da plataforma; legítimo interesse (art. 7º, IX) quando aplicável (ex.: segurança e prevenção a fraudes); consentimento (art. 7º, I) quando exigido (ex.: cookies não essenciais e uso de GPS do dispositivo); e cumprimento de obrigação legal.",
           "O consentimento para localização do dispositivo é específico e pode ser retirado a qualquer momento, sem prejuízo do uso das demais funções que não dependam de GPS.",
         ],
@@ -139,7 +215,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
           "Mercado Pago — processamento de pagamentos (Pix, cartão e assinaturas)",
           "Google — login OAuth e Maps (quando usados)",
           "Vercel e Cloudflare — hospedagem, CDN e proteção do site",
-          "Resend — envio de e-mails transacionais de autenticação (quando configurado)",
+          "Resend — envio de e-mails transacionais (autenticação e, quando configurado, lembretes de renovação de plano)",
         ],
       },
       {
@@ -230,39 +306,80 @@ export const LEGAL_DOCUMENTS: Record<LegalDocId, LegalDocument> = {
   reembolso: {
     id: "reembolso",
     title: "Política de reembolso e devolução",
-    description: "Regras para cobranças de upgrade de planos na Toq Tennis.",
+    description: "Regras para cobranças, cancelamentos e estornos de planos na Toq Tennis.",
     sections: [
       {
-        heading: "1. O que cobramos",
+        heading: "1. Escopo",
         paragraphs: [
-          `Na ${LEGAL_SITE.brand}, planos pagos têm ciclo de 30 dias. Cobranças (Pix, cartão avulso ou recorrente) são processadas pelo Mercado Pago. Sem renovação, o plano é desativado automaticamente ao vencer.`,
+          `Esta política cobre cobranças de planos pagos da ${LEGAL_SITE.brand} (Professor, Promotor, Proprietário e Proprietário Plus), processadas pelo Mercado Pago (Pix, cartão avulso ou cartão com renovação automática).`,
+          "Não cobre valores cobrados por terceiros fora da plataforma (ex.: aula particular, aluguel de quadra pago diretamente ao clube), nem produtos físicos de lojas de clube quando a venda for entre usuários/clube — nesses casos, a relação é entre as partes.",
           disclaimer,
         ],
       },
       {
-        heading: "2. Direito de arrependimento (CDC)",
+        heading: "2. Natureza do produto digital",
         paragraphs: [
-          "Se você for consumidor e a compra for feita fora do estabelecimento físico (online), a legislação brasileira pode assegurar o direito de arrependimento em até 7 dias corridos a contar da contratação/pagamento, nos termos do Código de Defesa do Consumidor, quando aplicável.",
-          `Para solicitar, envie e-mail a ${LEGAL_SITE.contactEmail} com: e-mail da conta, data do pagamento e motivo. Analisaremos e responderemos em prazo razoável.`,
+          "O plano pago é um serviço digital de acesso a funcionalidades da plataforma por ciclo de 30 dias (ou pelo prazo acumulado conforme renovação/upgrade descritos nos Termos de uso).",
+          "Após a liberação do plano, o benefício passa a ser utilizável imediatamente. Isso pode influenciar a análise de reembolso após o prazo legal de arrependimento.",
         ],
       },
       {
-        heading: "3. Outros casos de reembolso",
+        heading: "3. Direito de arrependimento (CDC)",
         paragraphs: [
-          "Podemos avaliar reembolso parcial ou total em caso de cobrança duplicada, falha técnica comprovada do nosso lado, ou upgrade não liberado após pagamento confirmado.",
-          "Não reembolsamos, em regra, pelo simples desuso do plano após o período de arrependimento, nem por insatisfação subjetiva sem falha do serviço, salvo obrigação legal.",
+          "Se você for consumidor e a contratação for à distância (online), a legislação brasileira pode assegurar o direito de arrependimento em até 7 (sete) dias corridos a contar da confirmação do pagamento/contratação, nos termos do Código de Defesa do Consumidor, quando aplicável.",
+          `Para solicitar, envie e-mail a ${LEGAL_SITE.contactEmail} com: e-mail da conta, data e valor do pagamento, identificador do pagamento no Mercado Pago (se tiver) e pedido de arrependimento. Analisaremos e responderemos em prazo razoável.`,
+          "Se o reembolso por arrependimento for integralmente deferido, o plano poderá ser revertido ao estado anterior (em geral Usuário ou o plano imediatamente anterior, conforme o caso).",
         ],
       },
       {
-        heading: "4. Como o estorno é feito",
+        heading: "4. Cancelamento sem reembolso (regra geral)",
         paragraphs: [
-          "Estornos aprovados são processados via Mercado Pago, no mesmo meio de pagamento quando possível. O prazo de crédito na fatura/conta depende do banco, cartão ou provedor Pix.",
-          "Após reembolso integral por arrependimento, o plano poderá retornar ao estado anterior.",
+          "Fora do direito de arrependimento e das hipóteses da seção 5:",
+        ],
+        bullets: [
+          "Não há reembolso proporcional pelo tempo não usado do ciclo já pago",
+          "Não há reembolso pelo simples desuso do plano ou insatisfação subjetiva sem falha nossa",
+          "Não é possível “devolver” o plano no meio do ciclo para receber o valor de volta e voltar a Usuário — o ciclo segue até o vencimento; depois, sem renovação, a conta volta a Usuário automaticamente",
+          "Cancelar a renovação automática do cartão interrompe cobranças futuras, mas não gera estorno do período já pago",
         ],
       },
       {
-        heading: "5. Contato",
-        paragraphs: [`Solicitações e dúvidas: ${LEGAL_SITE.contactEmail}.`],
+        heading: "5. Hipóteses em que podemos reembolsar",
+        paragraphs: ["Podemos avaliar reembolso total ou parcial, a nosso critério e/ou por obrigação legal, quando:"],
+        bullets: [
+          "Cobrança duplicada comprovada do mesmo ciclo",
+          "Pagamento aprovado sem liberação do plano por falha técnica nossa, após tentativa de correção",
+          "Valor cobrado indevidamente (ex.: valor divergente do checkout por erro nosso)",
+          "Determinação legal, de órgão de defesa do consumidor ou ordem judicial",
+        ],
+      },
+      {
+        heading: "6. Upgrade, renovação e valores",
+        paragraphs: [
+          "Upgrade nos primeiros 15 dias do ciclo (diferença de preço) e upgrade após 15 dias (valor integral), bem como renovação com acúmulo de prazo, seguem os Termos de uso. Reembolso desses valores, quando cabível, observa as mesmas seções 3 a 5 desta política.",
+          "Renovação antecipada que acumula dias não gera direito automático a estorno do saldo de dias; o serviço digital permanece disponível pelo prazo estendido.",
+        ],
+      },
+      {
+        heading: "7. Como o estorno é feito",
+        paragraphs: [
+          "Estornos aprovados são processados via Mercado Pago, preferencialmente no mesmo meio (Pix ou cartão). O prazo para o crédito aparecer na conta/fatura depende do banco, da bandeira e do Mercado Pago — tipicamente alguns dias úteis, podendo variar.",
+          "Não devolvemos valores em dinheiro vivo nem por meios alheios ao fluxo do processador, salvo acordo excepcional e base legal.",
+        ],
+      },
+      {
+        heading: "8. Chargeback e contestação no cartão",
+        paragraphs: [
+          "Antes de contestar no banco/cartão, solicite suporte pelo nosso e-mail — muitas vezes resolvemos mais rápido.",
+          "Chargeback após uso do plano, ou de má-fé, pode levar à suspensão da conta e à cobrança dos custos/valores devidos.",
+        ],
+      },
+      {
+        heading: "9. Contato",
+        paragraphs: [
+          `Solicitações de reembolso, cancelamento de recorrência com apoio nosso e dúvidas: ${LEGAL_SITE.contactEmail}.`,
+          `Também: ${LEGAL_SITE.whatsappDisplay} (WhatsApp) e Instagram ${LEGAL_SITE.instagramHandle}.`,
+        ],
       },
     ],
   },
