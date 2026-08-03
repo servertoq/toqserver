@@ -79,7 +79,7 @@ export function ClubCartPanel({
         role="dialog"
         aria-modal="true"
         aria-labelledby="club-cart-title"
-        className="flex max-h-[min(92dvh,100%)] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-[var(--toq-card)] shadow-xl sm:rounded-2xl"
+        className="flex max-h-[min(78dvh,640px)] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-[var(--toq-card)] shadow-xl sm:max-h-[min(85dvh,640px)] sm:rounded-2xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--toq-border)] px-4 py-3">
@@ -117,19 +117,29 @@ export function ClubCartPanel({
               {items.map((item) => (
                 <li
                   key={`${item.productId}-${item.variantId}`}
-                  className="flex gap-3 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-3"
+                  className="flex items-start gap-3 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-3"
                 >
-                  {item.imageUrl && (
+                  {item.imageUrl ? (
                     <div className="club-product-thumb shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.imageUrl} alt="" className="rounded-lg" />
+                      <img
+                        src={item.imageUrl}
+                        alt=""
+                        className="h-14 w-14 rounded-lg object-cover"
+                        width={56}
+                        height={56}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-[var(--toq-border)] text-xs font-bold text-[var(--toq-text-muted)]">
+                      —
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-[var(--toq-navy)]">
                       {item.productName}
                     </p>
-                    <p className="text-[11px] text-[var(--toq-text-muted)]">
+                    <p className="truncate text-[11px] text-[var(--toq-text-muted)]">
                       {variantLabel(item)}
                     </p>
                     <p className="mt-1 text-xs font-semibold text-[var(--toq-accent)]">

@@ -525,6 +525,15 @@ body {
   right: 0.4rem;
 }
 
+.club-product-thumb {
+  width: 3.5rem;
+  height: 3.5rem;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.club-product-thumb img,
 .feed-layout-main .club-product-thumb img {
   width: 3.5rem;
   height: 3.5rem;
