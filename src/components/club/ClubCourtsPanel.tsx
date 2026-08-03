@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import { canModerate } from "@/lib/community";
 import { normalizePhoneDigits } from "@/lib/courts";
@@ -426,9 +427,9 @@ function ClubCourtForm({
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
-      <div className="flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] shadow-xl sm:rounded-2xl">
+  return createPortal(
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
+      <div className="flex max-h-[min(92dvh,100%)] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] shadow-xl sm:rounded-2xl">
         <div className="mb-0 flex shrink-0 items-center justify-between border-b border-[var(--toq-border)] px-5 py-4">
           <h2 className="text-lg font-bold text-[var(--toq-navy)]">{isEdit ? "Editar quadra" : "Nova quadra"}</h2>
           <button type="button" onClick={onClose} className="text-sm font-semibold text-[var(--toq-text-muted)]">
@@ -810,7 +811,8 @@ function ClubCourtForm({
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
