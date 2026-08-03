@@ -109,10 +109,11 @@ body {
 }
 
 @media (min-width: 1024px) {
+  /* Largura relativa ao main (já com offset da sidebar) — evita 100vw + margem dupla e barra extra */
   .feed-page-container {
-    margin-left: calc(var(--app-sidebar-collapsed-w) + 1.25rem);
+    margin-left: 1.25rem;
     margin-right: 1.25rem;
-    width: min(1180px, calc(100vw - var(--app-sidebar-collapsed-w) - 2.5rem));
+    width: min(1180px, calc(100% - 2.5rem));
     max-width: none;
   }
 
@@ -160,7 +161,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    max-height: 100dvh;
+    max-height: calc(100dvh - 0.5rem);
+    overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-top: 1.5rem;
@@ -170,10 +172,6 @@ body {
 
   .feed-home-friends-hidden .feed-home-rail-sticky {
     padding-top: 0.5rem;
-  }
-
-  .feed-home-ad-slot {
-    margin-top: 5.5rem;
   }
 }
 

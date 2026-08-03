@@ -35,7 +35,7 @@ export function AppShell({
       <PresenceHeartbeat />
       <div className="feed-layout flex">
         <AppSidebar profile={profile} />
-        <div className={`feed-layout-main ${mobileMainOffsetClass}`}>
+        <div className={`feed-layout-main flex flex-col ${mobileMainOffsetClass}`}>
           {children}
         </div>
       </div>
