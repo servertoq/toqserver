@@ -318,42 +318,44 @@ export function CreatePostBox({
               </p>
             </div>
           </div>
-          {!isEdit && (
-          <div className="mt-2 flex flex-nowrap gap-1.5">
-            {([
-              "player",
-              "event",
-              "poll",
-              ...(allowMatch ? (["partida"] as const) : []),
-            ] as PostType[]).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => {
-                  setPostType(t);
-                  setPollError(null);
-                  setMatchError(null);
-                  if (t === "partida") setVisibility("private");
-                }}
-                className={`min-w-0 flex-1 rounded-full px-2 py-1 text-center text-xs font-semibold transition ${
-                  postType === t
-                    ? "toq-btn-primary text-white"
-                    : "bg-[var(--toq-surface)] text-[var(--toq-text-muted)] hover:bg-[var(--toq-input-bg)]"
-                }`}
-              >
-                {t === "event"
-                  ? "Evento"
-                  : t === "poll"
-                    ? "Enquete"
-                    : t === "partida"
-                      ? "Partida"
-                      : "Post"}
-              </button>
-            ))}
-          </div>
-          )}
         </div>
       </div>
+      {!isEdit && (
+        <div
+          className={`mb-3 grid gap-1.5 ${allowMatch ? "grid-cols-4" : "grid-cols-3"}`}
+        >
+          {([
+            "player",
+            "event",
+            "poll",
+            ...(allowMatch ? (["partida"] as const) : []),
+          ] as PostType[]).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => {
+                setPostType(t);
+                setPollError(null);
+                setMatchError(null);
+                if (t === "partida") setVisibility("private");
+              }}
+              className={`rounded-full px-1.5 py-1.5 text-center text-[11px] font-semibold leading-tight transition sm:px-3 sm:text-xs ${
+                postType === t
+                  ? "toq-btn-primary text-white"
+                  : "bg-[var(--toq-surface)] text-[var(--toq-text-muted)] hover:bg-[var(--toq-input-bg)]"
+              }`}
+            >
+              {t === "event"
+                ? "Evento"
+                : t === "poll"
+                  ? "Enquete"
+                  : t === "partida"
+                    ? "Partida"
+                    : "Post"}
+            </button>
+          ))}
+        </div>
+      )}
 
       {(postType === "event" || postType === "partida") && (
         <div className="mb-2 space-y-2">
