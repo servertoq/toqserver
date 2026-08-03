@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { normalizePhoneDigits } from "@/lib/courts";
@@ -27,6 +28,7 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
   const fileRef = useRef<HTMLInputElement>(null);
   const isEdit = !!tournament;
   const isStandalone = !communityId;
+  const [mounted, setMounted] = useState(false);
 
   const [name, setName] = useState(tournament?.name ?? "");
   const [description, setDescription] = useState(tournament?.description ?? "");
@@ -42,6 +44,24 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !loading) onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [mounted, loading, onClose]);
 
   function handleImagePick(file: File | null) {
     if (imagePreview) URL.revokeObjectURL(imagePreview);
@@ -154,32 +174,45 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
 
   const previewSrc = displayPreview;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
+  if (!mounted) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+      role="presentation"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget && !loading) onClose();
+      }}
+    >
       <form
         onSubmit={handleSubmit}
-        className="max-h-[90dvh] w-full max-w-lg overflow-y-auto toq-card p-5 shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="club-tournament-form-title"
+        className="flex max-h-[min(92dvh,100%)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] shadow-xl sm:rounded-2xl"
+        onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-lg font-bold text-[var(--toq-navy)]">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--toq-border)] px-5 py-4">
+          <h3 id="club-tournament-form-title" className="text-lg font-bold text-[var(--toq-navy)]">
             {isEdit ? "Editar torneio" : isStandalone ? "Novo torneio avulso" : "Novo torneio"}
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-2 py-1 text-sm text-[var(--toq-text-muted)] hover:bg-slate-100"
+            disabled={loading}
+            className="rounded-lg px-2 py-1 text-sm text-[var(--toq-text-muted)] hover:bg-slate-100 disabled:opacity-50 dark:hover:bg-white/10"
           >
             Fechar
           </button>
         </div>
 
-        <div className="mt-4 space-y-3">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5 py-4 [-webkit-overflow-scrolling:touch]">
           <label className="block">
             <span className="text-xs font-semibold text-[var(--toq-navy)]">Nome do torneio</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm"
               required
             />
           </label>
@@ -207,7 +240,7 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
                 </button>
               </div>
             ) : (
-              <div className="mt-2 flex aspect-[16/9] w-full items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50">
+              <div className="mt-2 flex aspect-[16/9] w-full items-center justify-center rounded-xl border border-dashed border-[var(--toq-border)] bg-[var(--toq-surface)]">
                 <p className="px-4 text-center text-xs text-[var(--toq-text-muted)]">
                   Nenhuma imagem — adicione uma foto para divulgar o torneio.
                 </p>
@@ -217,7 +250,7 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="mt-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-[var(--toq-navy)] hover:bg-slate-50"
+              className="mt-2 rounded-lg border border-[var(--toq-border)] bg-[var(--toq-surface)] px-3 py-2 text-xs font-bold text-[var(--toq-navy)]"
             >
               {displayPreview ? "Trocar imagem" : "Adicionar imagem"}
             </button>
@@ -239,7 +272,7 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm"
               placeholder="Resumo para divulgação do torneio…"
               required
             />
@@ -251,7 +284,7 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
               value={howItWorks}
               onChange={(e) => setHowItWorks(e.target.value)}
               rows={4}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm"
               placeholder="Regras, formato, categorias, horários…"
               required
             />
@@ -263,7 +296,7 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
               value={prizes}
               onChange={(e) => setPrizes(e.target.value)}
               rows={2}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm"
               placeholder="Troféus, valores, brindes…"
               required
             />
@@ -276,7 +309,7 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
             <input
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm"
               placeholder="(11) 99999-9999"
               required
             />
@@ -290,7 +323,7 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
               <input
                 value={locationLabel}
                 onChange={(e) => setLocationLabel(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm"
                 placeholder="Ex.: São Paulo / SP — Arena XYZ"
                 required={isStandalone}
               />
@@ -304,7 +337,7 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
                 type="datetime-local"
                 value={startsAt}
                 onChange={(e) => setStartsAt(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-sm"
+                className="mt-1 w-full rounded-lg toq-input px-2 py-2 text-sm"
               />
             </label>
             <label className="block">
@@ -313,13 +346,13 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
                 type="datetime-local"
                 value={endsAt}
                 onChange={(e) => setEndsAt(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-sm"
+                className="mt-1 w-full rounded-lg toq-input px-2 py-2 text-sm"
               />
             </label>
           </div>
 
           {!isStandalone && (
-            <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+            <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-[var(--toq-border)] bg-[var(--toq-surface)] px-3 py-2">
               <input
                 type="checkbox"
                 checked={isPrivate}
@@ -333,35 +366,37 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
             </label>
           )}
           {isStandalone && (
-            <p className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+            <p className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-100">
               Torneios avulsos aparecem na aba Torneios para toda a plataforma.
+            </p>
+          )}
+
+          {error && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950/40" role="alert">
+              {error}
             </p>
           )}
         </div>
 
-        {error && (
-          <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600" role="alert">
-            {error}
-          </p>
-        )}
-
-        <div className="mt-4 flex gap-2">
+        <div className="flex shrink-0 gap-2 border-t border-[var(--toq-border)] px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-lg border border-slate-200 py-2 text-sm font-semibold text-[var(--toq-navy)]"
+            disabled={loading}
+            className="flex-1 rounded-lg border border-[var(--toq-border)] py-2.5 text-sm font-semibold text-[var(--toq-navy)] disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 rounded-lg toq-btn-primary py-2 text-sm font-bold text-white disabled:opacity-50"
+            className="flex-1 rounded-lg toq-btn-primary py-2.5 text-sm font-bold text-white disabled:opacity-50"
           >
             {loading ? "Salvando…" : isEdit ? "Salvar" : "Criar torneio"}
           </button>
         </div>
       </form>
-    </div>
+    </div>,
+    document.body
   );
 }
