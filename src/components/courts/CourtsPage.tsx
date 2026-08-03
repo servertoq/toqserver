@@ -10,7 +10,7 @@ import { matchesLocationSearch, LOCATION_SEARCH_PLACEHOLDER } from "@/lib/locati
 import { partitionByProximity, type PlaceLocation } from "@/lib/nearbyLocation";
 import { useUserLocationAnchor } from "@/hooks/useUserLocationAnchor";
 import { fetchPlanUsage, canCreateCourtResource } from "@/lib/plans";
-import { fetchManagedClubs, type ManagedClub } from "@/lib/courtManagement";
+import { fetchManagedClubs, fetchManagedCourts, type ManagedClub } from "@/lib/courtManagement";
 import { groupDetailHref } from "@/lib/communityGroup";
 import { useAppProfile } from "@/components/app/AppShell";
 import type { PlanUsage } from "@/types/plans";
@@ -59,6 +59,7 @@ export function CourtsPage() {
   const [courts, setCourts] = useState<CourtWithOwner[]>([]);
   const [clubCourts, setClubCourts] = useState<BrowsableClubCourt[]>([]);
   const [managedClubs, setManagedClubs] = useState<ManagedClub[]>([]);
+  const [hasManagedCourts, setHasManagedCourts] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -67,7 +68,7 @@ export function CourtsPage() {
   const [clubPicker, setClubPicker] = useState<ClubAction | null>(null);
 
   const refreshClubCourts = useCallback(async () => {
-    const [{ data, error: listErr }, usage, clubRows, clubs] = await Promise.all([
+    const [{ data, error: listErr }, usage, clubRows, clubs, managedCourtRows] = await Promise.all([
       supabase
         .from("courts")
         .select(
@@ -82,9 +83,13 @@ export function CourtsPage() {
       profile.canAccessCourtManagement
         ? fetchManagedClubs(supabase, profile.id)
         : Promise.resolve([] as ManagedClub[]),
+      profile.canAccessCourtManagement
+        ? fetchManagedCourts(supabase, profile.id)
+        : Promise.resolve([]),
     ]);
     setPlanUsage(usage);
     setManagedClubs(clubs);
+    setHasManagedCourts(managedCourtRows.length > 0);
 
     if (listErr) {
       setError(
@@ -222,7 +227,9 @@ export function CourtsPage() {
 
   const canCreateStandalone = canCreateCourtResource(planUsage, profile.staffRole);
   const hasManagedClubs = managedClubs.length > 0;
-  const showManagerActions = profile.canAccessCourtManagement && hasManagedClubs;
+  /** Só mostra gestão/agenda quando já existe pelo menos uma quadra no clube. */
+  const showManagerActions = profile.canAccessCourtManagement && hasManagedClubs && hasManagedCourts;
+  const showCreateClubCourt = profile.canAccessCourtManagement && hasManagedClubs;
 
   function resolveClubAction(action: ClubAction): string | null {
     if (managedClubs.length === 1) return clubCourtsHref(managedClubs[0].slug, action);
@@ -234,7 +241,7 @@ export function CourtsPage() {
   }
 
   const headerAction =
-    showManagerActions || canCreateStandalone ? (
+    showManagerActions || showCreateClubCourt || canCreateStandalone ? (
       <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
         {showManagerActions && (
           <>
@@ -274,20 +281,24 @@ export function CourtsPage() {
             )}
           </>
         )}
-        {!showManagerActions && canCreateStandalone && (
+        {!showManagerActions && showCreateClubCourt && (
+          <button
+            type="button"
+            onClick={() => {
+              const href = resolveClubAction("nova");
+              if (href) router.push(href);
+            }}
+            className="col-span-2 inline-flex h-10 w-full items-center justify-center rounded-xl toq-btn-primary px-4 text-sm font-bold text-white sm:col-span-1 sm:h-9 sm:w-auto"
+          >
+            + Nova quadra
+          </button>
+        )}
+        {!showManagerActions && !showCreateClubCourt && canCreateStandalone && (
           <Link
             href="/inicio/quadras/cadastrar"
             className="col-span-2 inline-flex h-10 w-full items-center justify-center rounded-xl toq-btn-primary px-4 text-sm font-bold text-white sm:col-span-1 sm:h-9 sm:w-auto"
           >
             Cadastrar quadra
-          </Link>
-        )}
-        {profile.canAccessCourtManagement && !hasManagedClubs && (
-          <Link
-            href="/inicio/gestao-de-quadras"
-            className="col-span-2 inline-flex h-10 w-full items-center justify-center rounded-xl toq-btn-outline px-3.5 text-xs font-bold leading-none sm:col-span-1 sm:h-9 sm:w-auto sm:text-sm"
-          >
-            Gestão de Quadras
           </Link>
         )}
       </div>
