@@ -5285,6 +5285,7 @@ button {
 .coach-listing-card {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   border-radius: 1.25rem;
   border: 1px solid var(--toq-border);
   background: var(--toq-card);

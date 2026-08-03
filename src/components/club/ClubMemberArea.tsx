@@ -94,9 +94,9 @@ export function ClubMemberArea({
   }, [pathname, router, searchParams]);
 
   return (
-    <div className="mt-6 overflow-visible toq-card-lg">
+    <div className="mt-6 overflow-hidden toq-card-lg">
       <ClubTabs active={tab} onChange={changeTab} shopEnabled={shopEnabled} />
-      <div className="min-h-0 overflow-visible px-4 pb-8 sm:px-5">
+      <div className="min-h-0 px-4 pb-8 sm:px-5">
         {tab === "feed" && (
           <ClubFeedPanel
             posts={posts}

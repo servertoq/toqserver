@@ -22,7 +22,7 @@ export function ClubTabs({
   const visible = TABS.filter((t) => t.id !== "shop" || shopEnabled);
 
   return (
-    <div className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-white px-1">
+    <div className="flex gap-1 overflow-x-auto border-b border-[var(--toq-border)] bg-[var(--toq-card)] px-1">
       {visible.map((tab) => (
         <button
           key={tab.id}

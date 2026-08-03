@@ -1045,9 +1045,9 @@ export function ClubCourtsPanel({
       ) : (
         <ul className="mt-4 grid gap-4 sm:grid-cols-2">
           {courts.map((court) => (
-            <li key={court.id} className="toq-card-lg overflow-visible">
+            <li key={court.id} className="toq-card-lg overflow-hidden">
               {court.images?.[0] && (
-                <div className="overflow-hidden rounded-t-2xl">
+                <div className="overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={court.images[0].url} alt="" className="aspect-[4/3] w-full object-cover" />
                 </div>

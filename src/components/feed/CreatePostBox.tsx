@@ -319,7 +319,7 @@ export function CreatePostBox({
             </div>
           </div>
           {!isEdit && (
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-nowrap gap-1.5">
             {([
               "player",
               "event",
@@ -335,7 +335,7 @@ export function CreatePostBox({
                   setMatchError(null);
                   if (t === "partida") setVisibility("private");
                 }}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                className={`min-w-0 flex-1 rounded-full px-2 py-1 text-center text-xs font-semibold transition ${
                   postType === t
                     ? "toq-btn-primary text-white"
                     : "bg-[var(--toq-surface)] text-[var(--toq-text-muted)] hover:bg-[var(--toq-input-bg)]"
