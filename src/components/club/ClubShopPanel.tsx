@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { canModerate } from "@/lib/community";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ClubProductImageCarousel } from "@/components/club/ClubProductImageCarousel";
 import { formatClubPrice, hasShopWhatsApp, productDisplayPrice } from "@/lib/clubFeatures";
 import { cartItemCount, loadClubCart, saveClubCart } from "@/lib/clubCart";
@@ -33,6 +34,8 @@ export function ClubShopPanel({
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<ClubProduct | null | undefined>(undefined);
   const [viewing, setViewing] = useState<ClubProduct | null>(null);
+  const [productToRemove, setProductToRemove] = useState<ClubProduct | null>(null);
+  const [removingProduct, setRemovingProduct] = useState(false);
   const [cart, setCart] = useState<ClubCartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
 
@@ -86,8 +89,15 @@ export function ClubShopPanel({
     load();
   }, [load]);
 
-  async function toggleActive(product: ClubProduct) {
-    await supabase.from("club_products").update({ is_active: false }).eq("id", product.id);
+  async function confirmRemoveProduct() {
+    if (!productToRemove) return;
+    setRemovingProduct(true);
+    const removed = productToRemove;
+    await supabase.from("club_products").update({ is_active: false }).eq("id", removed.id);
+    persistCart(cart.filter((c) => c.productId !== removed.id));
+    if (viewing?.id === removed.id) setViewing(null);
+    setProductToRemove(null);
+    setRemovingProduct(false);
     await load();
   }
 
@@ -238,7 +248,7 @@ export function ClubShopPanel({
                     </button>
                     <button
                       type="button"
-                      onClick={() => void toggleActive(product)}
+                      onClick={() => setProductToRemove(product)}
                       className="text-xs font-semibold text-red-600"
                     >
                       Remover
@@ -282,6 +292,23 @@ export function ClubShopPanel({
           onClose={() => setEditing(undefined)}
         />
       )}
+
+      <ConfirmDialog
+        open={!!productToRemove}
+        title="Remover produto"
+        message={
+          productToRemove
+            ? `Remover "${productToRemove.name}" da loja? Ele deixa de aparecer para os membros.`
+            : "Remover este produto da loja?"
+        }
+        confirmLabel="Remover"
+        variant="danger"
+        loading={removingProduct}
+        onConfirm={() => void confirmRemoveProduct()}
+        onCancel={() => {
+          if (!removingProduct) setProductToRemove(null);
+        }}
+      />
     </div>
   );
 }
