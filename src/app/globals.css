@@ -203,6 +203,7 @@ body {
 @media (max-width: 767px) {
   .feed-layout-main {
     padding-top: var(--app-mobile-header-h);
+    scroll-padding-bottom: calc(var(--app-mobile-bottom-nav-h) + 1rem);
   }
 }
 
@@ -5282,8 +5283,6 @@ button {
 .coach-listing-card {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  overflow: hidden;
   border-radius: 1.25rem;
   border: 1px solid var(--toq-border);
   background: var(--toq-card);
