@@ -38,7 +38,7 @@ export function AuthPlansSection({ onRegister }: Props) {
               key={planId}
               className={`auth-plan-card auth-plan-card--${planId}${isPopular ? " auth-plan-card--highlight" : ""}`}
             >
-              {isPopular && <p className="auth-plan-badge">Mais popular</p>}
+              {isPopular && <p className="auth-plan-badge">Mais pedido</p>}
               <p className="auth-plan-label">{PLAN_LABELS[planId]}</p>
               <p className="auth-plan-price">
                 {isFree ? (

@@ -93,9 +93,9 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
         <div className="auth-landing-section-inner">
           <header className="auth-landing-section-header">
             <p className="auth-landing-eyebrow">Para quem é</p>
-            <h2 className="auth-landing-section-title">O ecossistema do tênis é para você</h2>
+            <h2 className="auth-landing-section-title">Jogador, professor ou arena</h2>
             <p className="auth-landing-section-lead">
-              Jogadores, professores e donos de arena — cada um com ferramentas pensadas para o seu objetivo.
+              Cada perfil encontra o essencial: partidas, aulas ou gestão de quadras.
             </p>
           </header>
           <AuthPersonaCards />
@@ -105,10 +105,10 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
       <section className="auth-landing-section auth-landing-section--alt">
         <div className="auth-landing-section-inner">
           <header className="auth-landing-section-header">
-            <p className="auth-landing-eyebrow">Vantagens</p>
-            <h2 className="auth-landing-section-title">Por que escolher a TOQ</h2>
+            <p className="auth-landing-eyebrow">Na prática</p>
+            <h2 className="auth-landing-section-title">O que a TOQ resolve</h2>
             <p className="auth-landing-section-lead">
-              Pagamento garantido, match inteligente, rede social e muito mais — tudo integrado.
+              Match, pagamento, clubes e divulgação — sem espalhar em várias ferramentas.
             </p>
           </header>
           <AuthFeatureGrid />
@@ -118,10 +118,10 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
       <section className="auth-landing-section">
         <div className="auth-landing-section-inner">
           <header className="auth-landing-section-header">
-            <p className="auth-landing-eyebrow">Como funciona</p>
-            <h2 className="auth-landing-section-title">Simples de começar</h2>
+            <p className="auth-landing-eyebrow">Passo a passo</p>
+            <h2 className="auth-landing-section-title">Como começar</h2>
             <p className="auth-landing-section-lead">
-              Em poucos passos você já está conectado à comunidade do tênis brasileiro.
+              Cadastro rápido. Depois é conectar e jogar.
             </p>
           </header>
           <AuthHowItWorks />
@@ -132,10 +132,9 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
         <div className="auth-landing-section-inner">
           <header className="auth-landing-section-header">
             <p className="auth-landing-eyebrow">Planos</p>
-            <h2 className="auth-landing-section-title">Escolha como quer crescer na TOQ</h2>
+            <h2 className="auth-landing-section-title">Preços transparentes</h2>
             <p className="auth-landing-section-lead">
-              Comece grátis. Evolua para Professor ou Empresário quando fizer sentido — pague só a
-              diferença ao mudar de plano.
+              Comece grátis. Troque de plano quando quiser — no upgrade, só a diferença.
             </p>
           </header>
           <AuthPlansSection onRegister={onRegister} />
@@ -148,7 +147,7 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
             <p className="auth-landing-eyebrow">Dúvidas</p>
             <h2 className="auth-landing-section-title">Perguntas frequentes</h2>
             <p className="auth-landing-section-lead">
-              Respostas rápidas sobre uso, instalação, integração e atualizações da plataforma.
+              Uso, instalação, integração com o sistema do clube e atualizações.
             </p>
           </header>
           <AuthFaqSection />
@@ -157,8 +156,8 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
 
       <section className="auth-landing-cta">
         <div className="auth-landing-section-inner auth-landing-cta-inner">
-          <h2 className="auth-landing-cta-title">Pronto para evoluir no tênis?</h2>
-          <p className="auth-landing-cta-lead">Crie sua conta ou entre agora e faça parte da rede.</p>
+          <h2 className="auth-landing-cta-title">Entre na TOQ</h2>
+          <p className="auth-landing-cta-lead">Crie sua conta ou faça login para continuar.</p>
           <div className="auth-landing-cta-actions">
             <button type="button" className="auth-splash-btn auth-splash-btn--primary" onClick={onLogin}>
               Entrar
