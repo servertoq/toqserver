@@ -9,10 +9,7 @@ const MAX_ROWS = 15;
 const COLORS = {
   bg0: "#07111f",
   bg1: "#0c1c36",
-  row: "#132#if",
-  rowAlt: "#0f2444",
   accent: "#3b82f6",
-  accentSoft: "rgba(59, 130, 246, 0.18)",
   text: "#ffffff",
   muted: "#94a3b8",
   gold: "#f5c542",
