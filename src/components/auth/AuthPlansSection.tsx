@@ -1,4 +1,4 @@
-import { PLAN_FEATURES, planMonthlyPriceLabel } from "@/lib/billing/plans";
+import { PLAN_FEATURES, PLAN_PRICES_CENTS, formatPlanPrice } from "@/lib/billing/plans";
 import { PLAN_LABELS } from "@/lib/plans";
 import type { UserPlan } from "@/types/plans";
 
@@ -30,6 +30,8 @@ export function AuthPlansSection({ onRegister }: Props) {
         {LANDING_PLANS.map((planId) => {
           const features = PLAN_FEATURES[planId].filter((f) => f.included);
           const isPopular = planId === "professor";
+          const cents = PLAN_PRICES_CENTS[planId] ?? 0;
+          const isFree = cents <= 0;
 
           return (
             <article
@@ -38,7 +40,16 @@ export function AuthPlansSection({ onRegister }: Props) {
             >
               {isPopular && <p className="auth-plan-badge">Mais popular</p>}
               <p className="auth-plan-label">{PLAN_LABELS[planId]}</p>
-              <p className="auth-plan-price">{planMonthlyPriceLabel(planId)}</p>
+              <p className="auth-plan-price">
+                {isFree ? (
+                  "Grátis"
+                ) : (
+                  <>
+                    <span className="auth-plan-price-value">{formatPlanPrice(cents)}</span>
+                    <span className="auth-plan-price-period">/mês</span>
+                  </>
+                )}
+              </p>
               <p className="auth-plan-tagline">{PLAN_TAGLINE[planId]}</p>
               <ul className="auth-plan-features">
                 {features.map((f) => (
