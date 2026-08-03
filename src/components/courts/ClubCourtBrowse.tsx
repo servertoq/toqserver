@@ -25,7 +25,7 @@ export function ClubCourtBrowseCard({ court }: { court: BrowsableClubCourt }) {
     >
       {court.images?.[0] && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={court.images[0].url} alt="" className="mb-3 aspect-[4/3] w-full rounded-xl object-cover" />
+        <img src={court.images[0].url} alt="" className="mb-3 aspect-[16/10] w-full rounded-xl object-cover sm:aspect-[4/3]" />
       )}
       <h3 className="font-bold text-[var(--toq-navy)]">{court.name}</h3>
       {!rentalOpen && (
