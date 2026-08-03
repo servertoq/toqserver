@@ -427,16 +427,19 @@ function ClubCourtForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-5 shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
+      <div className="flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] shadow-xl sm:rounded-2xl">
+        <div className="mb-0 flex shrink-0 items-center justify-between border-b border-[var(--toq-border)] px-5 py-4">
           <h2 className="text-lg font-bold text-[var(--toq-navy)]">{isEdit ? "Editar quadra" : "Nova quadra"}</h2>
           <button type="button" onClick={onClose} className="text-sm font-semibold text-[var(--toq-text-muted)]">
             Fechar
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] [-webkit-overflow-scrolling:touch]"
+        >
           {error && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600">{error}</p>}
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -1121,7 +1124,7 @@ export function ClubCourtsPanel({
       )}
 
       {agendaPickerOpen && courts.length > 1 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-sm rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-5 shadow-xl">
             <h3 className="text-sm font-bold text-[var(--toq-navy)]">Escolha a quadra</h3>
             <ul className="mt-3 space-y-2">

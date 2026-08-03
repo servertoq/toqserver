@@ -45,17 +45,17 @@ export function TournamentDetailDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="tournament-detail-title"
       onClick={onClose}
     >
       <div
-        className="max-h-[85dvh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-xl dark:bg-[#0b1220]"
+        className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl dark:bg-[#0b1220] sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative h-40 bg-gradient-to-br from-[var(--toq-navy)] to-[var(--toq-accent)] sm:h-48">
+        <div className="relative h-40 shrink-0 bg-gradient-to-br from-[var(--toq-navy)] to-[var(--toq-accent)] sm:h-48">
           {cover ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={cover} alt="" className="h-full w-full object-cover" />
@@ -74,7 +74,7 @@ export function TournamentDetailDialog({
           </button>
         </div>
 
-        <div className="space-y-4 p-4 sm:p-5">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:p-5 [-webkit-overflow-scrolling:touch]">
           <div>
             <p className="text-xs font-semibold text-[var(--toq-sky)]">{clubName}</p>
             <h2

@@ -415,8 +415,8 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-2 sm:items-center sm:p-3">
-      <div className="flex max-h-[min(88vh,720px)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] shadow-xl">
+      <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-2 sm:items-center sm:p-3">
+      <div className="flex max-h-[min(88dvh,720px)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] shadow-xl">
         <div className="shrink-0 border-b border-[var(--toq-border)] p-3 sm:p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
