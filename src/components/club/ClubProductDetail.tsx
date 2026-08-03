@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { ClubProductImageCarousel } from "@/components/club/ClubProductImageCarousel";
 import { formatClubPrice, hasShopWhatsApp, productDisplayPrice } from "@/lib/clubFeatures";
 import {
@@ -29,6 +30,7 @@ export function ClubProductDetail({
   onAddToCart,
   onClose,
 }: Props) {
+  const [mounted, setMounted] = useState(false);
   const variants = useMemo(
     () => (product.variants ?? []).filter((v) => v.is_active !== false),
     [product.variants]
@@ -55,6 +57,24 @@ export function ClubProductDetail({
 
   const whatsappReady = hasShopWhatsApp(shopWhatsapp);
   const displayPrice = selected?.price ?? productDisplayPrice(product);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [mounted, onClose]);
 
   function validateSelection() {
     if (variants.length === 0) return "Produto sem opções disponíveis.";
@@ -109,168 +129,189 @@ export function ClubProductDetail({
     setTimeout(() => setHint(null), 2000);
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-[var(--toq-card)] shadow-xl">
-        <ClubProductImageCarousel
-          images={product.images ?? []}
-          alt={product.name}
-          variant="detail"
-        />
-        <div className="p-5">
-          <div className="flex items-start justify-between gap-2">
-            <h2 className="text-lg font-bold text-[var(--toq-navy)]">{product.name}</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              className="shrink-0 text-sm font-semibold text-[var(--toq-text-muted)]"
-            >
-              Fechar
-            </button>
-          </div>
-          <p className="mt-2 text-sm text-[var(--toq-text-muted)]">{product.description}</p>
-          <p className="mt-3 text-lg font-bold text-[var(--toq-accent)]">
-            {formatClubPrice(displayPrice)}
-            {selected && quantity > 1 && (
-              <span className="ml-2 text-sm font-semibold text-[var(--toq-text-muted)]">
-                × {quantity} = {formatClubPrice(displayPrice * quantity)}
-              </span>
+  if (!mounted) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+      role="presentation"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="club-product-detail-title"
+        className="flex max-h-[min(92dvh,100%)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-[var(--toq-card)] shadow-xl sm:rounded-2xl"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
+          <ClubProductImageCarousel
+            images={product.images ?? []}
+            alt={product.name}
+            variant="detail"
+          />
+          <div className="p-5">
+            <div className="flex items-start justify-between gap-2">
+              <h2 id="club-product-detail-title" className="text-lg font-bold text-[var(--toq-navy)]">
+                {product.name}
+              </h2>
+              <button
+                type="button"
+                onClick={onClose}
+                className="shrink-0 text-sm font-semibold text-[var(--toq-text-muted)]"
+              >
+                Fechar
+              </button>
+            </div>
+            <p className="mt-2 text-sm text-[var(--toq-text-muted)]">{product.description}</p>
+            <p className="mt-3 text-lg font-bold text-[var(--toq-accent)]">
+              {formatClubPrice(displayPrice)}
+              {selected && quantity > 1 && (
+                <span className="ml-2 text-sm font-semibold text-[var(--toq-text-muted)]">
+                  × {quantity} = {formatClubPrice(displayPrice * quantity)}
+                </span>
+              )}
+            </p>
+
+            {!whatsappReady && (
+              <p className="mt-3 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800">
+                A loja ainda não tem WhatsApp configurado. O administrador deve informar o contato nas
+                configurações do clube.
+              </p>
             )}
-          </p>
 
-          {!whatsappReady && (
-            <p className="mt-3 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800">
-              A loja ainda não tem WhatsApp configurado. O administrador deve informar o contato nas
-              configurações do clube.
-            </p>
-          )}
+            {variants.length > 0 && (
+              <div className="mt-4 space-y-3">
+                {hasSizes && (
+                  <label className="block">
+                    <span className="text-xs font-semibold text-[var(--toq-navy)]">Tamanho</span>
+                    <select
+                      value={size}
+                      onChange={(e) => {
+                        setSize(e.target.value);
+                        setColor("");
+                        setNumbering("");
+                      }}
+                      className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm"
+                    >
+                      <option value="">Selecione…</option>
+                      {sizeOptions.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {hasColors && (
+                  <label className="block">
+                    <span className="text-xs font-semibold text-[var(--toq-navy)]">Cor</span>
+                    <select
+                      value={color}
+                      onChange={(e) => {
+                        setColor(e.target.value);
+                        setNumbering("");
+                      }}
+                      disabled={hasSizes && !size}
+                      className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm disabled:opacity-50"
+                    >
+                      <option value="">Selecione…</option>
+                      {colorOptions.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {hasNumbering && (
+                  <label className="block">
+                    <span className="text-xs font-semibold text-[var(--toq-navy)]">Numeração</span>
+                    <select
+                      value={numbering}
+                      onChange={(e) => setNumbering(e.target.value)}
+                      disabled={(hasSizes && !size) || (hasColors && !color)}
+                      className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm disabled:opacity-50"
+                    >
+                      <option value="">Selecione…</option>
+                      {numberingOptions.map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {!hasSizes && !hasColors && !hasNumbering && variants.length === 1 && (
+                  <p className="text-xs text-[var(--toq-text-muted)]">
+                    Opção: {variantLabel(variants[0])} — {formatClubPrice(variants[0].price)}
+                  </p>
+                )}
+                {selected && (
+                  <p className="text-xs font-semibold text-[var(--toq-navy)]">
+                    Selecionado: {variantLabel(selected)}
+                  </p>
+                )}
+              </div>
+            )}
 
-          {variants.length > 0 && (
-            <div className="mt-4 space-y-3">
-              {hasSizes && (
-                <label className="block">
-                  <span className="text-xs font-semibold text-[var(--toq-navy)]">Tamanho</span>
-                  <select
-                    value={size}
-                    onChange={(e) => {
-                      setSize(e.target.value);
-                      setColor("");
-                      setNumbering("");
-                    }}
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                  >
-                    <option value="">Selecione…</option>
-                    {sizeOptions.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              {hasColors && (
-                <label className="block">
-                  <span className="text-xs font-semibold text-[var(--toq-navy)]">Cor</span>
-                  <select
-                    value={color}
-                    onChange={(e) => {
-                      setColor(e.target.value);
-                      setNumbering("");
-                    }}
-                    disabled={hasSizes && !size}
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:opacity-50"
-                  >
-                    <option value="">Selecione…</option>
-                    {colorOptions.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              {hasNumbering && (
-                <label className="block">
-                  <span className="text-xs font-semibold text-[var(--toq-navy)]">Numeração</span>
-                  <select
-                    value={numbering}
-                    onChange={(e) => setNumbering(e.target.value)}
-                    disabled={(hasSizes && !size) || (hasColors && !color)}
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:opacity-50"
-                  >
-                    <option value="">Selecione…</option>
-                    {numberingOptions.map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              {!hasSizes && !hasColors && !hasNumbering && variants.length === 1 && (
-                <p className="text-xs text-[var(--toq-text-muted)]">
-                  Opção: {variantLabel(variants[0])} — {formatClubPrice(variants[0].price)}
-                </p>
-              )}
-              {selected && (
-                <p className="text-xs font-semibold text-[var(--toq-navy)]">
-                  Selecionado: {variantLabel(selected)}
-                </p>
-              )}
+            <div className="mt-4 flex items-center gap-3">
+              <span className="text-xs font-semibold text-[var(--toq-navy)]">Quantidade</span>
+              <div className="flex items-center gap-2 rounded-lg border border-[var(--toq-border)]">
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  className="px-3 py-1 text-sm font-bold"
+                >
+                  −
+                </button>
+                <span className="min-w-[2rem] text-center text-sm font-bold">{quantity}</span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => q + 1)}
+                  className="px-3 py-1 text-sm font-bold"
+                >
+                  +
+                </button>
+              </div>
             </div>
-          )}
 
-          <div className="mt-4 flex items-center gap-3">
-            <span className="text-xs font-semibold text-[var(--toq-navy)]">Quantidade</span>
-            <div className="flex items-center gap-2 rounded-lg border border-slate-200">
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="px-3 py-1 text-sm font-bold"
+            {hint && (
+              <p
+                className={`mt-3 rounded-lg px-3 py-2 text-xs ${
+                  hint.includes("carrinho")
+                    ? "bg-green-500/10 text-green-700"
+                    : "bg-red-500/10 text-red-600"
+                }`}
               >
-                −
-              </button>
-              <span className="min-w-[2rem] text-center text-sm font-bold">{quantity}</span>
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => q + 1)}
-                className="px-3 py-1 text-sm font-bold"
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          {hint && (
-            <p
-              className={`mt-3 rounded-lg px-3 py-2 text-xs ${
-                hint.includes("carrinho") ? "bg-green-500/10 text-green-700" : "bg-red-500/10 text-red-600"
-              }`}
-            >
-              {hint}
-            </p>
-          )}
-
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              disabled={variants.length === 0}
-              className="flex-1 rounded-lg border-2 border-[var(--toq-navy)] py-2.5 text-sm font-bold text-[var(--toq-navy)] disabled:opacity-50"
-            >
-              Adicionar ao carrinho
-            </button>
-            <button
-              type="button"
-              onClick={handleBuyNow}
-              disabled={!whatsappReady || variants.length === 0}
-              className="flex-1 rounded-lg bg-[#25D366] py-2.5 text-sm font-bold text-white disabled:opacity-50"
-            >
-              Comprar no WhatsApp
-            </button>
+                {hint}
+              </p>
+            )}
           </div>
         </div>
+
+        <div className="flex shrink-0 flex-col gap-2 border-t border-[var(--toq-border)] px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:flex-row">
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={variants.length === 0}
+            className="flex-1 rounded-lg border-2 border-[var(--toq-navy)] py-2.5 text-sm font-bold text-[var(--toq-navy)] disabled:opacity-50"
+          >
+            Adicionar ao carrinho
+          </button>
+          <button
+            type="button"
+            onClick={handleBuyNow}
+            disabled={!whatsappReady || variants.length === 0}
+            className="flex-1 rounded-lg bg-[#25D366] py-2.5 text-sm font-bold text-white disabled:opacity-50"
+          >
+            Comprar no WhatsApp
+          </button>
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,5 +1,7 @@
 ﻿"use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { formatClubPrice, hasShopWhatsApp } from "@/lib/clubFeatures";
 import {
   buildCartCheckoutMessage,
@@ -33,10 +35,29 @@ export function ClubCartPanel({
   onRemove,
   onClear,
 }: Props) {
+  const [mounted, setMounted] = useState(false);
   const count = cartItemCount(items);
   const whatsappReady = hasShopWhatsApp(shopWhatsapp);
 
-  if (!open) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
+
+  if (!open || !mounted) return null;
 
   function handleCheckout() {
     if (!whatsappReady || !shopWhatsapp || items.length === 0) return;
@@ -46,15 +67,22 @@ export function ClubCartPanel({
     onClose();
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+      role="presentation"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="club-cart-title"
-        className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-[var(--toq-card)] shadow-xl"
+        className="flex max-h-[min(92dvh,100%)] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-[var(--toq-card)] shadow-xl sm:rounded-2xl"
+        onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-[var(--toq-border)] px-4 py-3">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--toq-border)] px-4 py-3">
           <h3 id="club-cart-title" className="text-sm font-bold text-[var(--toq-navy)]">
             Carrinho
             {count > 0 ? ` (${count})` : ""}
@@ -79,7 +107,7 @@ export function ClubCartPanel({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 [-webkit-overflow-scrolling:touch]">
           {count === 0 ? (
             <p className="py-8 text-center text-sm text-[var(--toq-text-muted)]">
               Seu carrinho está vazio.
@@ -145,7 +173,7 @@ export function ClubCartPanel({
         </div>
 
         {count > 0 && (
-          <div className="border-t border-[var(--toq-border)] px-4 py-3">
+          <div className="shrink-0 border-t border-[var(--toq-border)] px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-sm font-bold text-[var(--toq-navy)]">
                 Total: {formatClubPrice(cartTotal(items))}
@@ -167,6 +195,7 @@ export function ClubCartPanel({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
