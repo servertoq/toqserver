@@ -118,3 +118,36 @@ export const AUTH_PLATFORM_FEATURES: PlatformFeature[] = [
     description: "Quadras publicadas com reservas e gestão simplificada.",
   },
 ];
+
+export type AuthFaqItem = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
+export const AUTH_FAQ: AuthFaqItem[] = [
+  {
+    id: "complex",
+    question: "A Toq é complexa de usar?",
+    answer:
+      "Não. A Toq foi desenvolvida para ser intuitiva desde o primeiro acesso. Além de uma interface simples e organizada, oferecemos um onboarding exclusivo, treinamento de capacitação e um suporte ágil para garantir que você e sua equipe aproveitem todos os recursos da plataforma com segurança e rapidez.",
+  },
+  {
+    id: "install",
+    question: "Preciso instalar algum programa?",
+    answer:
+      "Não. A Toq funciona diretamente pelo navegador. Basta acessar a plataforma ou adicioná-la à tela inicial do dispositivo para uma experiência prática, sem necessidade de instalação ou uso do armazenamento.",
+  },
+  {
+    id: "replace-system",
+    question: "Sou proprietário. Preciso substituir meu sistema atual para usar a Toq?",
+    answer:
+      "Não necessariamente. A Toq pode ser utilizada em conjunto com o sistema que você já possui, adicionando funcionalidades que fortalecem a gestão do clube e a experiência dos jogadores.",
+  },
+  {
+    id: "updates",
+    question: "A Toq recebe atualizações constantes?",
+    answer:
+      "Sim. A Toq evolui continuamente com base no feedback da comunidade e em nosso roadmap de inovação. Todas as novidades são disponibilizadas na plataforma e comunicadas aos usuários.",
+  },
+];

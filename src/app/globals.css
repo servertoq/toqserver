@@ -1969,6 +1969,69 @@ body {
   color: rgba(255, 255, 255, 0.72);
 }
 
+.auth-faq {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 44rem;
+}
+
+.auth-faq-item {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.auth-faq-question {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  cursor: pointer;
+  list-style: none;
+  padding: 1rem 1.125rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #ffffff;
+}
+
+.auth-faq-question::-webkit-details-marker {
+  display: none;
+}
+
+.auth-faq-question::after {
+  content: "+";
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.auth-faq-item[open] .auth-faq-question::after {
+  content: "–";
+}
+
+.auth-faq-ball {
+  flex-shrink: 0;
+  line-height: 1.35;
+}
+
+.auth-faq-question-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.auth-faq-answer {
+  margin: 0;
+  padding: 0 1.125rem 1.125rem 2.75rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .auth-landing-cta {
   padding:
     3rem

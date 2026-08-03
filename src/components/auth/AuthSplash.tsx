@@ -6,6 +6,7 @@ import { useCallback, useRef } from "react";
 import { LEGAL_NAV, LEGAL_SITE } from "@/lib/legal/site";
 import { SiteContactLinks } from "@/components/legal/SiteContactLinks";
 import { AuthFeatureGrid } from "./AuthFeatureGrid";
+import { AuthFaqSection } from "./AuthFaqSection";
 import { AuthHowItWorks } from "./AuthHowItWorks";
 import { AuthPersonaCards } from "./AuthPersonaCards";
 import { AuthPlansSection } from "./AuthPlansSection";
@@ -138,6 +139,19 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
             </p>
           </header>
           <AuthPlansSection onRegister={onRegister} />
+        </div>
+      </section>
+
+      <section className="auth-landing-section">
+        <div className="auth-landing-section-inner">
+          <header className="auth-landing-section-header">
+            <p className="auth-landing-eyebrow">Dúvidas</p>
+            <h2 className="auth-landing-section-title">Perguntas frequentes</h2>
+            <p className="auth-landing-section-lead">
+              Respostas rápidas sobre uso, instalação, integração e atualizações da plataforma.
+            </p>
+          </header>
+          <AuthFaqSection />
         </div>
       </section>
 
