@@ -114,19 +114,17 @@ export function FeedAdCarousel({ variant = "rail", className = "" }: Props) {
               </div>
             )}
           </div>
-          <div className="flex flex-col gap-2 bg-[var(--toq-card)] p-4">
+          <div className="flex min-h-[10.5rem] flex-col gap-2 bg-[var(--toq-card)] p-4">
             <span className="inline-flex w-fit rounded-full bg-[var(--toq-accent-soft)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--toq-accent)]">
               Publicidade
             </span>
-            <p className="line-clamp-3 text-base font-extrabold leading-snug text-[var(--toq-navy)]">
+            <p className="line-clamp-3 min-h-[3.75rem] text-base font-extrabold leading-snug text-[var(--toq-navy)]">
               {ad.title}
             </p>
-            {ad.card_excerpt && (
-              <p className="line-clamp-2 text-sm leading-snug text-[var(--toq-text-muted)]">
-                {ad.card_excerpt}
-              </p>
-            )}
-            <span className="mt-1 inline-flex w-fit rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white">
+            <p className="line-clamp-2 min-h-[2.5rem] text-sm leading-snug text-[var(--toq-text-muted)]">
+              {ad.card_excerpt || "\u00a0"}
+            </p>
+            <span className="mt-auto inline-flex w-fit rounded-lg toq-btn-primary px-3 py-1.5 text-xs font-bold text-white">
               Ler notícia
             </span>
           </div>

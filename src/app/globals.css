@@ -161,13 +161,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    max-height: calc(100dvh - 0.5rem);
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    overflow: visible;
     padding-top: 1.5rem;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
   }
 
   .feed-home-friends-hidden .feed-home-rail-sticky {
