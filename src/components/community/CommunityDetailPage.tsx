@@ -348,11 +348,11 @@ export function CommunityDetailPage({
             )}
           </div>
           <div className="p-4" style={{ borderTopWidth: 3, borderTopColor: community.accent_color }}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <h1 className="text-xl font-bold text-[var(--toq-navy)]">{community.name}</h1>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 w-full sm:flex-1">
+                <h1 className="break-words text-xl font-bold text-[var(--toq-navy)]">{community.name}</h1>
                 {community.description?.trim() ? (
-                  <div className="mt-1">
+                  <div className="mt-1 min-w-0">
                     <PostBody
                       body={community.description}
                       maxLines={3}
@@ -360,7 +360,7 @@ export function CommunityDetailPage({
                     />
                   </div>
                 ) : null}
-                <p className="mt-2 text-xs font-semibold text-[var(--toq-accent)]">
+                <p className="mt-2 break-words text-xs font-semibold text-[var(--toq-accent)]">
                   {community.member_count.toLocaleString("pt-BR")} / 1.000 membros ·{" "}
                   {groupVisibilityLabel(community.kind ?? groupKind, community.is_private)}
                   {myRole &&
@@ -369,7 +369,7 @@ export function CommunityDetailPage({
                       .join(" · ")}`}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:max-w-[14rem] sm:justify-end lg:max-w-none">
                 {isClubPage && isMember && (
                   <ClubFavoriteButton
                     communityId={community.id}
