@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
@@ -43,6 +44,7 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
   const config = COMMUNITY_GROUP_CONFIG[groupKind];
   const fileRef = useRef<HTMLInputElement>(null);
   const isClub = (community.kind ?? groupKind) === "club";
+  const [mounted, setMounted] = useState(false);
 
   const [name, setName] = useState(community.name);
   const [description, setDescription] = useState(community.description);
@@ -66,6 +68,24 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
   const { isSubmitting: loading, guard } = useSingleSubmit();
   const { isSubmitting: deleting, guard: guardDelete } = useSingleSubmit();
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !loading && !deleting) onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [mounted, loading, deleting, onClose]);
 
   async function handleCover(file: File | null) {
     if (!file) return;
@@ -171,11 +191,27 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
     });
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 text-[var(--toq-text)] shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-[var(--toq-navy)]">Configurações</h2>
+  if (!mounted) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+      role="presentation"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget && !loading && !deleting) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="community-settings-title"
+        className="flex max-h-[min(92dvh,100%)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-[var(--toq-card)] text-[var(--toq-text)] shadow-xl sm:rounded-2xl"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-[var(--toq-border)] px-5 py-4">
+          <h2 id="community-settings-title" className="text-lg font-bold text-[var(--toq-navy)]">
+            Configurações
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -185,6 +221,7 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
           </button>
         </div>
 
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] [-webkit-overflow-scrolling:touch]">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600">{error}</p>
@@ -356,7 +393,9 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
             </button>
           )}
         </div>
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
