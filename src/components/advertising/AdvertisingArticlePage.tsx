@@ -56,13 +56,13 @@ export function AdvertisingArticlePage({ slug }: { slug: string }) {
         ) : error ? (
           <p className="text-sm text-red-600">{error}</p>
         ) : article ? (
-          <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex max-h-[min(70vh,36rem)] items-center justify-center bg-slate-100">
+          <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-[var(--toq-border)] dark:bg-[var(--toq-card)]">
+            <div className="w-full overflow-hidden bg-slate-950">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={article.cover_image_url}
                 alt=""
-                className="max-h-[min(70vh,36rem)] w-full object-contain"
+                className="block h-auto w-full max-w-full"
               />
             </div>
             <div className="p-5 sm:p-8">

@@ -149,18 +149,18 @@ export function AdvertisingArticleForm({ article, userId, onSaved, onCancel }: P
       <div>
         <p className="text-sm font-semibold text-[var(--toq-navy)]">Imagem principal</p>
         <p className="mt-0.5 text-xs text-[var(--toq-text-muted)]">
-          Aparece no topo da página da notícia (imagem inteira, sem corte). Prefira arte
-          horizontal ou vertical nítida.
+          Aparece no topo da notícia em largura total (proporcional à tela, sem esticar). Prefira
+          arte nítida.
         </p>
         <div className="mt-2 flex flex-wrap items-start gap-3">
           {coverUrl && (
-            <div className="flex h-36 w-56 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+            <div className="w-full max-w-sm overflow-hidden rounded-xl border border-slate-200 bg-slate-950">
               <Image
                 src={coverUrl}
                 alt=""
-                width={224}
-                height={144}
-                className="max-h-36 w-auto object-contain"
+                width={640}
+                height={360}
+                className="h-auto w-full object-contain"
                 unoptimized
               />
             </div>
@@ -184,18 +184,18 @@ export function AdvertisingArticleForm({ article, userId, onSaved, onCancel }: P
         <div>
           <p className="text-sm font-semibold text-[var(--toq-navy)]">Imagem do card (publicidade)</p>
           <p className="mt-0.5 text-xs text-[var(--toq-text-muted)]">
-            Usada no carrossel da home. Ideal: proporção próxima de 4:3. O título fica{" "}
-            <strong>abaixo</strong> da imagem — não precisa colocar texto na arte.
+            Preenche o card na lista e no carrossel (proporção 16:10 / 4:3). O título fica{" "}
+            <strong>abaixo</strong> da imagem — a arte preenche o campo (pode cortar as bordas).
           </p>
           <div className="mt-2 flex flex-wrap items-start gap-3">
             {cardUrl && (
-              <div className="relative flex aspect-[4/3] h-28 w-auto items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-950">
+              <div className="relative aspect-[16/10] w-44 overflow-hidden rounded-xl border border-slate-200 bg-slate-950">
                 <Image
                   src={cardUrl}
                   alt=""
-                  width={160}
-                  height={120}
-                  className="max-h-full max-w-full object-contain"
+                  fill
+                  sizes="176px"
+                  className="object-cover object-center"
                   unoptimized
                 />
               </div>

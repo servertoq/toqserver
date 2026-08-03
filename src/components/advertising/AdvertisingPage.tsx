@@ -176,12 +176,13 @@ export function AdvertisingPage() {
                     className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
                   >
                     <Link href={`/inicio/publicidade/${article.slug}`} className="block">
-                      <div className="relative aspect-[16/10] bg-slate-100">
+                      <div className="relative aspect-[16/10] overflow-hidden bg-slate-950">
                         <Image
                           src={article.card_image_url || article.cover_image_url}
                           alt=""
                           fill
-                          className="object-contain"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover object-center"
                           unoptimized
                         />
                         {canManage && !article.is_published && (

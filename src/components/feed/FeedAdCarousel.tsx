@@ -81,7 +81,7 @@ export function FeedAdCarousel({ variant = "rail", className = "" }: Props) {
           aria-label={`Publicidade: ${ad.title}`}
         >
           <div
-            className={`relative w-full bg-slate-950 ${
+            className={`relative w-full overflow-hidden bg-slate-950 ${
               variant === "inline" ? "aspect-[16/10]" : "aspect-[4/3]"
             }`}
           >
@@ -89,7 +89,8 @@ export function FeedAdCarousel({ variant = "rail", className = "" }: Props) {
               src={ad.card_image_url}
               alt=""
               fill
-              className="object-contain"
+              sizes={variant === "inline" ? "(max-width: 768px) 100vw, 640px" : "280px"}
+              className="object-cover object-center"
               unoptimized
             />
             {ads.length > 1 && (
