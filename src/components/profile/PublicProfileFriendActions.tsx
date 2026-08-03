@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { formatFriendRequestError } from "@/lib/friendRequest";
 import { ReportButton } from "@/components/report/ReportButton";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import type { ReportTarget } from "@/types/support";
 
 export type FriendRelation =
@@ -44,6 +45,7 @@ export function PublicProfileFriendActions({
   const [loading, setLoading] = useState(true);
   const { isSubmitting: acting, guard } = useSingleSubmit();
   const [message, setMessage] = useState<string | null>(null);
+  const [confirmUnfriend, setConfirmUnfriend] = useState(false);
 
   const loadRelation = useCallback(async () => {
     setLoading(true);
@@ -141,9 +143,11 @@ export function PublicProfileFriendActions({
       });
       if (error) {
         setMessage(error.message || "Não foi possível desfazer a amizade.");
+        setConfirmUnfriend(false);
         return;
       }
       setMessage("Amizade desfeita.");
+      setConfirmUnfriend(false);
       await loadRelation();
     });
   }
@@ -211,10 +215,10 @@ export function PublicProfileFriendActions({
           <button
             type="button"
             disabled={acting}
-            onClick={handleUnfriend}
+            onClick={() => setConfirmUnfriend(true)}
             className={actionDanger}
           >
-            {acting ? "Removendo…" : "Desfazer amizade"}
+            Desfazer amizade
           </button>
         </>
       )}
@@ -232,6 +236,21 @@ export function PublicProfileFriendActions({
           {message}
         </p>
       )}
+
+      <ConfirmDialog
+        open={confirmUnfriend}
+        title="Desfazer amizade?"
+        message={`Remover @${profileUsername} da sua lista de amigos? Vocês deixarão de ver os posts privados um do outro.`}
+        confirmLabel="Desfazer amizade"
+        cancelLabel="Cancelar"
+        variant="danger"
+        priority="high"
+        loading={acting}
+        onConfirm={() => void handleUnfriend()}
+        onCancel={() => {
+          if (!acting) setConfirmUnfriend(false);
+        }}
+      />
     </div>
   );
 }

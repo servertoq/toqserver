@@ -7,6 +7,7 @@ import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { formatFriendRequestError } from "@/lib/friendRequest";
 import { profilePath } from "@/lib/publicProfile";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 type FriendRow = {
   friend_id: string;
@@ -19,7 +20,9 @@ export function FriendsPanel({ userId, embedded }: { userId: string; embedded?: 
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
   const { isSubmitting: adding, guard } = useSingleSubmit();
+  const { isSubmitting: removing, guard: guardRemove } = useSingleSubmit();
   const [message, setMessage] = useState<string | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<FriendRow | null>(null);
 
   const load = useCallback(async () => {
     const { data } = await supabase
@@ -93,9 +96,21 @@ export function FriendsPanel({ userId, embedded }: { userId: string; embedded?: 
     });
   }
 
-  async function handleRemove(friendId: string) {
-    await supabase.rpc("remove_friendship", { p_other_user_id: friendId });
-    await load();
+  async function confirmRemove() {
+    if (!removeTarget || removing) return;
+    await guardRemove(async () => {
+      const { error } = await supabase.rpc("remove_friendship", {
+        p_other_user_id: removeTarget.friend_id,
+      });
+      if (error) {
+        setMessage(error.message || "Não foi possível desfazer a amizade.");
+        setRemoveTarget(null);
+        return;
+      }
+      setMessage(`Amizade com @${removeTarget.profile.username} desfeita.`);
+      setRemoveTarget(null);
+      await load();
+    });
   }
 
   const wrapperClass = embedded
@@ -161,7 +176,7 @@ export function FriendsPanel({ userId, embedded }: { userId: string; embedded?: 
               </Link>
               <button
                 type="button"
-                onClick={() => handleRemove(f.friend_id)}
+                onClick={() => setRemoveTarget(f)}
                 className="shrink-0 text-xs font-semibold text-red-600 hover:underline"
               >
                 Remover
@@ -170,6 +185,25 @@ export function FriendsPanel({ userId, embedded }: { userId: string; embedded?: 
           ))
         )}
       </ul>
+
+      <ConfirmDialog
+        open={!!removeTarget}
+        title="Desfazer amizade?"
+        message={
+          removeTarget
+            ? `Remover @${removeTarget.profile.username} da sua lista de amigos? Vocês deixarão de ver os posts privados um do outro.`
+            : ""
+        }
+        confirmLabel="Desfazer amizade"
+        cancelLabel="Cancelar"
+        variant="danger"
+        priority="high"
+        loading={removing}
+        onConfirm={() => void confirmRemove()}
+        onCancel={() => {
+          if (!removing) setRemoveTarget(null);
+        }}
+      />
     </section>
   );
 }
