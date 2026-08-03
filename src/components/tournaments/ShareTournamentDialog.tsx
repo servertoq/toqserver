@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
@@ -29,6 +30,7 @@ export function ShareTournamentDialog({ tournament, open, onClose }: Props) {
   const supabase = createClient();
   const profile = useAppProfile();
   const { isSubmitting, guard } = useSingleSubmit();
+  const [mounted, setMounted] = useState(false);
   const [tab, setTab] = useState<ShareTab>("friends");
   const [friends, setFriends] = useState<DmDirectConversation[]>([]);
   const [groups, setGroups] = useState<DmCommunityConversation[]>([]);
@@ -37,6 +39,24 @@ export function ShareTournamentDialog({ tournament, open, onClose }: Props) {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
 
   const loadTargets = useCallback(async () => {
     setLoading(true);
@@ -135,40 +155,41 @@ export function ShareTournamentDialog({ tournament, open, onClose }: Props) {
     });
   }
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="share-tournament-title"
-      onClick={onClose}
+      className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+      role="presentation"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
-        className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl"
-        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="share-tournament-title"
+        className="flex max-h-[min(78dvh,640px)] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-[var(--toq-card)] shadow-xl sm:max-h-[min(85dvh,640px)] sm:rounded-2xl"
+        onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
-          <div>
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--toq-border)] px-4 py-3">
+          <div className="min-w-0">
             <h2 id="share-tournament-title" className="text-sm font-bold text-[var(--toq-navy)]">
               Compartilhar no chat
             </h2>
-            <p className="mt-0.5 text-xs text-[var(--toq-text-muted)] line-clamp-1">
-              {tournament.name}
-            </p>
+            <p className="mt-0.5 truncate text-xs text-[var(--toq-text-muted)]">{tournament.name}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-2 py-1 text-sm text-[var(--toq-text-muted)] hover:bg-slate-100"
+            className="shrink-0 rounded-lg px-2 py-1 text-sm text-[var(--toq-text-muted)] hover:bg-[var(--toq-surface)]"
           >
             Fechar
           </button>
         </div>
 
-        <div className="space-y-3 p-4">
-          <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-4 [-webkit-overflow-scrolling:touch]">
+          <div className="flex gap-1 rounded-xl bg-[var(--toq-surface)] p-1">
             <button
               type="button"
               onClick={() => {
@@ -180,7 +201,7 @@ export function ShareTournamentDialog({ tournament, open, onClose }: Props) {
               }}
               className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                 tab === "friends"
-                  ? "bg-white text-[var(--toq-navy)] shadow-sm"
+                  ? "bg-[var(--toq-card)] text-[var(--toq-navy)] shadow-sm"
                   : "text-[var(--toq-text-muted)]"
               }`}
             >
@@ -197,7 +218,7 @@ export function ShareTournamentDialog({ tournament, open, onClose }: Props) {
               }}
               className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                 tab === "groups"
-                  ? "bg-white text-[var(--toq-navy)] shadow-sm"
+                  ? "bg-[var(--toq-card)] text-[var(--toq-navy)] shadow-sm"
                   : "text-[var(--toq-text-muted)]"
               }`}
             >
@@ -213,7 +234,6 @@ export function ShareTournamentDialog({ tournament, open, onClose }: Props) {
               tab === "friends" ? "Buscar usuário pelo @…" : "Buscar comunidade ou clube…"
             }
             className="toq-input w-full px-3 py-2 text-sm"
-            autoFocus
           />
 
           {error && (
@@ -227,7 +247,7 @@ export function ShareTournamentDialog({ tournament, open, onClose }: Props) {
 
           {tab === "friends" ? (
             query.trim().length >= 2 ? (
-              <ul className="max-h-64 space-y-1 overflow-y-auto">
+              <ul className="space-y-1">
                 {results.length === 0 ? (
                   <li className="px-1 py-3 text-center text-xs text-[var(--toq-text-muted)]">
                     Nenhum usuário encontrado
@@ -239,7 +259,7 @@ export function ShareTournamentDialog({ tournament, open, onClose }: Props) {
                         type="button"
                         disabled={isSubmitting}
                         onClick={() => void shareWithUser(user.id, `@${user.username}`)}
-                        className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-slate-50 disabled:opacity-60"
+                        className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-[var(--toq-surface)] disabled:opacity-60"
                       >
                         <ProfileAvatar src={user.avatar_url} name={user.username} size="sm" />
                         <span className="text-sm font-semibold text-[var(--toq-navy)]">
@@ -262,7 +282,7 @@ export function ShareTournamentDialog({ tournament, open, onClose }: Props) {
                     Busque um @ acima para enviar o torneio.
                   </p>
                 ) : (
-                  <ul className="max-h-64 space-y-1 overflow-y-auto">
+                  <ul className="space-y-1">
                     {friends.map((conv) => (
                       <li key={conv.id}>
                         <button
@@ -271,7 +291,7 @@ export function ShareTournamentDialog({ tournament, open, onClose }: Props) {
                           onClick={() =>
                             void shareWithUser(conv.other_user.id, `@${conv.other_user.username}`)
                           }
-                          className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-slate-50 disabled:opacity-60"
+                          className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-[var(--toq-surface)] disabled:opacity-60"
                         >
                           <ProfileAvatar
                             src={conv.other_user.avatar_url}
@@ -297,14 +317,14 @@ export function ShareTournamentDialog({ tournament, open, onClose }: Props) {
                 : "Nenhum grupo encontrado com essa busca."}
             </p>
           ) : (
-            <ul className="max-h-64 space-y-1 overflow-y-auto">
+            <ul className="space-y-1">
               {filteredGroups.map((group) => (
                 <li key={group.id}>
                   <button
                     type="button"
                     disabled={isSubmitting}
                     onClick={() => void shareWithGroup(group)}
-                    className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-slate-50 disabled:opacity-60"
+                    className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-[var(--toq-surface)] disabled:opacity-60"
                   >
                     <ProfileAvatar
                       src={group.community.cover_image_url}
@@ -326,6 +346,7 @@ export function ShareTournamentDialog({ tournament, open, onClose }: Props) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
