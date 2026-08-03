@@ -330,23 +330,23 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
             </label>
           )}
 
-          <div className="grid grid-cols-2 gap-2">
-            <label className="block">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="block min-w-0">
               <span className="text-xs font-semibold text-[var(--toq-navy)]">Início (opcional)</span>
               <input
                 type="datetime-local"
                 value={startsAt}
                 onChange={(e) => setStartsAt(e.target.value)}
-                className="mt-1 w-full rounded-lg toq-input px-2 py-2 text-sm"
+                className="mt-1 w-full min-w-0 rounded-lg toq-input px-2 py-2 text-sm"
               />
             </label>
-            <label className="block">
+            <label className="block min-w-0">
               <span className="text-xs font-semibold text-[var(--toq-navy)]">Fim (opcional)</span>
               <input
                 type="datetime-local"
                 value={endsAt}
                 onChange={(e) => setEndsAt(e.target.value)}
-                className="mt-1 w-full rounded-lg toq-input px-2 py-2 text-sm"
+                className="mt-1 w-full min-w-0 rounded-lg toq-input px-2 py-2 text-sm"
               />
             </label>
           </div>
