@@ -2898,17 +2898,6 @@ body {
 
 .auth-pano-bg {
   object-position: center center;
-  transform: scale(1.04);
-  animation: auth-pano-drift 18s ease-in-out infinite alternate;
-}
-
-@keyframes auth-pano-drift {
-  from {
-    transform: scale(1.04) translate3d(0, 0, 0);
-  }
-  to {
-    transform: scale(1.1) translate3d(-1.2%, -0.8%, 0);
-  }
 }
 
 .auth-reveal {
@@ -2996,7 +2985,6 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .auth-hero-anim,
-  .auth-pano-bg,
   .auth-reveal,
   .auth-reveal-stagger .auth-landing-section-header,
   .auth-reveal-stagger .auth-persona-card,
