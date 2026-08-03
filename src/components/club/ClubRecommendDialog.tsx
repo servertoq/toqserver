@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
@@ -12,12 +13,17 @@ type Props = {
 
 export function ClubRecommendDialog({ open, userId, onClose }: Props) {
   const supabase = createClient();
+  const [mounted, setMounted] = useState(false);
   const [clubName, setClubName] = useState("");
   const [contact, setContact] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const { isSubmitting: saving, guard } = useSingleSubmit();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -46,7 +52,7 @@ export function ClubRecommendDialog({ open, userId, onClose }: Props) {
     }
   }, [open]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,9 +91,12 @@ export function ClubRecommendDialog({ open, userId, onClose }: Props) {
     });
   }
 
-  return (
+  const footerPad =
+    "shrink-0 border-t border-[var(--toq-border)] px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]";
+
+  return createPortal(
     <div
-      className="create-post-modal-backdrop fixed inset-0 z-[80] flex items-end justify-center bg-black/40 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !saving) onClose();
@@ -97,7 +106,7 @@ export function ClubRecommendDialog({ open, userId, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="club-recommend-dialog-title"
-        className="create-post-modal-panel flex max-h-[min(92dvh,calc(100dvh-1rem))] w-full max-w-md flex-col overflow-hidden rounded-t-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] shadow-[0_16px_48px_rgba(5,16,36,0.14)] sm:rounded-2xl"
+        className="flex max-h-[min(92dvh,100%)] w-full max-w-md flex-col overflow-hidden rounded-t-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] shadow-[0_16px_48px_rgba(5,16,36,0.14)] sm:rounded-2xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--toq-border)] px-5 py-4">
@@ -121,7 +130,7 @@ export function ClubRecommendDialog({ open, userId, onClose }: Props) {
 
         {success ? (
           <>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-8 text-center">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-8 text-center [-webkit-overflow-scrolling:touch]">
               <p className="text-3xl" aria-hidden>
                 ✓
               </p>
@@ -131,7 +140,7 @@ export function ClubRecommendDialog({ open, userId, onClose }: Props) {
                 plataforma.
               </p>
             </div>
-            <div className="create-post-box__footer shrink-0 border-t border-[var(--toq-border)] px-5 py-4">
+            <div className={footerPad}>
               <button
                 type="button"
                 onClick={onClose}
@@ -143,7 +152,7 @@ export function ClubRecommendDialog({ open, userId, onClose }: Props) {
           </>
         ) : (
           <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4 [-webkit-overflow-scrolling:touch]">
               {error && (
                 <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600" role="alert">
                   {error}
@@ -192,7 +201,7 @@ export function ClubRecommendDialog({ open, userId, onClose }: Props) {
               </label>
             </div>
 
-            <div className="create-post-box__footer shrink-0 border-t border-[var(--toq-border)] px-5 py-4">
+            <div className={footerPad}>
               <button
                 type="submit"
                 disabled={saving}
@@ -204,6 +213,7 @@ export function ClubRecommendDialog({ open, userId, onClose }: Props) {
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
