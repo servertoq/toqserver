@@ -235,12 +235,12 @@ export function CourtsPage() {
 
   const headerAction =
     showManagerActions || canCreateStandalone ? (
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
         {showManagerActions && (
           <>
             <Link
               href="/inicio/gestao-de-quadras"
-              className="inline-flex h-9 items-center justify-center rounded-xl toq-btn-primary px-3.5 text-xs font-bold leading-none text-white sm:text-sm"
+              className="inline-flex h-10 w-full items-center justify-center rounded-xl toq-btn-primary px-3 text-center text-xs font-bold leading-tight text-white sm:h-9 sm:w-auto sm:px-3.5 sm:text-sm sm:leading-none"
             >
               Gestão de Quadras
             </Link>
@@ -250,7 +250,7 @@ export function CourtsPage() {
                 const href = resolveClubAction("agenda");
                 if (href) router.push(href);
               }}
-              className="inline-flex h-9 items-center justify-center rounded-xl toq-btn-outline px-3.5 text-xs font-bold leading-none sm:text-sm"
+              className="inline-flex h-10 w-full items-center justify-center rounded-xl toq-btn-outline px-3 text-center text-xs font-bold leading-tight sm:h-9 sm:w-auto sm:px-3.5 sm:text-sm sm:leading-none"
             >
               Gerenciar agenda
             </button>
@@ -260,14 +260,14 @@ export function CourtsPage() {
                 const href = resolveClubAction("nova");
                 if (href) router.push(href);
               }}
-              className="inline-flex h-9 items-center justify-center rounded-xl toq-btn-primary px-3.5 text-xs font-bold leading-none text-white sm:text-sm"
+              className="inline-flex h-10 w-full items-center justify-center rounded-xl toq-btn-primary px-3 text-center text-xs font-bold leading-tight text-white sm:h-9 sm:w-auto sm:px-3.5 sm:text-sm sm:leading-none"
             >
               + Nova quadra
             </button>
             {canCreateStandalone && (
               <Link
                 href="/inicio/quadras/cadastrar"
-                className="inline-flex h-9 items-center justify-center rounded-xl toq-btn-outline px-3.5 text-xs font-bold leading-none sm:text-sm"
+                className="inline-flex h-10 w-full items-center justify-center rounded-xl toq-btn-outline px-3 text-center text-xs font-bold leading-tight sm:h-9 sm:w-auto sm:px-3.5 sm:text-sm sm:leading-none"
               >
                 Quadra avulsa
               </Link>
@@ -277,7 +277,7 @@ export function CourtsPage() {
         {!showManagerActions && canCreateStandalone && (
           <Link
             href="/inicio/quadras/cadastrar"
-            className="inline-flex h-9 items-center justify-center rounded-xl toq-btn-primary px-4 text-sm font-bold text-white"
+            className="col-span-2 inline-flex h-10 w-full items-center justify-center rounded-xl toq-btn-primary px-4 text-sm font-bold text-white sm:col-span-1 sm:h-9 sm:w-auto"
           >
             Cadastrar quadra
           </Link>
@@ -285,7 +285,7 @@ export function CourtsPage() {
         {profile.canAccessCourtManagement && !hasManagedClubs && (
           <Link
             href="/inicio/gestao-de-quadras"
-            className="inline-flex h-9 items-center justify-center rounded-xl toq-btn-outline px-3.5 text-xs font-bold leading-none sm:text-sm"
+            className="col-span-2 inline-flex h-10 w-full items-center justify-center rounded-xl toq-btn-outline px-3.5 text-xs font-bold leading-none sm:col-span-1 sm:h-9 sm:w-auto sm:text-sm"
           >
             Gestão de Quadras
           </Link>
