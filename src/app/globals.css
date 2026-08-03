@@ -1483,9 +1483,17 @@ body {
 
 /* ?? Landing com scroll ?? */
 .auth-landing {
-  --auth-court-deep: #0a1f3a;
-  --auth-court-mid: #0c2748;
+  /* Paleta: #021E73 #021859 #010A26 #0442BF #3E5902 */
+  --auth-court-deep: #010a26;
+  --auth-court-mid: #021859;
+  --auth-court-lift: #021e73;
+  --auth-accent: #0442bf;
+  --auth-accent-hover: #0336a0;
+  --auth-olive: #3e5902;
+  --auth-olive-soft: #6b8f1a;
   --auth-court-line: rgba(255, 255, 255, 0.1);
+  --auth-ink-muted: rgba(210, 222, 245, 0.72);
+  --auth-ink-soft: rgba(170, 195, 235, 0.78);
   width: 100%;
   color: #ffffff;
   background: var(--auth-court-deep);
@@ -1584,7 +1592,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: none;
-  color: rgba(186, 210, 240, 0.75);
+  color: var(--auth-ink-soft);
 }
 
 .auth-landing-section .auth-features-eyebrow {
@@ -1604,7 +1612,7 @@ body {
   max-width: 34rem;
   font-size: 0.9375rem;
   line-height: 1.55;
-  color: rgba(220, 232, 248, 0.72);
+  color: var(--auth-ink-muted);
 }
 
 .auth-persona-cards {
@@ -1673,7 +1681,7 @@ body {
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
-  color: #93c5fd;
+  color: #7eb0ff;
 }
 
 .auth-persona-card-title {
@@ -1714,7 +1722,7 @@ body {
   height: 1px;
   width: 0.4rem;
   border-radius: 0;
-  background: rgba(147, 197, 253, 0.7);
+  background: var(--auth-olive-soft);
 }
 
 .auth-plans-grid {
@@ -1785,8 +1793,8 @@ body {
 }
 
 .auth-plan-card--highlight {
-  border-color: rgba(96, 165, 250, 0.45);
-  background: rgba(37, 99, 235, 0.12);
+  border-color: color-mix(in srgb, var(--auth-accent) 55%, white);
+  background: color-mix(in srgb, var(--auth-accent) 18%, transparent);
   box-shadow: none;
   padding-top: 1.5rem;
 }
@@ -1797,7 +1805,7 @@ body {
   left: 1rem;
   transform: none;
   border-radius: 0.25rem;
-  background: #2563eb;
+  background: var(--auth-accent);
   padding: 0.2rem 0.5rem;
   font-size: 0.625rem;
   font-weight: 700;
@@ -1870,7 +1878,7 @@ body {
   top: 0.05rem;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #86efac;
+  color: var(--auth-olive-soft);
 }
 
 .auth-plan-cta {
@@ -1878,7 +1886,7 @@ body {
   width: 100%;
   border: none;
   border-radius: 0.5rem;
-  background: #2563eb;
+  background: var(--auth-accent);
   padding: 0.7rem 1rem;
   font-size: 0.8125rem;
   font-weight: 700;
@@ -1890,7 +1898,7 @@ body {
 .auth-plan-cta:hover {
   opacity: 1;
   transform: none;
-  background: #1d4ed8;
+  background: var(--auth-accent-hover);
 }
 
 .auth-plan-cta--secondary {
@@ -1998,7 +2006,7 @@ body {
   background: none;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #93c5fd;
+  color: #7eb0ff;
   box-shadow: none;
 }
 
@@ -2092,7 +2100,7 @@ body {
     max(1.25rem, env(safe-area-inset-right))
     max(3rem, calc(env(safe-area-inset-bottom) + 1.5rem))
     max(1.25rem, env(safe-area-inset-left));
-  background: var(--auth-court-mid);
+  background: var(--auth-court-lift);
   border-top: 1px solid var(--auth-court-line);
 }
 
@@ -2133,7 +2141,7 @@ body {
     max(1.25rem, env(safe-area-inset-right))
     max(2.25rem, calc(env(safe-area-inset-bottom) + 1.25rem))
     max(1.25rem, env(safe-area-inset-left));
-  background: #08182e;
+  background: #010a26;
   border-top: 1px solid var(--auth-court-line);
 }
 
@@ -2814,17 +2822,13 @@ body {
   inset: 0;
 }
 
-.auth-pano-bg {
-  object-position: center center;
-}
-
 .auth-splash-overlay {
   position: absolute;
   inset: 0;
   z-index: 1;
   background:
-    linear-gradient(0deg, #061a36 0%, rgba(6, 26, 54, 0.72) 18%, rgba(6, 26, 54, 0.28) 42%, rgba(4, 20, 42, 0.4) 100%),
-    linear-gradient(90deg, rgba(4, 20, 42, 0.28) 0%, transparent 35%, transparent 65%, rgba(4, 20, 42, 0.28) 100%);
+    linear-gradient(0deg, #010a26 0%, rgba(2, 24, 89, 0.78) 20%, rgba(2, 30, 115, 0.28) 48%, rgba(1, 10, 38, 0.45) 100%),
+    linear-gradient(90deg, rgba(1, 10, 38, 0.35) 0%, transparent 35%, transparent 65%, rgba(1, 10, 38, 0.35) 100%);
 }
 
 .auth-splash-mesh {
@@ -2832,8 +2836,8 @@ body {
   inset: 0;
   z-index: 1;
   background:
-    radial-gradient(ellipse 50% 40% at 25% 85%, rgba(37, 110, 210, 0.3) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 75% 85%, rgba(37, 110, 210, 0.24) 0%, transparent 55%);
+    radial-gradient(ellipse 50% 40% at 25% 85%, rgba(4, 66, 191, 0.28) 0%, transparent 55%),
+    radial-gradient(ellipse 45% 35% at 78% 80%, rgba(62, 89, 2, 0.18) 0%, transparent 55%);
   pointer-events: none;
 }
 
@@ -2850,7 +2854,35 @@ body {
     max(1.5rem, env(safe-area-inset-bottom))
     max(1.5rem, env(safe-area-inset-left));
   text-align: center;
-  animation: auth-page-in 0.4s ease;
+}
+
+.auth-hero-anim {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: auth-hero-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.auth-hero-anim--1 {
+  animation-delay: 0.05s;
+}
+
+.auth-hero-anim--2 {
+  animation-delay: 0.16s;
+}
+
+.auth-hero-anim--3 {
+  animation-delay: 0.28s;
+}
+
+.auth-hero-anim--4 {
+  animation-delay: 0.4s;
+}
+
+@keyframes auth-hero-rise {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes auth-page-in {
@@ -2863,6 +2895,123 @@ body {
     transform: translateY(0);
   }
 }
+
+.auth-pano-bg {
+  object-position: center center;
+  transform: scale(1.04);
+  animation: auth-pano-drift 18s ease-in-out infinite alternate;
+}
+
+@keyframes auth-pano-drift {
+  from {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.1) translate3d(-1.2%, -0.8%, 0);
+  }
+}
+
+.auth-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.auth-reveal--in {
+  opacity: 1;
+  transform: none;
+}
+
+.auth-reveal-stagger .auth-landing-section-header,
+.auth-reveal-stagger .auth-persona-card,
+.auth-reveal-stagger .auth-feature-card,
+.auth-reveal-stagger .auth-how-step-card,
+.auth-reveal-stagger .auth-plan-card,
+.auth-reveal-stagger .auth-faq-item,
+.auth-reveal-stagger .auth-plans-footnote {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.auth-reveal-stagger.auth-reveal--in .auth-landing-section-header,
+.auth-reveal-stagger.auth-reveal--in .auth-persona-card,
+.auth-reveal-stagger.auth-reveal--in .auth-feature-card,
+.auth-reveal-stagger.auth-reveal--in .auth-how-step-card,
+.auth-reveal-stagger.auth-reveal--in .auth-plan-card,
+.auth-reveal-stagger.auth-reveal--in .auth-faq-item,
+.auth-reveal-stagger.auth-reveal--in .auth-plans-footnote {
+  opacity: 1;
+  transform: none;
+}
+
+.auth-reveal-stagger.auth-reveal--in .auth-landing-section-header {
+  transition-delay: 0.04s;
+}
+
+.auth-reveal-stagger.auth-reveal--in .auth-persona-card:nth-child(1),
+.auth-reveal-stagger.auth-reveal--in .auth-feature-card:nth-child(1),
+.auth-reveal-stagger.auth-reveal--in .auth-how-step-card:nth-child(1),
+.auth-reveal-stagger.auth-reveal--in .auth-plan-card:nth-child(1),
+.auth-reveal-stagger.auth-reveal--in .auth-faq-item:nth-child(1) {
+  transition-delay: 0.1s;
+}
+
+.auth-reveal-stagger.auth-reveal--in .auth-persona-card:nth-child(2),
+.auth-reveal-stagger.auth-reveal--in .auth-feature-card:nth-child(2),
+.auth-reveal-stagger.auth-reveal--in .auth-how-step-card:nth-child(2),
+.auth-reveal-stagger.auth-reveal--in .auth-plan-card:nth-child(2),
+.auth-reveal-stagger.auth-reveal--in .auth-faq-item:nth-child(2) {
+  transition-delay: 0.16s;
+}
+
+.auth-reveal-stagger.auth-reveal--in .auth-persona-card:nth-child(3),
+.auth-reveal-stagger.auth-reveal--in .auth-feature-card:nth-child(3),
+.auth-reveal-stagger.auth-reveal--in .auth-how-step-card:nth-child(3),
+.auth-reveal-stagger.auth-reveal--in .auth-plan-card:nth-child(3),
+.auth-reveal-stagger.auth-reveal--in .auth-faq-item:nth-child(3) {
+  transition-delay: 0.22s;
+}
+
+.auth-reveal-stagger.auth-reveal--in .auth-feature-card:nth-child(4),
+.auth-reveal-stagger.auth-reveal--in .auth-how-step-card:nth-child(4),
+.auth-reveal-stagger.auth-reveal--in .auth-plan-card:nth-child(4),
+.auth-reveal-stagger.auth-reveal--in .auth-faq-item:nth-child(4) {
+  transition-delay: 0.28s;
+}
+
+.auth-reveal-stagger.auth-reveal--in .auth-feature-card:nth-child(5),
+.auth-reveal-stagger.auth-reveal--in .auth-plan-card:nth-child(5) {
+  transition-delay: 0.34s;
+}
+
+.auth-reveal-stagger.auth-reveal--in .auth-feature-card:nth-child(6),
+.auth-reveal-stagger.auth-reveal--in .auth-plans-footnote {
+  transition-delay: 0.4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-hero-anim,
+  .auth-pano-bg,
+  .auth-reveal,
+  .auth-reveal-stagger .auth-landing-section-header,
+  .auth-reveal-stagger .auth-persona-card,
+  .auth-reveal-stagger .auth-feature-card,
+  .auth-reveal-stagger .auth-how-step-card,
+  .auth-reveal-stagger .auth-plan-card,
+  .auth-reveal-stagger .auth-faq-item,
+  .auth-reveal-stagger .auth-plans-footnote {
+    opacity: 1;
+    transform: none;
+    animation: none;
+    transition: none;
+  }
+}
+
 
 .auth-splash-logo {
   height: 2.5rem;
@@ -2879,7 +3028,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(147, 197, 253, 0.9);
+  color: rgba(126, 176, 255, 0.92);
 }
 
 .auth-splash-title {
@@ -2916,14 +3065,14 @@ body {
 
 .auth-splash-btn--primary {
   border: none;
-  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  background: var(--auth-accent, #0442bf);
   color: #ffffff;
-  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 10px 28px rgba(4, 66, 191, 0.35);
 }
 
 .auth-splash-btn--secondary {
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(2, 24, 89, 0.45);
   color: #ffffff;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -2945,7 +3094,13 @@ body {
 }
 
 .auth-splash-discover span {
+  display: inline-block;
   margin-left: 0.25rem;
+  transition: transform 0.2s ease;
+}
+
+.auth-splash-discover:hover span {
+  transform: translateX(4px);
 }
 
 .auth-splash-btn:active,
@@ -4060,8 +4215,8 @@ body {
 
   .auth-splash-overlay {
     background:
-      linear-gradient(0deg, #061a36 0%, rgba(6, 26, 54, 0.78) 22%, rgba(6, 26, 54, 0.35) 48%, rgba(4, 20, 42, 0.5) 100%),
-      linear-gradient(90deg, rgba(4, 20, 42, 0.32) 0%, transparent 40%, transparent 60%, rgba(4, 20, 42, 0.32) 100%);
+      linear-gradient(0deg, #010a26 0%, rgba(2, 24, 89, 0.82) 22%, rgba(2, 30, 115, 0.4) 48%, rgba(1, 10, 38, 0.55) 100%),
+      linear-gradient(90deg, rgba(1, 10, 38, 0.38) 0%, transparent 40%, transparent 60%, rgba(1, 10, 38, 0.38) 100%);
   }
 
   /* ?? Se??es com scroll ?? */

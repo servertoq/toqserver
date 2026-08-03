@@ -10,6 +10,7 @@ import { AuthFaqSection } from "./AuthFaqSection";
 import { AuthHowItWorks } from "./AuthHowItWorks";
 import { AuthPersonaCards } from "./AuthPersonaCards";
 import { AuthPlansSection } from "./AuthPlansSection";
+import { AuthReveal } from "./AuthReveal";
 import { AUTH_HERO_IMAGE } from "./authLandingData";
 
 type Props = {
@@ -54,9 +55,9 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
         <div className="auth-splash-mesh" aria-hidden />
 
         <div className="auth-splash-content">
-          <div className="auth-splash-logo" style={logoMask} role="img" aria-label="Toq Tennis" />
+          <div className="auth-splash-logo auth-hero-anim auth-hero-anim--1" style={logoMask} role="img" aria-label="Toq Tennis" />
 
-          <div className="auth-splash-copy">
+          <div className="auth-splash-copy auth-hero-anim auth-hero-anim--2">
             <p className="auth-splash-eyebrow">Toq Tennis</p>
             <h1 className="auth-splash-title">Evolua no tênis com quem joga de verdade</h1>
             <p className="auth-splash-sub">
@@ -64,7 +65,7 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
             </p>
           </div>
 
-          <div className="auth-splash-actions">
+          <div className="auth-splash-actions auth-hero-anim auth-hero-anim--3">
             <button type="button" className="auth-splash-btn auth-splash-btn--primary" onClick={onLogin}>
               Entrar
             </button>
@@ -73,7 +74,11 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
             </button>
           </div>
 
-          <button type="button" className="auth-splash-discover" onClick={scrollToDiscover}>
+          <button
+            type="button"
+            className="auth-splash-discover auth-hero-anim auth-hero-anim--4"
+            onClick={scrollToDiscover}
+          >
             Conheça a plataforma
             <span aria-hidden>→</span>
           </button>
@@ -90,7 +95,7 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
       </section>
 
       <section ref={discoverRef} id="landing-discover" className="auth-landing-section">
-        <div className="auth-landing-section-inner">
+        <AuthReveal className="auth-landing-section-inner auth-reveal-stagger">
           <header className="auth-landing-section-header">
             <p className="auth-landing-eyebrow">Para quem é</p>
             <h2 className="auth-landing-section-title">Jogador, professor ou arena</h2>
@@ -99,11 +104,11 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
             </p>
           </header>
           <AuthPersonaCards />
-        </div>
+        </AuthReveal>
       </section>
 
       <section className="auth-landing-section auth-landing-section--alt">
-        <div className="auth-landing-section-inner">
+        <AuthReveal className="auth-landing-section-inner auth-reveal-stagger">
           <header className="auth-landing-section-header">
             <p className="auth-landing-eyebrow">Na prática</p>
             <h2 className="auth-landing-section-title">O que a TOQ resolve</h2>
@@ -112,11 +117,11 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
             </p>
           </header>
           <AuthFeatureGrid />
-        </div>
+        </AuthReveal>
       </section>
 
       <section className="auth-landing-section">
-        <div className="auth-landing-section-inner">
+        <AuthReveal className="auth-landing-section-inner auth-reveal-stagger">
           <header className="auth-landing-section-header">
             <p className="auth-landing-eyebrow">Passo a passo</p>
             <h2 className="auth-landing-section-title">Como começar</h2>
@@ -125,11 +130,11 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
             </p>
           </header>
           <AuthHowItWorks />
-        </div>
+        </AuthReveal>
       </section>
 
       <section className="auth-landing-section auth-landing-section--alt">
-        <div className="auth-landing-section-inner">
+        <AuthReveal className="auth-landing-section-inner auth-reveal-stagger">
           <header className="auth-landing-section-header">
             <p className="auth-landing-eyebrow">Planos</p>
             <h2 className="auth-landing-section-title">Preços transparentes</h2>
@@ -138,11 +143,11 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
             </p>
           </header>
           <AuthPlansSection onRegister={onRegister} />
-        </div>
+        </AuthReveal>
       </section>
 
       <section className="auth-landing-section">
-        <div className="auth-landing-section-inner">
+        <AuthReveal className="auth-landing-section-inner auth-reveal-stagger">
           <header className="auth-landing-section-header">
             <p className="auth-landing-eyebrow">Dúvidas</p>
             <h2 className="auth-landing-section-title">Perguntas frequentes</h2>
@@ -151,11 +156,11 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
             </p>
           </header>
           <AuthFaqSection />
-        </div>
+        </AuthReveal>
       </section>
 
       <section className="auth-landing-cta">
-        <div className="auth-landing-section-inner auth-landing-cta-inner">
+        <AuthReveal className="auth-landing-section-inner auth-landing-cta-inner">
           <h2 className="auth-landing-cta-title">Entre na TOQ</h2>
           <p className="auth-landing-cta-lead">Crie sua conta ou faça login para continuar.</p>
           <div className="auth-landing-cta-actions">
@@ -166,7 +171,7 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
               Criar conta
             </button>
           </div>
-        </div>
+        </AuthReveal>
       </section>
 
       <footer className="auth-landing-footer">
