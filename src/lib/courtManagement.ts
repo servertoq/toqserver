@@ -152,7 +152,6 @@ export async function fetchManagedCourts(supabase: SupabaseClient, userId: strin
     `
     )
     .in("community_id", communityIds)
-    .eq("is_active", true)
     .order("name");
 
   if (error) throw new Error(error.message);
@@ -168,11 +167,15 @@ export async function fetchManagedCourts(supabase: SupabaseClient, userId: strin
 
 export async function fetchManagedCourtBookings(
   supabase: SupabaseClient,
+  managedCourtIds: string[],
   status?: string[]
 ): Promise<CourtBookingWithDetails[]> {
+  if (managedCourtIds.length === 0) return [];
+
   let query = supabase
     .from("club_court_bookings")
     .select(BOOKING_SELECT)
+    .in("club_court_id", managedCourtIds)
     .order("created_at", { ascending: false })
     .limit(100);
 

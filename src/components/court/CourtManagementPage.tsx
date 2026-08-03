@@ -59,9 +59,12 @@ export function CourtManagementPage() {
   const { isSubmitting: savingManual, guard: guardManual } = useSingleSubmit();
 
   const refreshData = useCallback(async () => {
-    const [bookingRows, courtRows, statRows] = await Promise.all([
-      fetchManagedCourtBookings(supabase),
-      fetchManagedCourts(supabase, profile.id),
+    const courtRows = await fetchManagedCourts(supabase, profile.id);
+    const [bookingRows, statRows] = await Promise.all([
+      fetchManagedCourtBookings(
+        supabase,
+        courtRows.map((c) => c.id)
+      ),
       fetchCourtManagementStats(supabase, fromDate, toDate),
     ]);
     setBookings(bookingRows);
@@ -236,7 +239,7 @@ export function CourtManagementPage() {
 
       {loading ? (
         <p className="text-sm text-[var(--toq-text-muted)]">Carregando…</p>
-      ) : courts.length === 0 ? (
+      ) : courts.length === 0 && bookings.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-[var(--toq-border)] bg-[var(--toq-card)] p-8 text-center">
           <p className="text-sm font-semibold text-[var(--toq-navy)]">Nenhuma quadra para gerenciar</p>
           <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
@@ -245,7 +248,16 @@ export function CourtManagementPage() {
         </div>
       ) : (
         <>
-          {tab === "dashboard" && (
+          {courts.length === 0 && (tab === "dashboard" || tab === "manual") && (
+            <div className="mb-4 rounded-2xl border border-dashed border-[var(--toq-border)] bg-[var(--toq-card)] p-6 text-center">
+              <p className="text-sm font-semibold text-[var(--toq-navy)]">Nenhuma quadra cadastrada</p>
+              <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
+                Ainda há solicitações abaixo. Cadastre ou reative uma quadra no clube para gerenciar locações.
+              </p>
+            </div>
+          )}
+
+          {tab === "dashboard" && courts.length > 0 && (
             <section className="space-y-4">
               <div className="flex flex-wrap gap-3">
                 <label className="text-xs font-semibold text-[var(--toq-navy)]">
@@ -311,6 +323,11 @@ export function CourtManagementPage() {
                           {court.community?.name} ·{" "}
                           {court.rental_visibility === "public" ? "Pública" : "Só membros"}
                         </p>
+                        {court.is_active === false && (
+                          <span className="mt-1 inline-block rounded-full bg-slate-500/15 px-2 py-0.5 text-[10px] font-bold text-slate-500">
+                            Inativa
+                          </span>
+                        )}
                         {!rentalOpen && (
                           <span className="mt-1 inline-block rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600">
                             Indisponível para locação
@@ -407,7 +424,7 @@ export function CourtManagementPage() {
             />
           )}
 
-          {tab === "manual" && (
+          {tab === "manual" && courts.length > 0 && (
             <form onSubmit={handleManualSubmit} className="max-w-lg space-y-4 rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-5">
               <h3 className="text-sm font-bold text-[var(--toq-navy)]">Agendamento presencial</h3>
               <p className="text-xs text-[var(--toq-text-muted)]">
