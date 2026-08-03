@@ -237,11 +237,11 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
   return (
     <section className="mb-6 toq-card p-4">
       <h2 className="text-sm font-bold text-[var(--toq-navy)]">Moderação</h2>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-nowrap gap-1.5 overflow-x-auto">
         <button
           type="button"
           onClick={() => setTab("requests")}
-          className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
+          className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-bold ${
             tab === "requests"
               ? "toq-btn-primary text-white"
               : "bg-slate-100 text-[var(--toq-text-muted)]"
@@ -252,7 +252,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
         <button
           type="button"
           onClick={() => setTab("invite")}
-          className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
+          className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-bold ${
             tab === "invite"
               ? "toq-btn-primary text-white"
               : "bg-slate-100 text-[var(--toq-text-muted)]"
@@ -263,7 +263,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
         <button
           type="button"
           onClick={() => setTab("members")}
-          className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
+          className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-bold ${
             tab === "members"
               ? "toq-btn-primary text-white"
               : "bg-slate-100 text-[var(--toq-text-muted)]"
