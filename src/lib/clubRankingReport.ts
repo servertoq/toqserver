@@ -1,22 +1,24 @@
 import type { ClubRankingEntry } from "@/types/clubFeatures";
 
-const REPORT_WIDTH = 1080;
-const ROW_H = 72;
-const HEADER_H = 200;
-const FOOTER_H = 72;
-const MAX_ROWS = 12;
-const PAD_X = 48;
+/** Formato 4:5 — encaixa no feed e no Instagram sem esticar. */
+const W = 1080;
+const H = 1350;
+const PAD = 48;
+const MAX_ROWS = 15;
 
 const COLORS = {
-  bg: "#0a1830",
-  bgAlt: "#0f2240",
-  card: "#122848",
-  accent: "#437df4",
+  bg0: "#07111f",
+  bg1: "#0c1c36",
+  row: "#132#if",
+  rowAlt: "#0f2444",
+  accent: "#3b82f6",
+  accentSoft: "rgba(59, 130, 246, 0.18)",
   text: "#ffffff",
   muted: "#94a3b8",
   gold: "#f5c542",
   silver: "#c0c7d1",
   bronze: "#cd7f32",
+  line: "rgba(255,255,255,0.08)",
 };
 
 function loadImageFromUrl(url: string): Promise<HTMLImageElement | null> {
@@ -47,6 +49,15 @@ function roundRect(
   ctx.closePath();
 }
 
+function truncate(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let t = text;
+  while (t.length > 1 && ctx.measureText(`${t}…`).width > maxWidth) {
+    t = t.slice(0, -1);
+  }
+  return `${t}…`;
+}
+
 function drawAvatar(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement | null,
@@ -61,16 +72,16 @@ function drawAvatar(
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.closePath();
   ctx.clip();
-  if (img) {
+  if (img && img.width > 0 && img.height > 0) {
     const scale = Math.max(size / img.width, size / img.height);
-    const w = img.width * scale;
-    const h = img.height * scale;
-    ctx.drawImage(img, cx - w / 2, cy - h / 2, w, h);
+    const dw = img.width * scale;
+    const dh = img.height * scale;
+    ctx.drawImage(img, cx - dw / 2, cy - dh / 2, dw, dh);
   } else {
     ctx.fillStyle = COLORS.accent;
     ctx.fillRect(cx - r, cy - r, size, size);
     ctx.fillStyle = COLORS.text;
-    ctx.font = `bold ${Math.round(size * 0.4)}px system-ui, sans-serif`;
+    ctx.font = `700 ${Math.round(size * 0.42)}px Inter, system-ui, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText((username[0] ?? "?").toUpperCase(), cx, cy + 1);
@@ -78,8 +89,8 @@ function drawAvatar(
   ctx.restore();
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(255,255,255,0.2)";
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(255,255,255,0.22)";
+  ctx.lineWidth = 3;
   ctx.stroke();
 }
 
@@ -103,120 +114,154 @@ export type ClubRankingReportInput = {
   entries: ClubRankingEntry[];
 };
 
-/** Gera banner JPEG do ranking (1080px) com logo Toq, posições, fotos e nomes. */
+/** Gera imagem JPEG 1080×1350 (4:5) do ranking. */
 export async function generateClubRankingReportFile(
   input: ClubRankingReportInput
 ): Promise<File> {
   const rows = input.entries.slice(0, MAX_ROWS);
-  const height = HEADER_H + rows.length * ROW_H + FOOTER_H + (rows.length ? 16 : 48);
 
   const canvas = document.createElement("canvas");
-  canvas.width = REPORT_WIDTH;
-  canvas.height = height;
+  canvas.width = W;
+  canvas.height = H;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Não foi possível gerar o relatório.");
 
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
   // Fundo
-  const grad = ctx.createLinearGradient(0, 0, 0, height);
-  grad.addColorStop(0, "#0a1830");
-  grad.addColorStop(1, "#06101f");
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, COLORS.bg1);
+  grad.addColorStop(1, COLORS.bg0);
   ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, REPORT_WIDTH, height);
+  ctx.fillRect(0, 0, W, H);
 
-  // Faixa superior accent
+  // Glow decorativo
+  const glow = ctx.createRadialGradient(W * 0.85, 80, 20, W * 0.85, 80, 320);
+  glow.addColorStop(0, "rgba(59,130,246,0.28)");
+  glow.addColorStop(1, "rgba(59,130,246,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, 420);
+
+  // Barra superior
   ctx.fillStyle = COLORS.accent;
-  ctx.fillRect(0, 0, REPORT_WIDTH, 6);
+  ctx.fillRect(0, 0, W, 8);
 
-  // Logo Toq
-  const logo = await loadImageFromUrl("/imagens_publicas/logo_transp.png");
-  if (logo) {
-    const logoH = 56;
-    const logoW = (logo.width / logo.height) * logoH;
-    ctx.drawImage(logo, PAD_X, 28, logoW, logoH);
-  } else {
-    ctx.fillStyle = COLORS.text;
-    ctx.font = "bold 28px system-ui, sans-serif";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.fillText("TOQ TENNIS", PAD_X, 56);
-  }
+  // Marca TOQ (texto — logo mask não serve bem no canvas)
+  ctx.fillStyle = COLORS.text;
+  ctx.font = "800 34px Inter, system-ui, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText("TOQ", PAD, 56);
 
   ctx.fillStyle = COLORS.muted;
-  ctx.font = "600 13px system-ui, sans-serif";
+  ctx.font = "700 14px Inter, system-ui, sans-serif";
   ctx.textAlign = "right";
-  ctx.textBaseline = "middle";
-  ctx.fillText("RELATÓRIO DE RANKING", REPORT_WIDTH - PAD_X, 48);
+  ctx.fillText("RELATÓRIO DE RANKING", W - PAD, 56);
 
-  // Clube + categoria
+  // Título
   ctx.textAlign = "left";
   ctx.fillStyle = COLORS.text;
-  ctx.font = "bold 36px system-ui, sans-serif";
-  ctx.fillText(input.clubName.slice(0, 42), PAD_X, 120);
+  ctx.font = "800 48px Inter, system-ui, sans-serif";
+  const clubTitle = truncate(ctx, input.clubName.trim() || "Clube", W - PAD * 2);
+  ctx.fillText(clubTitle, PAD, 128);
 
   ctx.fillStyle = COLORS.accent;
-  ctx.font = "bold 22px system-ui, sans-serif";
-  ctx.fillText(input.categoryName.slice(0, 48), PAD_X, 158);
+  ctx.font = "700 28px Inter, system-ui, sans-serif";
+  ctx.fillText(truncate(ctx, input.categoryName, W - PAD * 2), PAD, 178);
 
   ctx.fillStyle = COLORS.muted;
-  ctx.font = "500 14px system-ui, sans-serif";
-  ctx.fillText(`Medido em: ${input.unitLabel}`, PAD_X, 184);
+  ctx.font = "500 18px Inter, system-ui, sans-serif";
+  ctx.fillText(`Medido em: ${input.unitLabel}`, PAD, 214);
 
-  // Avatar loads in parallel
+  // Linha divisória
+  ctx.strokeStyle = COLORS.line;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(PAD, 248);
+  ctx.lineTo(W - PAD, 248);
+  ctx.stroke();
+
+  const listTop = 272;
+  const footerH = 88;
+  const listBottom = H - footerH - 24;
+  const listH = listBottom - listTop;
+
   const avatars = await Promise.all(
     rows.map((e) =>
       e.profile?.avatar_url ? loadImageFromUrl(e.profile.avatar_url) : Promise.resolve(null)
     )
   );
 
-  const y = HEADER_H;
   if (rows.length === 0) {
     ctx.fillStyle = COLORS.muted;
-    ctx.font = "500 18px system-ui, sans-serif";
+    ctx.font = "500 22px Inter, system-ui, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("Sem pontuações nesta categoria.", REPORT_WIDTH / 2, y + 24);
+    ctx.fillText("Sem pontuações nesta categoria.", W / 2, listTop + listH / 2);
   } else {
+    const gap = 12;
+    const rowH = Math.min(96, Math.max(68, (listH - gap * (rows.length - 1)) / rows.length));
+    const blockH = rows.length * rowH + (rows.length - 1) * gap;
+    let y = listTop + Math.max(0, (listH - blockH) / 2);
+
     rows.forEach((entry, index) => {
       const rank = index + 1;
-      const rowY = y + index * ROW_H;
-      const bg = index % 2 === 0 ? COLORS.card : COLORS.bgAlt;
-      roundRect(ctx, PAD_X - 8, rowY, REPORT_WIDTH - PAD_X * 2 + 16, ROW_H - 8, 14);
-      ctx.fillStyle = bg;
+      const username = entry.profile?.username ?? "jogador";
+
+      roundRect(ctx, PAD, y, W - PAD * 2, rowH, 18);
+      ctx.fillStyle = index % 2 === 0 ? "#152a4d" : "#102240";
       ctx.fill();
 
-      // Rank
+      // Faixa de rank
+      roundRect(ctx, PAD, y, 10, rowH, 18);
       ctx.fillStyle = rankColor(rank);
-      ctx.font = "bold 22px system-ui, sans-serif";
+      ctx.fill();
+      // cobrir cantos direitos da faixa
+      ctx.fillRect(PAD + 5, y, 5, rowH);
+
+      const midY = y + rowH / 2;
+
+      ctx.fillStyle = rankColor(rank);
+      ctx.font = "800 26px Inter, system-ui, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(`${rank}º`, PAD_X + 28, rowY + (ROW_H - 8) / 2);
+      ctx.fillText(`${rank}º`, PAD + 52, midY);
 
-      // Avatar
-      const username = entry.profile?.username ?? "jogador";
-      drawAvatar(ctx, avatars[index], username, PAD_X + 96, rowY + (ROW_H - 8) / 2, 48);
+      const avatarSize = Math.min(56, rowH - 20);
+      drawAvatar(ctx, avatars[index], username, PAD + 118, midY, avatarSize);
 
-      // Name
+      const scoreText = formatScore(entry.score);
+      ctx.font = "800 28px Inter, system-ui, sans-serif";
+      const scoreW = ctx.measureText(scoreText).width;
+      ctx.font = "600 14px Inter, system-ui, sans-serif";
+      const unitW = ctx.measureText(input.unitLabel).width;
+      const rightBlock = Math.max(scoreW, unitW) + 28;
+
       ctx.fillStyle = COLORS.text;
-      ctx.font = "bold 20px system-ui, sans-serif";
+      ctx.font = "700 24px Inter, system-ui, sans-serif";
       ctx.textAlign = "left";
-      ctx.fillText(`@${username}`.slice(0, 28), PAD_X + 132, rowY + (ROW_H - 8) / 2);
+      const nameMax = W - PAD - 150 - rightBlock - 16;
+      ctx.fillText(truncate(ctx, `@${username}`, nameMax), PAD + 156, midY);
 
-      // Score
       ctx.fillStyle = COLORS.accent;
-      ctx.font = "bold 22px system-ui, sans-serif";
+      ctx.font = "800 28px Inter, system-ui, sans-serif";
       ctx.textAlign = "right";
-      ctx.fillText(formatScore(entry.score), REPORT_WIDTH - PAD_X - 12, rowY + (ROW_H - 8) / 2 - 8);
+      ctx.fillText(scoreText, W - PAD - 24, midY - 10);
+
       ctx.fillStyle = COLORS.muted;
-      ctx.font = "500 12px system-ui, sans-serif";
-      ctx.fillText(input.unitLabel, REPORT_WIDTH - PAD_X - 12, rowY + (ROW_H - 8) / 2 + 14);
+      ctx.font = "600 14px Inter, system-ui, sans-serif";
+      ctx.fillText(input.unitLabel, W - PAD - 24, midY + 16);
+
+      y += rowH + gap;
     });
   }
 
   // Footer
-  const footerY = height - FOOTER_H / 2;
-  ctx.fillStyle = "rgba(255,255,255,0.08)";
-  ctx.fillRect(0, height - FOOTER_H, REPORT_WIDTH, FOOTER_H);
+  ctx.fillStyle = "rgba(255,255,255,0.06)";
+  ctx.fillRect(0, H - footerH, W, footerH);
+
   ctx.fillStyle = COLORS.muted;
-  ctx.font = "500 13px system-ui, sans-serif";
+  ctx.font = "500 16px Inter, system-ui, sans-serif";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   const dateLabel = new Date().toLocaleDateString("pt-BR", {
@@ -224,23 +269,29 @@ export async function generateClubRankingReportFile(
     month: "long",
     year: "numeric",
   });
-  ctx.fillText(dateLabel, PAD_X, footerY);
+  ctx.fillText(dateLabel, PAD, H - footerH / 2);
+
   ctx.textAlign = "right";
-  ctx.fillText("toqtennis.com.br", REPORT_WIDTH - PAD_X, footerY);
+  ctx.fillStyle = COLORS.text;
+  ctx.font = "700 16px Inter, system-ui, sans-serif";
+  ctx.fillText("toqtennis.com.br", W - PAD, H - footerH / 2);
 
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (result) => (result ? resolve(result) : reject(new Error("Falha ao exportar o relatório."))),
       "image/jpeg",
-      0.92
+      0.94
     );
   });
 
   const slug = input.categoryName
     .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/gi, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 40);
+
   return new File([blob], `ranking-${slug || "clube"}.jpg`, { type: "image/jpeg" });
 }
 
