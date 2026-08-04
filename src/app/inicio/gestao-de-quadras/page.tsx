@@ -1,8 +1,11 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { CourtManagementPage } from "@/components/court/CourtManagementPage";
 import { resolveCanAccessCourtManagement } from "@/lib/courtManagementAccess";
 import { createClient } from "@/lib/supabase/server";
 import type { AppProfile } from "@/components/app/AppSidebar";
+import { appContentClass } from "@/lib/layout";
+
 export default async function GestaoDeQuadrasPage() {
   const supabase = await createClient();
   const {
@@ -18,8 +21,19 @@ export default async function GestaoDeQuadrasPage() {
     (staffRole as AppProfile["staffRole"]) ?? null
   );
 
-  if (!canAccess) {    redirect("/inicio/quadras");
+  if (!canAccess) {
+    redirect("/inicio/quadras");
   }
 
-  return <CourtManagementPage />;
+  return (
+    <Suspense
+      fallback={
+        <main className={appContentClass}>
+          <p className="text-sm text-[var(--toq-text-muted)]">Carregando…</p>
+        </main>
+      }
+    >
+      <CourtManagementPage />
+    </Suspense>
+  );
 }

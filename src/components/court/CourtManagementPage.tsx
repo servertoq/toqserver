@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { formatClubPrice } from "@/lib/clubFeatures";
@@ -18,15 +19,17 @@ import {
   markCourtBookingPaid,
   reviewCourtBooking,
   setCourtRentalAvailability,
+  type ManagedClubCourt,
 } from "@/lib/courtManagement";
-import type { ClubCourtPlan } from "@/types/clubFeatures";
+import type { ClubCourt, ClubCourtPlan } from "@/types/clubFeatures";
 import type { CourtBookingWithDetails } from "@/types/courtManagement";
 import { appContentClass } from "@/lib/layout";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { filterPlansForSlot, planAppliesToSlot, planScopeLabel } from "@/lib/clubCourtPlans";
+import { ClubCourtAgendaModal } from "@/components/club/ClubCourtAgendaModal";
 
-type Tab = "dashboard" | "pending" | "bookings" | "manual";
+type Tab = "dashboard" | "pending" | "bookings" | "manual" | "agenda";
 
 function formatDateBR(iso: string) {
   const [y, m, d] = iso.split("-");
@@ -41,13 +44,28 @@ function formatTime(t: string) {
 export function CourtManagementPage() {
   const supabase = createClient();
   const profile = useAppProfile();
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab");
+  const initialCourtId = searchParams.get("court");
+  const [tab, setTab] = useState<Tab>(() =>
+    initialTab === "agenda" ||
+    initialTab === "pending" ||
+    initialTab === "bookings" ||
+    initialTab === "manual"
+      ? initialTab
+      : "dashboard"
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [bookings, setBookings] = useState<CourtBookingWithDetails[]>([]);
-  const [courts, setCourts] = useState<Awaited<ReturnType<typeof fetchManagedCourts>>>([]);
+  const [courts, setCourts] = useState<ManagedClubCourt[]>([]);
   const [stats, setStats] = useState({ listing_views: 0, bookings_count: 0, total_revenue: 0 });
+  const [agendaCourtId, setAgendaCourtId] = useState<string | null>(
+    () => initialCourtId
+  );
+  const [agendaOpen, setAgendaOpen] = useState(() => initialTab === "agenda" && !!initialCourtId);
   const [fromDate, setFromDate] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
@@ -94,6 +112,20 @@ export function CourtManagementPage() {
   }, [load]);
 
   useEffect(() => {
+    if (loading || courts.length === 0) return;
+    if (tab !== "agenda") return;
+    if (agendaCourtId && courts.some((c) => c.id === agendaCourtId)) {
+      if (initialTab === "agenda" && initialCourtId === agendaCourtId) {
+        setAgendaOpen(true);
+      }
+      return;
+    }
+    if (!agendaCourtId) {
+      setAgendaCourtId(courts[0].id);
+    }
+  }, [agendaCourtId, courts, initialCourtId, initialTab, loading, tab]);
+
+  useEffect(() => {
     const channel = supabase
       .channel(`court-management-${profile.id}`)
       .on(
@@ -125,6 +157,12 @@ export function CourtManagementPage() {
     () => bookings.filter((b) => ["confirmed", "completed"].includes(b.status)),
     [bookings]
   );
+
+  const agendaCourt = useMemo(() => {
+    const row = courts.find((c) => c.id === agendaCourtId);
+    if (!row) return null;
+    return row as ClubCourt;
+  }, [agendaCourtId, courts]);
 
   const selectedCourt = courts.find((c) => c.id === manualForm.court_id);
   const courtPlans = useMemo(
@@ -199,13 +237,14 @@ export function CourtManagementPage() {
       <PageHeader
         kicker="Clube"
         title="Gestão de Quadras"
-        subtitle="Para administradores e moderadores: aprove solicitações, confirme pagamentos e acompanhe resultados."
+        subtitle="Agenda, reservas, pagamentos e resultados das quadras dos clubes que você administra."
       />
 
       <div className="mb-6 flex flex-wrap gap-2 border-b border-[var(--toq-border)] pb-1">
         {(
           [
             ["dashboard", "Dashboard"],
+            ["agenda", "Agenda"],
             ["pending", `Pendentes (${pendingTabItems.length})`],
             ["bookings", "Agendamentos"],
             ["manual", "Agendar manual"],
@@ -214,7 +253,12 @@ export function CourtManagementPage() {
           <button
             key={id}
             type="button"
-            onClick={() => setTab(id)}
+            onClick={() => {
+              setTab(id);
+              if (id === "agenda" && courts.length === 1) {
+                setAgendaCourtId(courts[0].id);
+              }
+            }}
             className={`rounded-t-lg px-3 py-2 text-sm font-semibold transition ${
               tab === id
                 ? "border-b-2 border-[var(--toq-accent)] text-[var(--toq-navy)]"
@@ -255,6 +299,49 @@ export function CourtManagementPage() {
                 Ainda há solicitações abaixo. Cadastre ou reative uma quadra no clube para gerenciar locações.
               </p>
             </div>
+          )}
+
+          {tab === "agenda" && (
+            <section className="space-y-4">
+              <div className="rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-5">
+                <h3 className="text-sm font-bold text-[var(--toq-navy)]">Agenda semanal</h3>
+                <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
+                  Marque horários locados aqui. Eles entram automaticamente em Agendamentos — o mesmo
+                  registro da gestão do clube.
+                </p>
+                {courts.length === 0 ? (
+                  <p className="mt-4 text-sm text-[var(--toq-text-muted)]">
+                    Cadastre uma quadra no clube para usar a agenda.
+                  </p>
+                ) : (
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+                    <label className="block min-w-0 flex-1 text-xs font-semibold text-[var(--toq-navy)]">
+                      Quadra
+                      <select
+                        value={agendaCourtId ?? ""}
+                        onChange={(e) => setAgendaCourtId(e.target.value || null)}
+                        className="toq-input mt-1 w-full px-3 py-2 text-sm"
+                      >
+                        <option value="">Selecione…</option>
+                        {courts.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.community?.name ? `${c.community.name} — ${c.name}` : c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      disabled={!agendaCourtId}
+                      onClick={() => setAgendaOpen(true)}
+                      className="rounded-lg toq-btn-primary px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                    >
+                      Abrir agenda
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
           )}
 
           {tab === "dashboard" && courts.length > 0 && (
@@ -541,6 +628,18 @@ export function CourtManagementPage() {
             </form>
           )}
         </>
+      )}
+
+      {agendaOpen && agendaCourt && (
+        <ClubCourtAgendaModal
+          canManage
+          court={agendaCourt}
+          onClose={() => {
+            setAgendaOpen(false);
+            router.replace("/inicio/gestao-de-quadras?tab=agenda", { scroll: false });
+          }}
+          onChanged={() => void load()}
+        />
       )}
     </main>
   );

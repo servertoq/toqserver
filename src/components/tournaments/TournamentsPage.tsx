@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { fetchAllTournaments, tournamentLocationLabel, tournamentOrganizerLabel } from "@/lib/tournaments";
@@ -19,6 +20,8 @@ import Link from "next/link";
 export function TournamentsPage() {
   const supabase = createClient();
   const profile = useAppProfile();
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("torneio");
   const { anchor } = useUserLocationAnchor(profile.id);
   const [tournaments, setTournaments] = useState<ClubTournament[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +50,13 @@ export function TournamentsPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!highlightId || loading) return;
+    const el = document.getElementById(`torneio-${highlightId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightId, loading, tournaments]);
 
   const filtered = useMemo(
     () =>
@@ -92,6 +102,7 @@ export function TournamentsPage() {
             canSignup
             canShare={t.is_active}
             showClubLink={Boolean(t.community_id)}
+            autoOpenDetail={highlightId === t.id}
           />
         ))}
       </div>

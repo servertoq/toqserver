@@ -23,7 +23,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { NearbySection, OtherSection } from "@/components/shared/NearbySections";
 
 type CourtsFilter = "all" | "my_club";
-type ClubAction = "nova" | "agenda";
+type ClubAction = "nova";
 
 type CourtListItem =
   | { kind: "club"; id: string; court: BrowsableClubCourt }
@@ -254,20 +254,10 @@ export function CourtsPage() {
             <button
               type="button"
               onClick={() => {
-                const href = resolveClubAction("agenda");
-                if (href) router.push(href);
-              }}
-              className="inline-flex h-10 w-full items-center justify-center rounded-xl toq-btn-outline px-3 text-center text-xs font-bold leading-tight sm:h-9 sm:w-auto sm:px-3.5 sm:text-sm sm:leading-none"
-            >
-              Gerenciar agenda
-            </button>
-            <button
-              type="button"
-              onClick={() => {
                 const href = resolveClubAction("nova");
                 if (href) router.push(href);
               }}
-              className="inline-flex h-10 w-full items-center justify-center rounded-xl toq-btn-primary px-3 text-center text-xs font-bold leading-tight text-white sm:h-9 sm:w-auto sm:px-3.5 sm:text-sm sm:leading-none"
+              className="inline-flex h-10 w-full items-center justify-center rounded-xl toq-btn-outline px-3 text-center text-xs font-bold leading-tight sm:h-9 sm:w-auto sm:px-3.5 sm:text-sm sm:leading-none"
             >
               + Nova quadra
             </button>
@@ -397,10 +387,10 @@ export function CourtsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 id="club-picker-title" className="text-lg font-bold text-[var(--toq-navy)]">
-              {clubPicker === "nova" ? "Cadastrar quadra em qual clube?" : "Gerenciar agenda de qual clube?"}
+              Cadastrar quadra em qual clube?
             </h2>
             <p className="mt-1 text-sm text-[var(--toq-text-muted)]">
-              Escolha o clube para continuar com planos, preços e agenda.
+              Escolha o clube. Depois use Gestão de Quadras para agenda e reservas.
             </p>
             <ul className="mt-4 space-y-2">
               {managedClubs.map((club) => (

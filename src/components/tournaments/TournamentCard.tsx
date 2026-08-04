@@ -20,6 +20,8 @@ type Props = {
   showClubLink?: boolean;
   canSignup?: boolean;
   canShare?: boolean;
+  /** Abre o Ver completo ao montar (ex.: link ?torneio=). */
+  autoOpenDetail?: boolean;
 };
 
 function ShareIcon({ className = "" }: { className?: string }) {
@@ -51,9 +53,10 @@ export function TournamentCard({
   showClubLink = true,
   canSignup = true,
   canShare = false,
+  autoOpenDetail = false,
 }: Props) {
   const [shareOpen, setShareOpen] = useState(false);
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(autoOpenDetail);
   const dateRange = formatTournamentDateRange(tournament.starts_at, tournament.ends_at);
   const clubHref = tournamentClubHref(tournament);
   const organizer = clubName || tournamentOrganizerLabel(tournament);
@@ -76,16 +79,23 @@ export function TournamentCard({
       id={`torneio-${tournament.id}`}
       className="tournament-card flex flex-col overflow-hidden toq-card-lg"
     >
-      {/* Foto compacta — não estica o card */}
-      <div className="relative aspect-[16/9] max-h-24 w-full shrink-0 overflow-hidden bg-[#0a1628]">
-        {cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={cover} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-[#0a1628] to-[var(--toq-accent)]" />
-        )}
+      {/* Foto do card — mesma capa do Ver completo */}
+      <div className="relative aspect-[16/9] max-h-36 w-full shrink-0 overflow-hidden bg-[#0a1628]">
+        <button
+          type="button"
+          onClick={() => setDetailOpen(true)}
+          className="absolute inset-0 block h-full w-full"
+          aria-label={`Ver completo: ${tournament.name}`}
+        >
+          {cover ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={cover} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="block h-full w-full bg-gradient-to-br from-[#051024] to-[#2563eb]" />
+          )}
+        </button>
         {tournament.is_private && (
-          <span className="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
+          <span className="pointer-events-none absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
             Privado
           </span>
         )}
@@ -93,7 +103,7 @@ export function TournamentCard({
           <button
             type="button"
             onClick={() => setShareOpen(true)}
-            className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white transition hover:bg-black/75"
+            className="absolute right-2 top-2 z-[1] inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white transition hover:bg-black/75"
             aria-label="Compartilhar torneio"
             title="Compartilhar"
           >

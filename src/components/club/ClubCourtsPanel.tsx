@@ -838,7 +838,6 @@ export function ClubCourtsPanel({
   const [editing, setEditing] = useState<ClubCourt | null | undefined>(undefined);
   const [bookingCourt, setBookingCourt] = useState<ClubCourt | null>(null);
   const [agendaCourtId, setAgendaCourtId] = useState<string | null>(null);
-  const [agendaPickerOpen, setAgendaPickerOpen] = useState(false);
   const agendaCourt = courts.find((c) => c.id === agendaCourtId) ?? null;
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -846,23 +845,9 @@ export function ClubCourtsPanel({
   const [removingCourt, setRemovingCourt] = useState(false);
   const autoOpenHandled = useRef(false);
 
-  async function handleCourtSaved(courtId: string) {
+  async function handleCourtSaved(_courtId: string) {
     setEditing(undefined);
     await load();
-    setAgendaCourtId(courtId);
-  }
-
-  function openAgendaManager(courtList: ClubCourt[] = courts) {
-    setInfo(null);
-    if (courtList.length === 0) {
-      setInfo("Cadastre uma quadra com o botão “+ Nova quadra” antes de gerenciar a agenda.");
-      return;
-    }
-    if (courtList.length === 1) {
-      setAgendaCourtId(courtList[0].id);
-      return;
-    }
-    setAgendaPickerOpen(true);
   }
 
   const load = useCallback(async () => {
@@ -925,14 +910,12 @@ export function ClubCourtsPanel({
     if (autoOpen === "nova") {
       setEditing(null);
     } else if (autoOpen === "agenda") {
-      setInfo(null);
-      if (courts.length === 0) {
-        setInfo("Cadastre uma quadra com o botão “+ Nova quadra” antes de gerenciar a agenda.");
-      } else if (courts.length === 1) {
-        setAgendaCourtId(courts[0].id);
-      } else {
-        setAgendaPickerOpen(true);
-      }
+      const href =
+        courts.length === 1
+          ? `/inicio/gestao-de-quadras?tab=agenda&court=${courts[0].id}`
+          : "/inicio/gestao-de-quadras?tab=agenda";
+      window.location.assign(href);
+      return;
     }
     onAutoOpenConsumed?.();
   }, [autoOpen, canManage, courts, loading, onAutoOpenConsumed]);
@@ -982,7 +965,8 @@ export function ClubCourtsPanel({
           <h2 className="text-sm font-bold text-[var(--toq-navy)]">Quadras do clube</h2>
           {canManage && (
             <p className="mt-0.5 text-[11px] text-[var(--toq-text-muted)]">
-              Cadastre a quadra e use <strong>Agenda</strong> para marcar horários locados.
+              Cadastre a quadra aqui. Horários, reservas e pagamentos ficam em{" "}
+              <strong>Gestão de Quadras</strong>.
             </p>
           )}
         </div>
@@ -996,17 +980,8 @@ export function ClubCourtsPanel({
             </Link>
             <button
               type="button"
-              onClick={() => openAgendaManager()}
-              disabled={courts.length === 0}
-              title={courts.length === 0 ? "Cadastre uma quadra antes" : "Abrir agenda para marcar locações"}
-              className="inline-flex h-8 items-center justify-center rounded-lg toq-btn-outline px-3 text-xs font-bold leading-none disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Gerenciar agenda
-            </button>
-            <button
-              type="button"
               onClick={() => setEditing(null)}
-              className="inline-flex h-8 items-center justify-center rounded-lg toq-btn-primary px-3 text-xs font-bold leading-none text-white"
+              className="inline-flex h-8 items-center justify-center rounded-lg toq-btn-outline px-3 text-xs font-bold leading-none"
             >
               + Nova quadra
             </button>
@@ -1025,8 +1000,8 @@ export function ClubCourtsPanel({
           {canManage ? (
             <>
               <p className="mt-2 text-xs text-[var(--toq-text-muted)]">
-                A agenda só existe depois de cadastrar uma quadra. Ao salvar, a agenda abre
-                automaticamente para você marcar os horários.
+                Depois de cadastrar, use <strong>Gestão de Quadras</strong> para agenda, reservas e
+                pagamentos — o mesmo lugar das quadras avulsas.
               </p>
               <button
                 type="button"
@@ -1065,15 +1040,22 @@ export function ClubCourtsPanel({
                 )}
 
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setAgendaCourtId(court.id)}
-                    className={`rounded-lg px-3 py-2 text-xs font-bold ${
-                      canManage ? "toq-btn-primary text-white" : "toq-btn-outline"
-                    }`}
-                  >
-                    {canManage ? "Agenda — editar horários" : "Ver agenda"}
-                  </button>
+                  {canManage ? (
+                    <Link
+                      href={`/inicio/gestao-de-quadras?tab=agenda&court=${court.id}`}
+                      className="rounded-lg toq-btn-primary px-3 py-2 text-xs font-bold text-white"
+                    >
+                      Abrir na Gestão de Quadras
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setAgendaCourtId(court.id)}
+                      className="rounded-lg toq-btn-outline px-3 py-2 text-xs font-bold"
+                    >
+                      Ver agenda
+                    </button>
+                  )}
                   {!canManage && court.rental_available !== false && (
                     <button
                       type="button"
@@ -1105,7 +1087,8 @@ export function ClubCourtsPanel({
 
                 {(court.blocks?.length ?? 0) > 0 && (
                   <p className="mt-3 text-[11px] font-semibold text-red-600">
-                    {(court.blocks?.length ?? 0)} horário(s) locado(s) — abra a Agenda para ver a semana
+                    {(court.blocks?.length ?? 0)} horário(s) locado(s)
+                    {canManage ? " — veja em Gestão de Quadras" : " — abra a agenda para ver a semana"}
                   </p>
                 )}
               </div>
@@ -1125,37 +1108,6 @@ export function ClubCourtsPanel({
         />
       )}
 
-      {agendaPickerOpen && courts.length > 1 && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-5 shadow-xl">
-            <h3 className="text-sm font-bold text-[var(--toq-navy)]">Escolha a quadra</h3>
-            <ul className="mt-3 space-y-2">
-              {courts.map((c) => (
-                <li key={c.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAgendaCourtId(c.id);
-                      setAgendaPickerOpen(false);
-                    }}
-                    className="w-full rounded-lg border border-[var(--toq-border)] bg-[var(--toq-surface)] px-3 py-2.5 text-left text-sm font-semibold text-[var(--toq-navy)] hover:border-[var(--toq-accent)]"
-                  >
-                    {c.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              onClick={() => setAgendaPickerOpen(false)}
-              className="mt-4 w-full text-sm font-semibold text-[var(--toq-text-muted)]"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      )}
-
       {bookingCourt && (
         <CourtBookingDialog
           open
@@ -1167,7 +1119,7 @@ export function ClubCourtsPanel({
 
       {agendaCourt && (
         <ClubCourtAgendaModal
-          canManage={canManage}
+          canManage={false}
           court={agendaCourt}
           onChanged={load}
           onClose={() => setAgendaCourtId(null)}

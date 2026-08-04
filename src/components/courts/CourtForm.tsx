@@ -105,8 +105,8 @@ export function CourtForm({ initial }: Props) {
           {isEdit ? "Editar quadra" : "Cadastrar quadra avulsa"}
         </h1>
         <p className="mt-1 text-sm text-[var(--toq-text-muted)]">
-          Anúncio simples com WhatsApp para contato. Para planos, preços, horários e agenda, cadastre no
-          clube.
+          Anúncio simples com WhatsApp para contato. Planos, preços, agenda e reservas ficam nas
+          quadras do clube e na <strong>Gestão de Quadras</strong>.
         </p>
 
         {!isEdit && managedClubs.length > 0 && (
@@ -115,7 +115,8 @@ export function CourtForm({ initial }: Props) {
               Você administra clube — use o cadastro completo
             </p>
             <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
-              Planos por horário, ocultar preços, funcionamento e agenda ficam no cadastro do clube.
+              Cadastre no clube e gerencie horários/reservas só em Gestão de Quadras — um único lugar,
+              sem dados divergentes.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {managedClubs.map((club) => (

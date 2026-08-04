@@ -3,7 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { useAppProfile } from "@/components/app/AppShell";
+import {
+  cancelCourtBooking,
+  createManualCourtBooking,
+} from "@/lib/courtManagement";
+import { filterPlansForSlot } from "@/lib/clubCourtPlans";
 import type { ClubCourt, ClubCourtBlock, ClubCourtHours } from "@/types/clubFeatures";
 
 const SLOT_STEP = 60;
@@ -178,7 +182,6 @@ type Props = {
 
 export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: Props) {
   const supabase = createClient();
-  const profile = useAppProfile();
 
   const todayISO = toISODate(new Date());
   const [weekStart, setWeekStart] = useState(() => startOfWeekMonday(new Date()));
@@ -327,6 +330,14 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
   ) {
     if (!canManage || ranges.length === 0) return;
 
+    const plans = (court.plans ?? []).filter((p) => p.is_active !== false);
+    if (plans.length === 0) {
+      setError(
+        "Cadastre pelo menos um plano de preço na quadra antes de marcar horários. Use Gestão de Quadras ou Editar quadra."
+      );
+      return;
+    }
+
     for (const range of ranges) {
       if (range.endMin <= range.startMin) {
         setError("O horário final deve ser depois do inicial.");
@@ -341,21 +352,31 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
     setSaving(true);
     setError(null);
     try {
-      const rows = ranges.map((range) => ({
-        court_id: court.id,
-        start_ts: new Date(`${selectedDate}T${minutesToHHMM(range.startMin)}:00`).toISOString(),
-        end_ts: new Date(`${selectedDate}T${minutesToHHMM(range.endMin)}:00`).toISOString(),
-        reason: reason.trim() || null,
-        created_by: profile.id,
-      }));
-      const { error: blkErr } = await supabase.from("club_court_blocks").insert(rows);
-      if (blkErr) {
-        setError(
-          blkErr.message.includes("Horário já reservado")
-            ? "Um dos horários selecionados já está reservado neste dia."
-            : blkErr.message
-        );
-        return;
+      for (const range of ranges) {
+        const startTime = minutesToHHMM(range.startMin);
+        const applicable = filterPlansForSlot(plans, selectedDate, startTime);
+        const plan = applicable[0] ?? plans[0];
+        if (!plan) {
+          setError("Nenhum plano válido para este horário.");
+          return;
+        }
+        const durationMin = range.endMin - range.startMin;
+        const quantity = Math.max(1, Math.round(durationMin / Math.max(1, plan.unit_minutes)));
+        const { error: bookErr } = await createManualCourtBooking(supabase, {
+          court_id: court.id,
+          plan_id: plan.id,
+          booking_date: selectedDate,
+          start_time: startTime,
+          quantity: String(quantity),
+          guest_name: reason.trim() || "Locação (agenda)",
+          guest_phone: "",
+          notes: "Criado pela agenda",
+          mark_paid: true,
+        });
+        if (bookErr) {
+          setError(bookErr);
+          return;
+        }
       }
       setSelectedStarts([]);
       await refreshLocalBlocks();
@@ -370,10 +391,27 @@ export function ClubCourtAgendaModal({ canManage, court, onClose, onChanged }: P
     setSaving(true);
     setError(null);
     try {
-      const { error: delErr } = await supabase.from("club_court_blocks").delete().eq("id", blockId);
-      if (delErr) {
-        setError(delErr.message);
-        return false;
+      const { data: linked } = await supabase
+        .from("club_court_bookings")
+        .select("id")
+        .eq("block_id", blockId)
+        .maybeSingle();
+
+      if (linked?.id) {
+        const { error: cancelErr } = await cancelCourtBooking(supabase, linked.id);
+        if (cancelErr) {
+          setError(cancelErr);
+          return false;
+        }
+      } else {
+        const { error: delErr } = await supabase
+          .from("club_court_blocks")
+          .delete()
+          .eq("id", blockId);
+        if (delErr) {
+          setError(delErr.message);
+          return false;
+        }
       }
       await refreshLocalBlocks();
       onChanged();

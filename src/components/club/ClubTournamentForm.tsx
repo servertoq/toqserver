@@ -98,6 +98,10 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
       setError("WhatsApp do responsável inválido.");
       return;
     }
+    if (!isEdit && !imageFile && !imageUrl.trim()) {
+      setError("Adicione uma imagem de divulgação — ela aparece em Torneios e no Ver completo.");
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -151,14 +155,14 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
         const { data: urlData } = supabase.storage
           .from("club-tournament-images")
           .getPublicUrl(path);
-        finalImageUrl = urlData.publicUrl;
+        // Cache-buster evita imagem antiga após trocar a capa
+        finalImageUrl = `${urlData.publicUrl}?v=${Date.now()}`;
       }
 
-      const savedImageUrl = finalImageUrl;
-      if (tournamentId && savedImageUrl !== (tournament?.image_url ?? null)) {
+      if (tournamentId && finalImageUrl !== (tournament?.image_url ?? null)) {
         const { error: imgErr } = await supabase
           .from("club_tournaments")
-          .update({ image_url: savedImageUrl })
+          .update({ image_url: finalImageUrl })
           .eq("id", tournamentId);
         if (imgErr) throw new Error(imgErr.message);
       }
@@ -220,7 +224,7 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
           <div>
             <span className="text-xs font-semibold text-[var(--toq-navy)]">Imagem de divulgação</span>
             <p className="mt-0.5 text-[11px] text-[var(--toq-text-muted)]">
-              Aparece no card do torneio na aba Torneios e no clube.
+              Obrigatória na criação — aparece no card, no Ver completo e na aba Torneios.
             </p>
 
             {previewSrc ? (
