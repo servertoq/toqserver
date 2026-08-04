@@ -22,13 +22,15 @@ export function PostMediaGrid({ items, fullBleed = false }: Props) {
         return (
           <div
             key={item.url}
-            className={`overflow-hidden bg-slate-950/80 ${
+            className={`overflow-hidden ${
               fullBleed ? "rounded-none md:rounded-lg" : "rounded-lg"
             } ${
               single && !isVideo
-                ? fullBleed
-                  ? "aspect-[4/5] max-h-none md:max-h-[28rem] md:aspect-auto"
-                  : "max-h-[28rem]"
+                ? "bg-transparent"
+                : "bg-[var(--toq-elevated)]"
+            } ${
+              single && !isVideo
+                ? ""
                 : isVideo
                   ? "aspect-video"
                   : "aspect-square"
@@ -47,9 +49,15 @@ export function PostMediaGrid({ items, fullBleed = false }: Props) {
               <img
                 src={item.url}
                 alt=""
-                className={`h-full w-full object-contain ${
-                  single && !fullBleed ? "max-h-[28rem] w-full" : ""
-                }`}
+                className={
+                  single
+                    ? `block w-full object-contain ${
+                        fullBleed
+                          ? "max-h-[min(70vh,36rem)]"
+                          : "max-h-[28rem]"
+                      }`
+                    : "h-full w-full object-cover"
+                }
               />
             )}
           </div>

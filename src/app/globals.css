@@ -227,8 +227,7 @@ body {
 
 .post-media-grid--bleed img,
 .post-media-grid--bleed video {
-  height: 100%;
-  max-height: none;
+  max-width: 100%;
 }
 
 /* Modais de post (portal no body) */
@@ -263,16 +262,22 @@ body {
     gap: 0;
   }
 
-  .post-media-grid--bleed .aspect-\[4\/5\] {
-    aspect-ratio: auto;
-    max-height: min(85vh, 720px);
-  }
-
-  .post-media-grid--bleed .aspect-\[4\/5\] img,
-  .post-media-grid--bleed .aspect-\[4\/5\] video {
+  .post-media-grid--bleed img {
     width: 100%;
     height: auto;
-    max-height: min(85vh, 720px);
+    max-height: min(70vh, 36rem);
+    object-fit: contain;
+  }
+
+  .post-media-grid--bleed .aspect-video,
+  .post-media-grid--bleed .aspect-square {
+    background: #0a0a0a;
+  }
+
+  .post-media-grid--bleed .aspect-video video,
+  .post-media-grid--bleed .aspect-square img {
+    height: 100%;
+    max-height: none;
     object-fit: cover;
   }
 
