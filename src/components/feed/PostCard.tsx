@@ -60,6 +60,10 @@ export function PostCard({
   const isClubCourtPost = post.post_type === "court" || post.is_club_court;
   const visBadge = visibilityBadgeLabel(post.visibility, !!post.community_id);
   const isAuthor = post.author.id === currentUserId;
+  const isCommunityCreator =
+    !!post.community_id &&
+    !!post.community?.created_by &&
+    post.author.id === post.community.created_by;
   const isCoachListingPost = !!post.coach_listing || isCoachPost;
   const isCourtListingPost = !!post.club_court || isClubCourtPost;
   const canManage = isAuthor && onEditPost && onDeletePost && !isCoachListingPost && !isCourtListingPost;
@@ -148,6 +152,11 @@ export function PostCard({
               plan={post.author.plan ?? "free"}
               show={!isCoachPost && canShowPlanBadge(post.author.plan, post.author.show_plan_badge)}
             />
+            {isCommunityCreator && (
+              <span className="rounded-full bg-[var(--toq-accent-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--toq-accent)]">
+                Criador
+              </span>
+            )}
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
                 post.post_type === "event"

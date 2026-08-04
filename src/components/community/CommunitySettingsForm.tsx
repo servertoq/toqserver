@@ -12,6 +12,7 @@ import {
   type AddressFields,
   addressFromRow,
   addressToDbPayload,
+  profileLocationToDbPayload,
 } from "@/lib/address";
 import {
   type DayHours,
@@ -19,6 +20,7 @@ import {
   parseOperatingHours,
 } from "@/lib/operatingHours";
 import { AddressForm } from "@/components/shared/AddressForm";
+import { ProfileCepField } from "@/components/shared/ProfileCepField";
 import { OperatingHoursForm } from "@/components/shared/OperatingHoursForm";
 import {
   COMMUNITY_COVER_HINT,
@@ -50,6 +52,11 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
   const [description, setDescription] = useState(community.description);
   const [isPrivate, setIsPrivate] = useState(isClub ? true : community.is_private);
   const [address, setAddress] = useState<AddressFields>(() => addressFromRow(community));
+  const [location, setLocation] = useState({
+    zip: community.address_zip ?? "",
+    city: community.address_city ?? "",
+    state: community.address_state ?? "",
+  });
   const [hours, setHours] = useState<DayHours[]>(() =>
     parseOperatingHours(community.operating_hours)
   );
@@ -122,15 +129,18 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
       let coverUrl = community.cover_image_url;
 
       if (coverFile) {
-        const path = `${profile.id}/${community.id}/cover.jpg`;
+        const path = `${profile.id}/${community.id}/cover-${Date.now()}.jpg`;
         const { error: uploadErr } = await supabase.storage
           .from("community-covers")
           .upload(path, coverFile, { upsert: true, contentType: "image/jpeg" });
 
-        if (!uploadErr) {
-          const { data: urlData } = supabase.storage.from("community-covers").getPublicUrl(path);
-          coverUrl = urlData.publicUrl;
+        if (uploadErr) {
+          setError(`Não foi possível enviar a capa: ${uploadErr.message}`);
+          return;
         }
+
+        const { data: urlData } = supabase.storage.from("community-covers").getPublicUrl(path);
+        coverUrl = `${urlData.publicUrl}?t=${Date.now()}`;
       }
 
       const payload: Record<string, unknown> = {
@@ -147,6 +157,8 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
         payload.shop_whatsapp = shopWhatsapp.trim() || null;
         payload.instagram_url = contact.value.instagram_url;
         payload.contact_whatsapp = contact.value.contact_whatsapp;
+      } else if (!isClub) {
+        Object.assign(payload, profileLocationToDbPayload(location));
       }
 
       const { error: updateErr } = await supabase
@@ -249,6 +261,18 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
               className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)] outline-none focus:border-[var(--toq-accent)]"
             />
           </label>
+
+          {!isClub && (
+            <fieldset className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4">
+              <legend className="px-1 text-xs font-semibold text-[var(--toq-navy)]">
+                Localização
+              </legend>
+              <p className="mb-3 text-[11px] text-[var(--toq-text-muted)]">
+                CEP preenche cidade e UF para a busca por local.
+              </p>
+              <ProfileCepField value={location} onChange={setLocation} />
+            </fieldset>
+          )}
 
           {isClub && (
             <>

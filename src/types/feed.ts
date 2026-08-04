@@ -35,6 +35,7 @@ export type FeedCommunity = {
   description: string;
   member_count: number;
   accent_color: string;
+  created_by?: string | null;
 };
 
 export type PostImage = {
@@ -64,7 +65,7 @@ export type FeedPost = {
   mentions: FeedProfile[];
   author: FeedProfile;
   images: PostImage[];
-  community: Pick<FeedCommunity, "name" | "slug" | "accent_color"> | null;
+  community: Pick<FeedCommunity, "name" | "slug" | "accent_color" | "created_by"> | null;
   likes_count: number;
   comments_count: number;
   liked_by_me: boolean;

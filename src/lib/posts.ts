@@ -31,7 +31,7 @@ const POST_SELECT = `
   event_time,
   author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, plan, show_plan_badge),
   images:post_images(url, sort_order, media_type),
-  communities(name, slug, accent_color),
+  communities(name, slug, accent_color, created_by),
   mentions:post_mentions(
     mentioned_user:profiles!post_mentions_mentioned_user_id_fkey(id, username, display_name, avatar_url)
   ),

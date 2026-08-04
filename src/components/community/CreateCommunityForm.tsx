@@ -10,13 +10,14 @@ import type { PlanUsage } from "@/types/plans";
 import type { CommunityGroupKind } from "@/types/community";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
-import { type AddressFields, EMPTY_ADDRESS, addressToDbPayload } from "@/lib/address";
+import { type AddressFields, EMPTY_ADDRESS, addressToDbPayload, profileLocationToDbPayload } from "@/lib/address";
 import {
   type DayHours,
   defaultOperatingHours,
   operatingHoursToJson,
 } from "@/lib/operatingHours";
 import { AddressForm } from "@/components/shared/AddressForm";
+import { ProfileCepField } from "@/components/shared/ProfileCepField";
 import { OperatingHoursForm } from "@/components/shared/OperatingHoursForm";
 import {
   COMMUNITY_COVER_HINT,
@@ -39,6 +40,7 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [coverProcessing, setCoverProcessing] = useState(false);
   const [address, setAddress] = useState<AddressFields>(EMPTY_ADDRESS);
+  const [location, setLocation] = useState({ zip: "", city: "", state: "" });
   const [hours, setHours] = useState<DayHours[]>(defaultOperatingHours);
   const [instagram, setInstagram] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -111,7 +113,9 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
         return;
       }
 
-      const addrDb = isClub ? addressToDbPayload(address) : null;
+      const addrDb = isClub
+        ? addressToDbPayload(address)
+        : profileLocationToDbPayload(location);
       const contactValue = contact && contact.ok ? contact.value : null;
       const { data: created, error: insertErr } = await supabase.rpc("create_community", {
         p_name: trimmedName,
@@ -120,18 +124,14 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
         p_is_private: isClub ? true : isPrivate,
         p_kind: groupKind,
         p_accent_color: "#437df4",
-        ...(isClub && addrDb
-          ? {
-              p_address_zip: addrDb.address_zip,
-              p_address_street: addrDb.address_street,
-              p_address_number: addrDb.address_number,
-              p_address_neighborhood: addrDb.address_neighborhood,
-              p_address_complement: addrDb.address_complement,
-              p_address_city: addrDb.address_city,
-              p_address_state: addrDb.address_state,
-              p_operating_hours: operatingHoursToJson(hours),
-            }
-          : {}),
+        p_address_zip: addrDb.address_zip,
+        p_address_street: addrDb.address_street,
+        p_address_number: addrDb.address_number,
+        p_address_neighborhood: addrDb.address_neighborhood,
+        p_address_complement: addrDb.address_complement,
+        p_address_city: addrDb.address_city,
+        p_address_state: addrDb.address_state,
+        ...(isClub ? { p_operating_hours: operatingHoursToJson(hours) } : {}),
       });
 
       const community = Array.isArray(created) ? created[0] : created;
@@ -164,17 +164,31 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
       }
 
       if (coverFile) {
-        const path = `${profile.id}/${community.id}/cover.jpg`;
+        const path = `${profile.id}/${community.id}/cover-${Date.now()}.jpg`;
         const { error: uploadErr } = await supabase.storage
           .from("community-covers")
           .upload(path, coverFile, { upsert: true, contentType: "image/jpeg" });
 
-        if (!uploadErr) {
-          const { data: urlData } = supabase.storage.from("community-covers").getPublicUrl(path);
-          await supabase
-            .from("communities")
-            .update({ cover_image_url: urlData.publicUrl })
-            .eq("id", community.id);
+        if (uploadErr) {
+          setError(
+            `Comunidade criada, mas a capa não foi enviada: ${uploadErr.message}`
+          );
+          router.push(groupDetailHref(groupKind, community.slug));
+          return;
+        }
+
+        const { data: urlData } = supabase.storage.from("community-covers").getPublicUrl(path);
+        const coverUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+        const { error: coverErr } = await supabase
+          .from("communities")
+          .update({ cover_image_url: coverUrl })
+          .eq("id", community.id);
+        if (coverErr) {
+          setError(
+            `Comunidade criada, mas a capa não foi salva: ${coverErr.message}`
+          );
+          router.push(groupDetailHref(groupKind, community.slug));
+          return;
         }
       }
 
@@ -257,6 +271,20 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
               )}
             </div>
           </div>
+
+          {!isClub && (
+            <fieldset className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4">
+              <legend className="px-1 text-xs font-semibold text-[var(--toq-navy)]">
+                Localização{" "}
+                <span className="font-normal text-[var(--toq-text-muted)]">(opcional)</span>
+              </legend>
+              <p className="mb-3 text-[11px] text-[var(--toq-text-muted)]">
+                Informe o CEP para preencher cidade e UF automaticamente — assim a comunidade
+                aparece nas buscas por local.
+              </p>
+              <ProfileCepField value={location} onChange={setLocation} />
+            </fieldset>
+          )}
 
           {!isClub && (
           <fieldset className="rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4">
