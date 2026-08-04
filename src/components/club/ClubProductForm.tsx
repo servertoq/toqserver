@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import {
@@ -58,6 +59,7 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
   const profile = useAppProfile();
   const fileRef = useRef<HTMLInputElement>(null);
   const isEdit = !!product;
+  const [mounted, setMounted] = useState(false);
 
   const [name, setName] = useState(product?.name ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
@@ -69,6 +71,24 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
   const [existingImages, setExistingImages] = useState(product?.images ?? []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !loading) onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [mounted, loading, onClose]);
 
   const totalImages = existingImages.length + files.length;
   const sizeOptions = clubProductSizesForAge(ageGroup);
@@ -240,23 +260,39 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
       })
     : null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-[var(--toq-card)] p-5 text-[var(--toq-text)] shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-[var(--toq-navy)]">
+  if (!mounted) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+      role="presentation"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget && !loading) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="club-product-form-title"
+        className="flex max-h-[min(92dvh,100%)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-[var(--toq-card)] text-[var(--toq-text)] shadow-xl sm:rounded-2xl"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--toq-border)] px-5 py-3">
+          <h2 id="club-product-form-title" className="text-lg font-bold text-[var(--toq-navy)]">
             {isEdit ? "Editar produto" : "Novo produto"}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-sm font-semibold text-[var(--toq-text-muted)]"
+            disabled={loading}
+            className="text-sm font-semibold text-[var(--toq-text-muted)] disabled:opacity-50"
           >
             Fechar
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5 py-4 [-webkit-overflow-scrolling:touch]">
           {error && (
             <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500">{error}</p>
           )}
@@ -471,16 +507,20 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
               </>
             )}
           </div>
+          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg toq-btn-primary py-2.5 text-sm font-bold text-white disabled:opacity-50"
-          >
-            {loading ? "Salvando…" : "Salvar produto"}
-          </button>
+          <div className="shrink-0 border-t border-[var(--toq-border)] bg-[var(--toq-card)] px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-lg toq-btn-primary py-2.5 text-sm font-bold text-white disabled:opacity-50"
+            >
+              {loading ? "Salvando…" : "Salvar produto"}
+            </button>
+          </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
