@@ -37,7 +37,7 @@ export type EditableProfile = {
 
 type Props = {
   initial: EditableProfile;
-  onSaved?: () => void;
+  onSaved?: (avatarUrl: string | null) => void;
 };
 
 export function ProfileEditForm({ initial, onSaved }: Props) {
@@ -158,7 +158,7 @@ export function ProfileEditForm({ initial, onSaved }: Props) {
 
       setSuccess("Perfil atualizado com sucesso.");
       setAvatarFile(null);
-      onSaved?.();
+      onSaved?.(avatarUrl);
     });
   }
 

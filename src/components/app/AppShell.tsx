@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 import type { AppProfile } from "./AppSidebar";
 import { AppSidebar } from "./AppSidebar";
 import { MobileBottomNav } from "./MobileBottomNav";
@@ -8,6 +8,7 @@ import { PresenceHeartbeat } from "@/components/feed/PresenceHeartbeat";
 import { mobileMainOffsetClass } from "@/lib/responsive";
 
 const ProfileContext = createContext<AppProfile | null>(null);
+const ProfileUpdateContext = createContext<((patch: Partial<AppProfile>) => void) | null>(null);
 
 export function useAppProfile() {
   const ctx = useContext(ProfileContext);
@@ -15,31 +16,48 @@ export function useAppProfile() {
   return ctx;
 }
 
+/** Atualiza campos do perfil no shell (nav, amigos, sidebar) sem recarregar a página. */
+export function useUpdateAppProfile() {
+  const update = useContext(ProfileUpdateContext);
+  if (!update) throw new Error("useUpdateAppProfile deve ser usado dentro de AppShell");
+  return update;
+}
+
 export function AppShell({
-  profile,
+  profile: initialProfile,
   children,
 }: {
   profile: AppProfile;
   children: React.ReactNode;
 }) {
+  const [profile, setProfile] = useState(initialProfile);
+
+  const updateAppProfile = useCallback((patch: Partial<AppProfile>) => {
+    setProfile((current) => ({ ...current, ...patch }));
+  }, []);
+
   if (profile.isBanned) {
     return (
       <ProfileContext.Provider value={profile}>
-        <div className="flex min-h-dvh w-full flex-col">{children}</div>
+        <ProfileUpdateContext.Provider value={updateAppProfile}>
+          <div className="flex min-h-dvh w-full flex-col">{children}</div>
+        </ProfileUpdateContext.Provider>
       </ProfileContext.Provider>
     );
   }
 
   return (
     <ProfileContext.Provider value={profile}>
-      <PresenceHeartbeat />
-      <div className="feed-layout flex">
-        <AppSidebar profile={profile} />
-        <div className={`feed-layout-main flex flex-col ${mobileMainOffsetClass}`}>
-          {children}
+      <ProfileUpdateContext.Provider value={updateAppProfile}>
+        <PresenceHeartbeat />
+        <div className="feed-layout flex">
+          <AppSidebar profile={profile} />
+          <div className={`feed-layout-main flex flex-col ${mobileMainOffsetClass}`}>
+            {children}
+          </div>
         </div>
-      </div>
-      <MobileBottomNav />
+        <MobileBottomNav />
+      </ProfileUpdateContext.Provider>
     </ProfileContext.Provider>
   );
 }

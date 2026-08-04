@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useAppProfile } from "@/components/app/AppShell";
+import { useAppProfile, useUpdateAppProfile } from "@/components/app/AppShell";
 import { appContentClass } from "@/lib/layout";
 import type { GenderType, PlayerLevelType } from "@/lib/profile";
 import { FriendsPanel } from "@/components/profile/FriendsPanel";
@@ -28,6 +28,7 @@ function PerfilPageContent() {
   const searchParams = useSearchParams();
   const initialTab = resolveInitialTab(searchParams.get("tab"));
   const appProfile = useAppProfile();
+  const updateAppProfile = useUpdateAppProfile();
   const supabase = createClient();
   const [profile, setProfile] = useState<EditableProfile | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
@@ -174,9 +175,10 @@ function PerfilPageContent() {
             friendsPanel={<FriendsPanel userId={appProfile.id} embedded />}
             supportForm={<ProfileSupportForm userId={appProfile.id} />}
             onResumoSaved={load}
-            onAvatarUpdated={(url) =>
-              setProfile((current) => (current ? { ...current, avatar_url: url } : current))
-            }
+            onAvatarUpdated={(url) => {
+              setProfile((current) => (current ? { ...current, avatar_url: url } : current));
+              updateAppProfile({ avatar_url: url });
+            }}
           />
         ) : (
           <p className="text-sm text-red-600">

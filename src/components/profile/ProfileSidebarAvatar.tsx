@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useUpdateAppProfile } from "@/components/app/AppShell";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { AvatarCropModal } from "./AvatarCropModal";
 import { ProfileAvatar } from "./ProfileAvatar";
@@ -22,6 +23,7 @@ export function ProfileSidebarAvatar({
   onUpdated,
 }: Props) {
   const supabase = createClient();
+  const updateAppProfile = useUpdateAppProfile();
   const fileRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl);
@@ -108,6 +110,7 @@ export function ProfileSidebarAvatar({
     }
 
     setAvatarUrl(url);
+    updateAppProfile({ avatar_url: url });
     onUpdated?.(url);
     return true;
   }
