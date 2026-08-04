@@ -56,7 +56,7 @@ export async function createPostWithMedia(
     .from("posts")
     .insert({
       author_id: input.authorId,
-      body: input.body,
+      body: input.body ?? "",
       post_type: input.postType,
       title: input.postType === "event" ? input.title : null,
       visibility,
@@ -73,7 +73,14 @@ export async function createPostWithMedia(
     .single();
 
   if (insertErr || !newPost) {
-    return { postId: null, error: insertErr?.message ?? "Não foi possível publicar." };
+    const msg = insertErr?.message ?? "Não foi possível publicar.";
+    if (msg.includes("posts_body_check")) {
+      return {
+        postId: null,
+        error: "Escreva uma mensagem ou anexe pelo menos uma imagem/vídeo.",
+      };
+    }
+    return { postId: null, error: msg };
   }
 
   if (input.postType === "partida") {
@@ -127,6 +134,7 @@ export async function createPostWithMedia(
 
   await insertPostMentions(supabase, newPost.id, mentionIds);
 
+  let uploadedCount = 0;
   for (let i = 0; i < input.files.length; i++) {
     const file = input.files[i];
     const ext = extensionForMediaFile(file);
@@ -134,17 +142,26 @@ export async function createPostWithMedia(
 
     const { error: uploadErr } = await supabase.storage
       .from("post-images")
-      .upload(path, file, { upsert: false, contentType: file.type });
+      .upload(path, file, { upsert: false, contentType: file.type || undefined });
 
     if (uploadErr) continue;
 
     const { data: urlData } = supabase.storage.from("post-images").getPublicUrl(path);
-    await supabase.from("post_images").insert({
+    const { error: imgErr } = await supabase.from("post_images").insert({
       post_id: newPost.id,
       url: urlData.publicUrl,
       sort_order: i,
       media_type: mediaKindFromFile(file),
     });
+    if (!imgErr) uploadedCount += 1;
+  }
+
+  if (input.files.length > 0 && uploadedCount === 0) {
+    return {
+      postId: newPost.id,
+      error:
+        "A publicação foi criada, mas as mídias não puderam ser enviadas. Tente editar o post e anexar de novo.",
+    };
   }
 
   return { postId: newPost.id, error: null };

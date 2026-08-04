@@ -40,7 +40,9 @@ export function getBaseCoverScale(
   viewportW: number,
   viewportH: number
 ) {
-  return Math.max(viewportW / naturalWidth, viewportH / naturalHeight);
+  const w = Math.max(naturalWidth, 1);
+  const h = Math.max(naturalHeight, 1);
+  return Math.max(viewportW / w, viewportH / h);
 }
 
 export function getPostCropDisplayScale(

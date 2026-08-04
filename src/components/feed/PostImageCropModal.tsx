@@ -27,11 +27,13 @@ export function PostImageCropModal({ open, imageSrc, onConfirm, onSkip, onCancel
   const [aspect, setAspect] = useState<PostCropAspect>(POST_CROP_ASPECTS[0]);
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setCrop({ scale: 1, offsetX: 0, offsetY: 0 });
     setReady(false);
+    setError(null);
   }, [open, imageSrc]);
 
   const viewport = useMemo(() => postCropViewportSize(aspect.ratio), [aspect.ratio]);
@@ -68,16 +70,26 @@ export function PostImageCropModal({ open, imageSrc, onConfirm, onSkip, onCancel
 
   function handleImageLoad() {
     const img = imageRef.current;
-    if (img) {
+    if (img && img.naturalWidth > 0 && img.naturalHeight > 0) {
       setAspect(pickDefaultPostCropAspect(img.naturalWidth, img.naturalHeight));
+      setReady(true);
+      setError(null);
+      return;
     }
-    setReady(true);
+    setReady(false);
+    setError("Não foi possível carregar esta imagem.");
+  }
+
+  function handleImageError() {
+    setReady(false);
+    setError("Não foi possível carregar esta imagem. Tente outro arquivo.");
   }
 
   async function handleConfirm() {
     const img = imageRef.current;
     if (!img || !ready) return;
     setLoading(true);
+    setError(null);
     try {
       const file = await renderCroppedPostImageFile(
         img,
@@ -87,6 +99,8 @@ export function PostImageCropModal({ open, imageSrc, onConfirm, onSkip, onCancel
       );
       const previewUrl = URL.createObjectURL(file);
       onConfirm(file, previewUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao recortar a imagem.");
     } finally {
       setLoading(false);
     }
@@ -97,8 +111,10 @@ export function PostImageCropModal({ open, imageSrc, onConfirm, onSkip, onCancel
   const img = imageRef.current;
   const displayScale =
     img && ready ? getPostCropDisplayScale(img, crop, viewport.width, viewport.height) : 1;
-  const renderedW = img && ready ? img.naturalWidth * displayScale : viewport.width;
-  const renderedH = img && ready ? img.naturalHeight * displayScale : viewport.height;
+  const renderedW =
+    img && ready ? Math.max(1, img.naturalWidth * displayScale) : viewport.width;
+  const renderedH =
+    img && ready ? Math.max(1, img.naturalHeight * displayScale) : viewport.height;
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 p-4">
@@ -148,6 +164,7 @@ export function PostImageCropModal({ open, imageSrc, onConfirm, onSkip, onCancel
             alt=""
             draggable={false}
             onLoad={handleImageLoad}
+            onError={handleImageError}
             className="post-crop-image"
             style={{
               width: renderedW,
@@ -156,6 +173,12 @@ export function PostImageCropModal({ open, imageSrc, onConfirm, onSkip, onCancel
             }}
           />
         </div>
+
+        {error && (
+          <p className="mt-3 rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-600" role="alert">
+            {error}
+          </p>
+        )}
 
         <label className="mt-4 block text-xs font-semibold text-[var(--toq-navy)]">
           Zoom
@@ -188,7 +211,7 @@ export function PostImageCropModal({ open, imageSrc, onConfirm, onSkip, onCancel
               disabled={loading}
               className="rounded-xl toq-btn-outline px-4 py-2 text-sm font-semibold"
             >
-              Usar inteira
+              {error ? "Usar mesmo assim" : "Usar inteira"}
             </button>
           )}
           <button
