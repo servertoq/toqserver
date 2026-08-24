@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { mapCommunityRow } from "@/lib/community";
+import { COMMUNITY_GALLERY_SELECT, mapGalleryRows } from "@/lib/communityGallery";
 import { fetchPlanUsage, planLimitMessage, canCreateCommunityResource } from "@/lib/plans";
 import { matchesLocationSearch, LOCATION_SEARCH_PLACEHOLDER } from "@/lib/locationSearch";
 import { partitionByProximity } from "@/lib/nearbyLocation";
@@ -47,23 +48,51 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
       return;
     }
 
+    let rawRows: Record<string, unknown>[] = [];
     const { data: rows, error: listErr } = await supabase
       .from("communities")
-      .select("*")
+      .select(`*, ${COMMUNITY_GALLERY_SELECT}`)
       .eq("kind", groupKind)
       .order("member_count", { ascending: false });
 
     if (listErr) {
-      setError(
-        groupKind === "club"
-          ? "Não foi possível carregar clubes. Execute a migration 019_clubs_and_invites.sql no Supabase."
-          : "Não foi possível carregar comunidades. Execute as migrations de comunidades no Supabase."
-      );
-      setLoading(false);
-      return;
+      if (listErr.message?.includes("community_gallery_images")) {
+        const { data: fallback, error: fbErr } = await supabase
+          .from("communities")
+          .select("*")
+          .eq("kind", groupKind)
+          .order("member_count", { ascending: false });
+        if (fbErr) {
+          setError(
+            groupKind === "club"
+              ? "Não foi possível carregar clubes. Execute a migration 019_clubs_and_invites.sql no Supabase."
+              : "Não foi possível carregar comunidades. Execute as migrations de comunidades no Supabase."
+          );
+          setLoading(false);
+          return;
+        }
+        rawRows = (fallback ?? []) as Record<string, unknown>[];
+      } else {
+        setError(
+          groupKind === "club"
+            ? "Não foi possível carregar clubes. Execute a migration 019_clubs_and_invites.sql no Supabase."
+            : "Não foi possível carregar comunidades. Execute as migrations de comunidades no Supabase."
+        );
+        setLoading(false);
+        return;
+      }
+    } else {
+      rawRows = (rows ?? []) as Record<string, unknown>[];
     }
 
-    const comms = (rows ?? []).map((c) => ({ ...c, kind: (c.kind ?? groupKind) as CommunityGroupKind })) as Community[];
+    const comms = rawRows.map((c) => {
+      const row = c as Community & { gallery_images?: unknown };
+      return {
+        ...row,
+        kind: (row.kind ?? groupKind) as CommunityGroupKind,
+        gallery_images: mapGalleryRows(row.gallery_images),
+      };
+    }) as Community[];
     const ids = comms.map((c) => c.id);
 
     const roleByCommunity: Record<string, CommunityMemberRole> = {};

@@ -32,7 +32,17 @@ export type Community = {
   created_by: string | null;
   created_at: string;
   operating_hours?: DayHours[] | unknown;
+  /** Fotos extras da galeria (capa fica em cover_image_url). */
+  gallery_images?: CommunityGalleryImage[];
 } & CommunityAddress;
+
+export type CommunityGalleryImage = {
+  id: string;
+  community_id: string;
+  url: string;
+  sort_order: number;
+  created_at?: string;
+};
 
 export type CommunityInvite = {
   id: string;

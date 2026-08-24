@@ -30,6 +30,7 @@ import {
   formatClubWhatsappDisplay,
   parseClubContactInputs,
 } from "@/lib/clubContact";
+import { CommunityGalleryManager } from "./CommunityGalleryManager";
 
 type Props = {
   community: Community;
@@ -313,7 +314,8 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
                   <span>
                     <span className="text-sm font-semibold text-[var(--toq-navy)]">Loja do clube ativa</span>
                     <span className="block text-xs text-[var(--toq-text-muted)]">
-                      Membros veem a aba Loja e finalizam pelo WhatsApp.
+                      Qualquer pessoa autenticada vê a loja no card do clube e pode comprar pelo
+                      WhatsApp, mesmo sem ser membro.
                     </span>
                   </span>
                 </label>
@@ -363,6 +365,8 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
               )}
             </div>
           </div>
+
+          <CommunityGalleryManager communityId={community.id} onChanged={onSaved} />
 
           {!isClub && (
             <label className="flex items-center gap-2">

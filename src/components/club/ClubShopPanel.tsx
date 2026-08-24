@@ -188,8 +188,8 @@ export function ClubShopPanel({
 
       {canManage && !whatsappOk && (
         <p className="mt-3 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800">
-          Ative a loja e informe o WhatsApp nas configurações do clube para que os membros possam
-          comprar.
+          Ative a loja e informe o WhatsApp nas configurações do clube para que compradores (membros
+          ou visitantes) possam finalizar o pedido.
         </p>
       )}
 

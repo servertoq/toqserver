@@ -36,7 +36,7 @@ export function ClubFeedPanel({
   const { display_name } = useAppProfile();
 
   return (
-    <div className="mt-4 space-y-4">
+    <div className="mt-3 space-y-4 md:mt-4">
       <CreatePostBox
         avatarUrl={avatarUrl}
         username={username}
@@ -50,16 +50,19 @@ export function ClubFeedPanel({
       />
 
       <section>
-        <h2 className="mb-3 text-sm font-bold text-[var(--toq-navy)]">Feed do clube</h2>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="text-sm font-bold text-[var(--toq-navy)]">Feed do clube</h2>
+          <span className="text-[11px] font-semibold text-[var(--toq-text-muted)]">Mais recentes</span>
+        </div>
         {posts.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+          <div className="rounded-2xl border border-dashed border-[var(--toq-border)] bg-[var(--toq-surface)]/50 p-8 text-center">
             <p className="text-sm font-semibold text-[var(--toq-navy)]">Nenhum post ainda</p>
             <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
               Publique o primeiro conteúdo visível apenas para membros do clube.
             </p>
           </div>
         ) : (
-          <ul className="space-y-4">
+          <ul className="space-y-3 md:space-y-4">
             {posts.map((post) => (
               <li key={post.id}>
                 <PostCard

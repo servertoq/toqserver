@@ -157,7 +157,7 @@ export type ClubTournament = {
   } | null;
 };
 
-export type ClubTab = "feed" | "shop" | "ranking" | "courts" | "tournaments";
+export type ClubTab = "feed" | "shop" | "ranking" | "courts" | "tournaments" | "gallery";
 
 export type VariantDraft = {
   key: string;

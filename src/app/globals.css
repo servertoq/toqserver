@@ -37,7 +37,7 @@
   --toq-profile-ring-bg: #e8eef7;
   --toq-profile-surface: var(--toq-surface);
   --app-mobile-header-h: calc(3.5rem + env(safe-area-inset-top, 0px));
-  --app-mobile-bottom-nav-h: calc(3.25rem + env(safe-area-inset-bottom, 0px));
+  --app-mobile-bottom-nav-h: calc(3.85rem + env(safe-area-inset-bottom, 0px));
   --app-topbar-h: 3.25rem;
   --app-sidebar-collapsed-w: 5rem;
   --app-sidebar-expanded-w: 244px;
@@ -1239,12 +1239,12 @@ body {
   right: 0;
   z-index: 55;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-around;
-  gap: 0.25rem;
+  gap: 0.15rem;
   height: var(--app-mobile-bottom-nav-h);
-  padding: 0 0.5rem env(safe-area-inset-bottom, 0px);
-  background: rgba(5, 16, 36, 0.94);
+  padding: 0.35rem 0.35rem calc(0.2rem + env(safe-area-inset-bottom, 0px));
+  background: rgba(5, 16, 36, 0.96);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -1252,27 +1252,78 @@ body {
 
 .app-mobile-bottom-nav-item {
   display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 0.875rem;
-  color: rgba(255, 255, 255, 0.72);
-  transition: background-color 0.2s ease, color 0.2s ease;
+  justify-content: flex-start;
+  gap: 0.15rem;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.62);
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 .app-mobile-bottom-nav-item:hover {
-  color: #ffffff;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.app-mobile-bottom-nav-icon {
+  display: inline-flex;
+  height: 2.15rem;
+  width: 2.15rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.7rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.app-mobile-bottom-nav-icon--avatar {
+  height: 2.15rem;
+  width: 2.15rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.app-mobile-bottom-nav-icon--avatar > * {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+.app-mobile-bottom-nav-icon-svg,
+.app-mobile-bottom-nav-icon-svg svg {
+  display: block;
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.app-mobile-bottom-nav-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
 }
 
 .app-mobile-bottom-nav-item--active {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.12);
+  color: var(--toq-accent);
 }
 
-.app-mobile-bottom-nav-item svg {
-  width: 1.5rem;
-  height: 1.5rem;
+.app-mobile-bottom-nav-item--active .app-mobile-bottom-nav-icon:not(.app-mobile-bottom-nav-icon--avatar) {
+  color: var(--toq-accent);
+  background: color-mix(in srgb, var(--toq-accent) 22%, transparent);
+}
+
+.app-mobile-bottom-nav-item--active .app-mobile-bottom-nav-label {
+  color: var(--toq-accent);
+}
+
+.app-mobile-bottom-nav-item--profile.app-mobile-bottom-nav-item--active {
+  color: var(--toq-accent);
 }
 
 .app-mobile-drawer-backdrop {
@@ -4739,6 +4790,102 @@ button {
   box-shadow: 0 8px 32px rgba(5, 16, 36, 0.06);
 }
 
+/* Abas do clube (ícone + rótulo, estilo print mobile) */
+.club-tabs-bar {
+  display: flex;
+  gap: 0.15rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 0.5rem 0.4rem 0.35rem;
+}
+
+.club-tabs-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.club-tabs-item {
+  display: flex;
+  min-width: 3.6rem;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.35rem 0.4rem 0.45rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--toq-text-muted);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.club-tabs-item-icon {
+  display: inline-flex;
+  height: 1.5rem;
+  width: 1.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.club-tabs-item-icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.club-tabs-item-label {
+  max-width: 4.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.club-tabs-item--active {
+  color: var(--toq-accent);
+}
+
+.club-tabs-item--active .club-tabs-item-label {
+  box-shadow: inset 0 -2px 0 var(--toq-accent);
+  padding-bottom: 0.1rem;
+}
+
+@media (min-width: 768px) {
+  .club-tabs-bar {
+    gap: 0.25rem;
+    border-bottom: 1px solid var(--toq-border);
+    padding: 0 0.5rem;
+  }
+
+  .club-tabs-item {
+    min-width: auto;
+    flex: 0 0 auto;
+    flex-direction: row;
+    gap: 0.4rem;
+    padding: 0.85rem 0.9rem;
+    border-radius: 0;
+  }
+
+  .club-tabs-item-label {
+    max-width: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    box-shadow: none !important;
+    padding-bottom: 0 !important;
+  }
+
+  .club-tabs-item--active {
+    color: var(--toq-navy);
+    box-shadow: inset 0 -2px 0 var(--toq-accent);
+  }
+
+  .club-tabs-item--active .club-tabs-item-icon {
+    color: var(--toq-accent);
+  }
+}
+
 .toq-section-label {
   font-size: 0.65rem;
   font-weight: 800;
@@ -5372,8 +5519,16 @@ button {
 }
 
 [data-theme="dark"] .app-mobile-bottom-nav-item--active {
-  color: #ffffff;
-  background: transparent;
+  color: var(--toq-accent);
+}
+
+[data-theme="dark"] .app-mobile-bottom-nav-item--active .app-mobile-bottom-nav-icon:not(.app-mobile-bottom-nav-icon--avatar) {
+  color: var(--toq-accent);
+  background: color-mix(in srgb, var(--toq-accent) 22%, transparent);
+}
+
+[data-theme="dark"] .app-mobile-bottom-nav-item--active .app-mobile-bottom-nav-label {
+  color: var(--toq-accent);
 }
 
 [data-theme="dark"] .toq-topbar {

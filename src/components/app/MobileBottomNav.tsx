@@ -14,20 +14,18 @@ type TabItem = {
 };
 
 function TabIcon({ children }: { children: ReactNode }) {
-  return (
-    <span className="inline-flex h-6 w-6 items-center justify-center">{children}</span>
-  );
+  return <span className="app-mobile-bottom-nav-icon-svg">{children}</span>;
 }
 
 function IconHome({ active }: { active: boolean }) {
   return (
     <TabIcon>
-      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 0 : 2}>
-        {active ? (
-          <path fill="currentColor" d="M12 3l9 8v10h-6v-6H9v6H3V11l9-8z" />
-        ) : (
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 11.5 12 4l9 7.5M5 10.5V20h5v-6h4v6h5v-9.5" />
-        )}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.25 : 1.75}>
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M3 11.5 12 4l9 7.5M5 10.5V20h5v-6h4v6h5v-9.5"
+        />
       </svg>
     </TabIcon>
   );
@@ -36,8 +34,12 @@ function IconHome({ active }: { active: boolean }) {
 function IconClub({ active }: { active: boolean }) {
   return (
     <TabIcon>
-      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.25 : 1.75}>
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"
+        />
       </svg>
     </TabIcon>
   );
@@ -46,8 +48,12 @@ function IconClub({ active }: { active: boolean }) {
 function IconMessages({ active }: { active: boolean }) {
   return (
     <TabIcon>
-      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.8-4.2A7.8 7.8 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.25 : 1.75}>
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.8-4.2A7.8 7.8 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+        />
       </svg>
     </TabIcon>
   );
@@ -56,7 +62,7 @@ function IconMessages({ active }: { active: boolean }) {
 function IconSearch({ active }: { active: boolean }) {
   return (
     <TabIcon>
-      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.25 : 1.75}>
         <circle cx="11" cy="11" r="7" />
         <path strokeLinecap="round" d="M20 20l-3-3" />
       </svg>
@@ -79,7 +85,7 @@ const TABS: TabItem[] = [
   },
   {
     href: "/inicio/mensagens",
-    label: "Mensagens",
+    label: "Conversas",
     icon: (active) => <IconMessages active={active} />,
     match: (path) =>
       path.startsWith("/inicio/mensagens") || path.startsWith("/inicio/conversar"),
@@ -95,6 +101,8 @@ const TABS: TabItem[] = [
 export function MobileBottomNav() {
   const pathname = usePathname();
   const profile = useAppProfile();
+  const profileActive =
+    pathname.startsWith("/inicio/perfil") && !pathname.startsWith("/inicio/jogador");
 
   return (
     <nav className="app-mobile-bottom-nav md:hidden" aria-label="Navegação principal">
@@ -106,36 +114,28 @@ export function MobileBottomNav() {
             href={tab.href}
             className={`app-mobile-bottom-nav-item ${active ? "app-mobile-bottom-nav-item--active" : ""}`}
             aria-current={active ? "page" : undefined}
-            aria-label={tab.label}
           >
-            {tab.icon(active)}
+            <span className="app-mobile-bottom-nav-icon">{tab.icon(active)}</span>
+            <span className="app-mobile-bottom-nav-label">{tab.label}</span>
           </Link>
         );
       })}
       <Link
         href="/inicio/perfil"
-        className={`app-mobile-bottom-nav-item ${
-          pathname.startsWith("/inicio/perfil") && !pathname.startsWith("/inicio/jogador")
-            ? "app-mobile-bottom-nav-item--active"
-            : ""
+        className={`app-mobile-bottom-nav-item app-mobile-bottom-nav-item--profile ${
+          profileActive ? "app-mobile-bottom-nav-item--active" : ""
         }`}
-        aria-label="Perfil"
-        aria-current={
-          pathname.startsWith("/inicio/perfil") && !pathname.startsWith("/inicio/jogador")
-            ? "page"
-            : undefined
-        }
+        aria-current={profileActive ? "page" : undefined}
       >
-        <ProfileAvatar
-          src={profile.avatar_url}
-          name={profile.username}
-          size="sm"
-          className={
-            pathname.startsWith("/inicio/perfil") && !pathname.startsWith("/inicio/jogador")
-              ? "ring-2 ring-[var(--toq-navy)]"
-              : ""
-          }
-        />
+        <span className="app-mobile-bottom-nav-icon app-mobile-bottom-nav-icon--avatar">
+          <ProfileAvatar
+            src={profile.avatar_url}
+            name={profile.username}
+            size="sm"
+            className={profileActive ? "ring-2 ring-[var(--toq-accent)] ring-offset-1 ring-offset-[var(--toq-navy-deep)]" : ""}
+          />
+        </span>
+        <span className="app-mobile-bottom-nav-label">Perfil</span>
       </Link>
     </nav>
   );
