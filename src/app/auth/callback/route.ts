@@ -54,13 +54,9 @@ export async function GET(request: Request) {
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("profile_complete, is_banned, deletion_requested_at")
+          .select("profile_complete, is_banned")
           .eq("id", user.id)
           .maybeSingle();
-
-        if (profile?.deletion_requested_at) {
-          await supabase.rpc("cancel_account_deletion");
-        }
 
         if (profile?.is_banned) {
           destination = "/inicio/bloqueado";

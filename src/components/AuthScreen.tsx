@@ -235,7 +235,7 @@ export function AuthScreen() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_banned, profile_complete, deletion_requested_at")
+        .select("is_banned, profile_complete")
         .eq("id", authData.user.id)
         .maybeSingle();
 
@@ -243,11 +243,6 @@ export function AuthScreen() {
         window.location.href = "/inicio/bloqueado";
         return;
       }
-
-      if (profile?.deletion_requested_at) {
-        await supabase.rpc("cancel_account_deletion");
-      }
-
       if (profile && profile.profile_complete === false) {
         window.location.href = "/?complete=1";
         return;

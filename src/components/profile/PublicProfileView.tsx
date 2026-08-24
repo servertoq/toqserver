@@ -8,13 +8,6 @@ import { enrichPostsWithStaffRoles } from "@/lib/staff";
 import { addressFromRow } from "@/lib/address";
 import { POST_SELECT } from "@/lib/posts";
 import type { GenderType, PlayerLevelType } from "@/lib/profile";
-import type {
-  DominantHand,
-  ExperienceBand,
-  FavoriteCourt,
-  PlayFrequency,
-  PlayStyle,
-} from "@/lib/profileGame";
 import type { UserPlan } from "@/types/plans";
 import type { StaffRole } from "@/types/staff";
 import type { FeedPost } from "@/types/feed";
@@ -23,9 +16,6 @@ import { useAppProfile } from "@/components/app/AppShell";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { PlayerProfileDashboard } from "@/components/profile/PlayerProfileDashboard";
 import { PublicProfileFriendActions } from "@/components/profile/PublicProfileFriendActions";
-import { FriendsPanel } from "@/components/profile/FriendsPanel";
-import { ProfileFriendsPreview } from "@/components/profile/ProfileFriendsPreview";
-import { fetchProfilePhotos, type ProfilePhoto } from "@/lib/profilePhotos";
 import { appContentClass } from "@/lib/layout";
 
 type Props = { username: string };
@@ -34,7 +24,6 @@ export function PublicProfileView({ username }: Props) {
   const supabase = createClient();
   const viewer = useAppProfile();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
-  const [photos, setPhotos] = useState<ProfilePhoto[]>([]);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +42,6 @@ export function PublicProfileView({ username }: Props) {
       setError("Jogador não encontrado.");
       setProfile(null);
       setPosts([]);
-      setPhotos([]);
       setLoading(false);
       return;
     }
@@ -85,18 +73,7 @@ export function PublicProfileView({ username }: Props) {
       club_count: Number(stat?.club_count ?? 0),
       last_seen_at: row.last_seen_at ?? null,
       address: addressFromRow(row),
-      dominant_hand: (row.dominant_hand as DominantHand | null) ?? null,
-      experience_band: (row.experience_band as ExperienceBand | null) ?? null,
-      play_frequency: (row.play_frequency as PlayFrequency | null) ?? null,
-      play_style: (row.play_style as PlayStyle | null) ?? null,
-      favorite_court: (row.favorite_court as FavoriteCourt | null) ?? null,
     });
-
-    try {
-      setPhotos(await fetchProfilePhotos(supabase, row.id));
-    } catch {
-      setPhotos([]);
-    }
 
     const { data: rawPosts, error: postsErr } = await supabase
       .from("posts")
@@ -183,13 +160,8 @@ export function PublicProfileView({ username }: Props) {
           <p className="text-sm text-[var(--toq-text-muted)]">Carregando perfil…</p>
         ) : error || !profile ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
-            <p className="text-sm font-semibold text-[var(--toq-navy)]">
-              {error ?? "Perfil não encontrado"}
-            </p>
-            <Link
-              href="/inicio"
-              className="mt-3 inline-block text-sm font-semibold text-[var(--toq-sky)]"
-            >
+            <p className="text-sm font-semibold text-[var(--toq-navy)]">{error ?? "Perfil não encontrado"}</p>
+            <Link href="/inicio" className="mt-3 inline-block text-sm font-semibold text-[var(--toq-sky)]">
               Voltar ao início
             </Link>
           </div>
@@ -199,16 +171,10 @@ export function PublicProfileView({ username }: Props) {
             username={profile.username}
             displayName={profile.display_name}
             avatarUrl={profile.avatar_url}
-            photos={photos}
             bio={profile.bio}
             birthDate={profile.birth_date}
             gender={profile.gender}
             playerLevel={profile.player_level}
-            dominantHand={profile.dominant_hand}
-            experienceBand={profile.experience_band}
-            playFrequency={profile.play_frequency}
-            playStyle={profile.play_style}
-            favoriteCourt={profile.favorite_court}
             createdAt={profile.created_at}
             postCount={profile.post_count}
             friendCount={profile.friend_count}
@@ -221,21 +187,10 @@ export function PublicProfileView({ username }: Props) {
             currentUserId={viewer.id}
             isOwnProfile={isOwnProfile}
             onLikeToggle={handleLikeToggle}
-            friendsPanel={
-              isOwnProfile ? (
-                <FriendsPanel userId={profile.id} embedded />
-              ) : (
-                <ProfileFriendsPreview
-                  profileId={profile.id}
-                  friendCount={profile.friend_count}
-                  limit={40}
-                />
-              )
-            }
             headerActions={
               isOwnProfile ? (
                 <Link
-                  href="/inicio/perfil/editar"
+                  href="/inicio/perfil"
                   className="block w-full rounded-xl bg-[var(--toq-profile-accent)] py-2 text-center text-xs font-bold text-white transition hover:opacity-90"
                 >
                   Editar perfil
