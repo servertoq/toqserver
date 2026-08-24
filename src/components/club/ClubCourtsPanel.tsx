@@ -364,19 +364,21 @@ function ClubCourtForm({
       for (let i = 0; i < files.length; i++) {
         if (existingImages.length + i >= 3) break;
         const file = files[i];
-        const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
         const sortOrder = existingImages.length + i;
-        const path = `${profile.id}/${communityId}/${courtId}/${sortOrder}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("club-court-images")
-          .upload(path, file, { upsert: true, contentType: file.type });
-        if (upErr) continue;
-        const { data: urlData } = supabase.storage.from("club-court-images").getPublicUrl(path);
-        await supabase.from("club_court_images").insert({
-          court_id: courtId,
-          url: urlData.publicUrl,
-          sort_order: sortOrder,
-        });
+        try {
+          const { uploadMediaToR2 } = await import("@/lib/mediaUpload");
+          const { publicUrl } = await uploadMediaToR2(file, {
+            folder: "club-court-images",
+            pathPrefix: `${profile.id}/${communityId}/${courtId}`,
+          });
+          await supabase.from("club_court_images").insert({
+            court_id: courtId,
+            url: publicUrl,
+            sort_order: sortOrder,
+          });
+        } catch {
+          // continua
+        }
       }
 
       const { data: savedRow, error: fetchErr } = await supabase

@@ -164,28 +164,28 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
       }
 
       if (coverFile) {
-        const path = `${profile.id}/${community.id}/cover-${Date.now()}.jpg`;
-        const { error: uploadErr } = await supabase.storage
-          .from("community-covers")
-          .upload(path, coverFile, { upsert: true, contentType: "image/jpeg" });
-
-        if (uploadErr) {
+        try {
+          const { uploadMediaToR2 } = await import("@/lib/mediaUpload");
+          const { publicUrl: coverUrl } = await uploadMediaToR2(coverFile, {
+            folder: "community-covers",
+            pathPrefix: `${profile.id}/${community.id}`,
+          });
+          const { error: coverErr } = await supabase
+            .from("communities")
+            .update({ cover_image_url: coverUrl })
+            .eq("id", community.id);
+          if (coverErr) {
+            setError(
+              `Comunidade criada, mas a capa não foi salva: ${coverErr.message}`
+            );
+            router.push(groupDetailHref(groupKind, community.slug));
+            return;
+          }
+        } catch (err) {
           setError(
-            `Comunidade criada, mas a capa não foi enviada: ${uploadErr.message}`
-          );
-          router.push(groupDetailHref(groupKind, community.slug));
-          return;
-        }
-
-        const { data: urlData } = supabase.storage.from("community-covers").getPublicUrl(path);
-        const coverUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-        const { error: coverErr } = await supabase
-          .from("communities")
-          .update({ cover_image_url: coverUrl })
-          .eq("id", community.id);
-        if (coverErr) {
-          setError(
-            `Comunidade criada, mas a capa não foi salva: ${coverErr.message}`
+            `Comunidade criada, mas a capa não foi enviada: ${
+              err instanceof Error ? err.message : "erro"
+            }`
           );
           router.push(groupDetailHref(groupKind, community.slug));
           return;

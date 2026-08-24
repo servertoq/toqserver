@@ -85,17 +85,16 @@ export function ProfileSidebarAvatar({
   }
 
   async function uploadAvatar(file: File): Promise<string | null> {
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const path = `${profileId}/avatar.${ext}`;
-
-    const { error: uploadErr } = await supabase.storage
-      .from("avatars")
-      .upload(path, file, { upsert: true, contentType: file.type });
-
-    if (uploadErr) return null;
-
-    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-    return `${data.publicUrl}?t=${Date.now()}`;
+    try {
+      const { uploadMediaToR2 } = await import("@/lib/mediaUpload");
+      const { publicUrl } = await uploadMediaToR2(file, {
+        folder: "avatars",
+        pathPrefix: `${profileId}/avatar`,
+      });
+      return publicUrl;
+    } catch {
+      return null;
+    }
   }
 
   async function persistAvatar(url: string | null) {

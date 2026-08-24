@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CommunityGalleryImage } from "@/types/community";
+import { deleteMediaFromR2, uploadMediaToR2 } from "@/lib/mediaUpload";
 
 export const COMMUNITY_GALLERY_MAX = 8;
 
@@ -69,27 +70,25 @@ export async function uploadCommunityGalleryImage(
     sortOrder: number;
   }
 ): Promise<{ image: CommunityGalleryImage | null; error: string | null }> {
-  const ext = input.file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const path = `${input.userId}/${input.communityId}/gallery/${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}.${ext}`;
-
-  const { error: upErr } = await supabase.storage
-    .from("community-covers")
-    .upload(path, input.file, { upsert: false, contentType: input.file.type || "image/jpeg" });
-
-  if (upErr) {
-    return { image: null, error: upErr.message };
+  let publicUrl: string;
+  try {
+    const uploaded = await uploadMediaToR2(input.file, {
+      folder: "community-covers",
+      pathPrefix: `${input.userId}/${input.communityId}/gallery`,
+    });
+    publicUrl = uploaded.publicUrl;
+  } catch (err) {
+    return {
+      image: null,
+      error: err instanceof Error ? err.message : "Falha no upload.",
+    };
   }
-
-  const { data: urlData } = supabase.storage.from("community-covers").getPublicUrl(path);
-  const url = `${urlData.publicUrl}?t=${Date.now()}`;
 
   const { data, error } = await supabase
     .from("community_gallery_images")
     .insert({
       community_id: input.communityId,
-      url,
+      url: publicUrl,
       sort_order: input.sortOrder,
       created_by: input.userId,
     })
@@ -97,6 +96,11 @@ export async function uploadCommunityGalleryImage(
     .single();
 
   if (error || !data) {
+    try {
+      await deleteMediaFromR2(publicUrl);
+    } catch {
+      // ignore
+    }
     return { image: null, error: error?.message ?? "Não foi possível salvar a foto." };
   }
 
@@ -107,6 +111,21 @@ export async function deleteCommunityGalleryImage(
   supabase: SupabaseClient,
   imageId: string
 ): Promise<{ error: string | null }> {
+  const { data: row } = await supabase
+    .from("community_gallery_images")
+    .select("url")
+    .eq("id", imageId)
+    .maybeSingle();
+
   const { error } = await supabase.from("community_gallery_images").delete().eq("id", imageId);
-  return { error: error?.message ?? null };
+  if (error) return { error: error.message };
+
+  if (row?.url) {
+    try {
+      await deleteMediaFromR2(row.url);
+    } catch {
+      // ignore
+    }
+  }
+  return { error: null };
 }

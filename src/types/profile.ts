@@ -1,5 +1,12 @@
 import type { AddressFields } from "@/lib/address";
 import type { GenderType, PlayerLevelType } from "@/lib/profile";
+import type {
+  DominantHand,
+  ExperienceBand,
+  FavoriteCourt,
+  PlayFrequency,
+  PlayStyle,
+} from "@/lib/profileGame";
 import type { UserPlan } from "@/types/plans";
 import type { StaffRole } from "@/types/staff";
 
@@ -20,4 +27,9 @@ export type PublicProfile = {
   club_count: number;
   last_seen_at: string | null;
   address: AddressFields;
+  dominant_hand: DominantHand | null;
+  experience_band: ExperienceBand | null;
+  play_frequency: PlayFrequency | null;
+  play_style: PlayStyle | null;
+  favorite_court: FavoriteCourt | null;
 };

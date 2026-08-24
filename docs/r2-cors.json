@@ -1,0 +1,14 @@
+[
+  {
+    "AllowedOrigins": [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "https://www.toqtennis.com.br",
+      "https://toqtennis.com.br"
+    ],
+    "AllowedMethods": ["GET", "PUT", "HEAD", "POST"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag", "Content-Type"],
+    "MaxAgeSeconds": 3600
+  }
+]

@@ -6,6 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 import { useAppProfile, useUpdateAppProfile } from "@/components/app/AppShell";
 import { appContentClass } from "@/lib/layout";
 import type { GenderType, PlayerLevelType } from "@/lib/profile";
+import type {
+  DominantHand,
+  ExperienceBand,
+  FavoriteCourt,
+  PlayFrequency,
+  PlayStyle,
+} from "@/lib/profileGame";
 import { FriendsPanel } from "@/components/profile/FriendsPanel";
 import type { EditableProfile } from "@/components/profile/ProfileEditForm";
 import { ProfileSupportForm } from "@/components/profile/ProfileSupportForm";
@@ -17,10 +24,15 @@ import { addressFromRow } from "@/lib/address";
 import { fetchCoachListingsForPosts, mapPostRow } from "@/lib/feed";
 import { POST_SELECT } from "@/lib/posts";
 import { enrichPostsWithStaffRoles } from "@/lib/staff";
+import { fetchProfilePhotos, type ProfilePhoto } from "@/lib/profilePhotos";
 import type { FeedPost } from "@/types/feed";
 
 function resolveInitialTab(tab: string | null): ProfileTab | undefined {
   if (tab === "agenda") return "agenda";
+  if (tab === "amigos") return "amigos";
+  if (tab === "torneios") return "torneios";
+  if (tab === "clubes") return "clubes";
+  if (tab === "publicacoes") return "publicacoes";
   return undefined;
 }
 
@@ -31,6 +43,7 @@ function PerfilPageContent() {
   const updateAppProfile = useUpdateAppProfile();
   const supabase = createClient();
   const [profile, setProfile] = useState<EditableProfile | null>(null);
+  const [photos, setPhotos] = useState<ProfilePhoto[]>([]);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [friendCount, setFriendCount] = useState(0);
   const [clubCount, setClubCount] = useState(0);
@@ -41,7 +54,7 @@ function PerfilPageContent() {
     const { data } = await supabase
       .from("profiles")
       .select(
-        "id, username, display_name, email, avatar_url, birth_date, gender, bio, player_level, created_at, plan, show_plan_badge, address_zip, address_street, address_number, address_neighborhood, address_complement, address_city, address_state"
+        "id, username, display_name, email, avatar_url, birth_date, gender, bio, player_level, dominant_hand, experience_band, play_frequency, play_style, favorite_court, created_at, plan, show_plan_badge, address_zip, address_street, address_number, address_neighborhood, address_complement, address_city, address_state"
       )
       .eq("id", appProfile.id)
       .single();
@@ -53,6 +66,11 @@ function PerfilPageContent() {
         gender: data.gender as GenderType,
         bio: data.bio ?? "",
         player_level: (data.player_level as PlayerLevelType) ?? "iniciante",
+        dominant_hand: (data.dominant_hand as DominantHand | null) ?? null,
+        experience_band: (data.experience_band as ExperienceBand | null) ?? null,
+        play_frequency: (data.play_frequency as PlayFrequency | null) ?? null,
+        play_style: (data.play_style as PlayStyle | null) ?? null,
+        favorite_court: (data.favorite_court as FavoriteCourt | null) ?? null,
         display_name: data.display_name ?? null,
         plan: (data.plan as EditableProfile["plan"]) ?? "free",
         show_plan_badge: data.show_plan_badge ?? true,
@@ -60,6 +78,12 @@ function PerfilPageContent() {
       });
     } else {
       setProfile(null);
+    }
+
+    try {
+      setPhotos(await fetchProfilePhotos(supabase, appProfile.id));
+    } catch {
+      setPhotos([]);
     }
 
     const { data: stats } = await supabase.rpc("get_profile_public_stats", {
@@ -156,10 +180,16 @@ function PerfilPageContent() {
             username={profile.username}
             displayName={profile.display_name}
             avatarUrl={profile.avatar_url}
+            photos={photos}
             bio={profile.bio}
             birthDate={profile.birth_date}
             gender={profile.gender}
             playerLevel={profile.player_level}
+            dominantHand={profile.dominant_hand}
+            experienceBand={profile.experience_band}
+            playFrequency={profile.play_frequency}
+            playStyle={profile.play_style}
+            favoriteCourt={profile.favorite_court}
             createdAt={profile.created_at}
             postCount={postCount}
             friendCount={friendCount}
@@ -182,8 +212,8 @@ function PerfilPageContent() {
           />
         ) : (
           <p className="text-sm text-red-600">
-            Não foi possível carregar o perfil. Execute a migration 007_profiles_bio.sql no
-            Supabase se o campo bio ainda não existir.
+            Não foi possível carregar o perfil. Execute a migration 086 no Supabase se os novos
+            campos ainda não existirem.
           </p>
         )}
       </main>

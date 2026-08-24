@@ -46,11 +46,16 @@ export async function middleware(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_banned")
+    .select("is_banned, deletion_requested_at")
     .eq("id", user.id)
     .maybeSingle();
 
   const isBanned = Boolean(profile?.is_banned);
+
+  // Login / sessão ativa cancela exclusão pendente (reativa a conta).
+  if (profile?.deletion_requested_at) {
+    await supabase.rpc("cancel_account_deletion");
+  }
 
   if (path === "/api/billing/checkout" && isBanned) {
     return NextResponse.json({ error: "Conta suspensa." }, { status: 403 });

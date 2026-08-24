@@ -32,22 +32,21 @@ export function supportTopicLabel(topic: SupportTopic) {
 }
 
 export async function uploadSupportImage(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   userId: string,
   ticketId: string,
   file: File
 ): Promise<string | null> {
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-  const path = `${userId}/${ticketId}.${ext}`;
-
-  const { error: uploadErr } = await supabase.storage
-    .from("support-images")
-    .upload(path, file, { upsert: true, contentType: file.type });
-
-  if (uploadErr) return null;
-
-  const { data } = supabase.storage.from("support-images").getPublicUrl(path);
-  return data.publicUrl;
+  try {
+    const { uploadMediaToR2 } = await import("@/lib/mediaUpload");
+    const { publicUrl } = await uploadMediaToR2(file, {
+      folder: "support-images",
+      pathPrefix: `${userId}/${ticketId}`,
+    });
+    return publicUrl;
+  } catch {
+    return null;
+  }
 }
 
 export function reportTargetHeading(type: ReportTargetType) {

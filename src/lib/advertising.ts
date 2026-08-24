@@ -5,7 +5,6 @@ import type {
   AdvertisingCarouselItem,
 } from "@/types/advertising";
 
-const IMAGE_BUCKET = "advertising-images";
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
 
@@ -31,7 +30,7 @@ export function buildCardExcerpt(bodyHtml: string, max = 120) {
 }
 
 export async function uploadAdvertisingImage(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   userId: string,
   articleKey: string,
   file: File,
@@ -41,17 +40,16 @@ export async function uploadAdvertisingImage(
     return null;
   }
 
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-  const path = `${userId}/${articleKey}/${suffix}-${Date.now()}.${ext}`;
-
-  const { error } = await supabase.storage
-    .from(IMAGE_BUCKET)
-    .upload(path, file, { upsert: true, contentType: file.type });
-
-  if (error) return null;
-
-  const { data } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path);
-  return data.publicUrl;
+  try {
+    const { uploadMediaToR2 } = await import("@/lib/mediaUpload");
+    const { publicUrl } = await uploadMediaToR2(file, {
+      folder: "advertising-images",
+      pathPrefix: `${userId}/${articleKey}/${suffix}`,
+    });
+    return publicUrl;
+  } catch {
+    return null;
+  }
 }
 
 export async function listCarouselArticles(supabase: SupabaseClient) {

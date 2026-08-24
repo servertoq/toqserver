@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { insertPostMentions, resolveMentionUserIds, syncPostMentions } from "@/lib/mentions";
-import { extensionForMediaFile, mediaKindFromFile } from "@/lib/postMedia";
+import { mediaKindFromFile } from "@/lib/postMedia";
+import { deleteMediaFromR2, uploadMediaToR2 } from "@/lib/mediaUpload";
 import type { PostType, PostVisibility } from "@/types/feed";
 
 export type CreatePostInput = {
@@ -135,31 +136,35 @@ export async function createPostWithMedia(
   await insertPostMentions(supabase, newPost.id, mentionIds);
 
   let uploadedCount = 0;
+  let lastUploadError: string | null = null;
   for (let i = 0; i < input.files.length; i++) {
     const file = input.files[i];
-    const ext = extensionForMediaFile(file);
-    const path = `${input.authorId}/${newPost.id}/${Date.now()}-${i}.${ext}`;
-
-    const { error: uploadErr } = await supabase.storage
-      .from("post-images")
-      .upload(path, file, { upsert: false, contentType: file.type || undefined });
-
-    if (uploadErr) continue;
-
-    const { data: urlData } = supabase.storage.from("post-images").getPublicUrl(path);
-    const { error: imgErr } = await supabase.from("post_images").insert({
-      post_id: newPost.id,
-      url: urlData.publicUrl,
-      sort_order: i,
-      media_type: mediaKindFromFile(file),
-    });
-    if (!imgErr) uploadedCount += 1;
+    try {
+      const { publicUrl } = await uploadMediaToR2(file, {
+        folder: "post-images",
+        pathPrefix: `${input.authorId}/${newPost.id}`,
+      });
+      const { error: imgErr } = await supabase.from("post_images").insert({
+        post_id: newPost.id,
+        url: publicUrl,
+        sort_order: i,
+        media_type: mediaKindFromFile(file),
+      });
+      if (imgErr) {
+        lastUploadError = imgErr.message;
+        continue;
+      }
+      uploadedCount += 1;
+    } catch (err) {
+      lastUploadError = err instanceof Error ? err.message : "Falha no upload da mídia.";
+    }
   }
 
   if (input.files.length > 0 && uploadedCount === 0) {
     return {
       postId: newPost.id,
       error:
+        lastUploadError ??
         "A publicação foi criada, mas as mídias não puderam ser enviadas. Tente editar o post e anexar de novo.",
     };
   }
@@ -247,6 +252,11 @@ export async function updatePostWithMedia(
 
   for (const url of input.removedImageUrls) {
     await supabase.from("post_images").delete().eq("post_id", input.postId).eq("url", url);
+    try {
+      await deleteMediaFromR2(url);
+    } catch {
+      // URLs antigas do Supabase Storage podem falhar — ok
+    }
   }
 
   if (input.postType !== "poll" && input.files.length > 0) {
@@ -261,23 +271,21 @@ export async function updatePostWithMedia(
 
     for (let i = 0; i < input.files.length; i++) {
       const file = input.files[i];
-      const ext = extensionForMediaFile(file);
-      const path = `${input.authorId}/${input.postId}/${Date.now()}-${i}.${ext}`;
-
-      const { error: uploadErr } = await supabase.storage
-        .from("post-images")
-        .upload(path, file, { upsert: false, contentType: file.type });
-
-      if (uploadErr) continue;
-
-      const { data: urlData } = supabase.storage.from("post-images").getPublicUrl(path);
-      await supabase.from("post_images").insert({
-        post_id: input.postId,
-        url: urlData.publicUrl,
-        sort_order: nextSort,
-        media_type: mediaKindFromFile(file),
-      });
-      nextSort += 1;
+      try {
+        const { publicUrl } = await uploadMediaToR2(file, {
+          folder: "post-images",
+          pathPrefix: `${input.authorId}/${input.postId}`,
+        });
+        await supabase.from("post_images").insert({
+          post_id: input.postId,
+          url: publicUrl,
+          sort_order: nextSort,
+          media_type: mediaKindFromFile(file),
+        });
+        nextSort += 1;
+      } catch {
+        // continua
+      }
     }
   }
 
@@ -289,13 +297,28 @@ export async function deletePost(
   postId: string,
   authorId: string
 ): Promise<{ error: string | null }> {
+  const { data: images } = await supabase
+    .from("post_images")
+    .select("url")
+    .eq("post_id", postId);
+
   const { error } = await supabase
     .from("posts")
     .delete()
     .eq("id", postId)
     .eq("author_id", authorId);
 
-  return { error: error?.message ?? null };
+  if (error) return { error: error.message };
+
+  for (const row of images ?? []) {
+    try {
+      await deleteMediaFromR2(row.url);
+    } catch {
+      // ignore
+    }
+  }
+
+  return { error: null };
 }
 
 export function formatEventSchedule(eventDate: string | null, eventTime: string | null) {

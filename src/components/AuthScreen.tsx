@@ -235,7 +235,7 @@ export function AuthScreen() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_banned, profile_complete")
+        .select("is_banned, profile_complete, deletion_requested_at")
         .eq("id", authData.user.id)
         .maybeSingle();
 
@@ -243,6 +243,11 @@ export function AuthScreen() {
         window.location.href = "/inicio/bloqueado";
         return;
       }
+
+      if (profile?.deletion_requested_at) {
+        await supabase.rpc("cancel_account_deletion");
+      }
+
       if (profile && profile.profile_complete === false) {
         window.location.href = "/?complete=1";
         return;
@@ -416,18 +421,16 @@ export function AuthScreen() {
 
   async function uploadAvatar(userId: string): Promise<string | null> {
     if (!avatarFile) return null;
-
-    const ext = avatarFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const path = `${userId}/avatar.${ext}`;
-
-    const { error } = await supabase.storage
-      .from("avatars")
-      .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
-
-    if (error) return null;
-
-    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-    return data.publicUrl;
+    try {
+      const { uploadMediaToR2 } = await import("@/lib/mediaUpload");
+      const { publicUrl } = await uploadMediaToR2(avatarFile, {
+        folder: "avatars",
+        pathPrefix: `${userId}/avatar`,
+      });
+      return publicUrl;
+    } catch {
+      return null;
+    }
   }
 
   async function handleRegister(e: React.FormEvent) {

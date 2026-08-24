@@ -215,19 +215,21 @@ export function ClubProductForm({ communityId, product, onSaved, onClose }: Prop
       for (let i = 0; i < files.length; i++) {
         if (existingImages.length + i >= 3) break;
         const file = files[i];
-        const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
         const sortOrder = existingImages.length + i;
-        const path = `${profile.id}/${communityId}/${productId}/${sortOrder}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("club-product-images")
-          .upload(path, file, { upsert: true, contentType: file.type });
-        if (upErr) continue;
-        const { data: urlData } = supabase.storage.from("club-product-images").getPublicUrl(path);
-        await supabase.from("club_product_images").insert({
-          product_id: productId,
-          url: urlData.publicUrl,
-          sort_order: sortOrder,
-        });
+        try {
+          const { uploadMediaToR2 } = await import("@/lib/mediaUpload");
+          const { publicUrl } = await uploadMediaToR2(file, {
+            folder: "club-product-images",
+            pathPrefix: `${profile.id}/${communityId}/${productId}`,
+          });
+          await supabase.from("club_product_images").insert({
+            product_id: productId,
+            url: publicUrl,
+            sort_order: sortOrder,
+          });
+        } catch {
+          // continua
+        }
       }
 
       onSaved();

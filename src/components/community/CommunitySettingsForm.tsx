@@ -130,18 +130,19 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
       let coverUrl = community.cover_image_url;
 
       if (coverFile) {
-        const path = `${profile.id}/${community.id}/cover-${Date.now()}.jpg`;
-        const { error: uploadErr } = await supabase.storage
-          .from("community-covers")
-          .upload(path, coverFile, { upsert: true, contentType: "image/jpeg" });
-
-        if (uploadErr) {
-          setError(`Não foi possível enviar a capa: ${uploadErr.message}`);
+        try {
+          const { uploadMediaToR2 } = await import("@/lib/mediaUpload");
+          const { publicUrl } = await uploadMediaToR2(coverFile, {
+            folder: "community-covers",
+            pathPrefix: `${profile.id}/${community.id}`,
+          });
+          coverUrl = publicUrl;
+        } catch (err) {
+          setError(
+            `Não foi possível enviar a capa: ${err instanceof Error ? err.message : "erro"}`
+          );
           return;
         }
-
-        const { data: urlData } = supabase.storage.from("community-covers").getPublicUrl(path);
-        coverUrl = `${urlData.publicUrl}?t=${Date.now()}`;
       }
 
       const payload: Record<string, unknown> = {

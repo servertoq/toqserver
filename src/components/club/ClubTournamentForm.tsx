@@ -141,22 +141,19 @@ export function ClubTournamentForm({ communityId = null, tournament, onSaved, on
       }
 
       if (imageFile && tournamentId) {
-        const ext = imageFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
-        const folder = communityId ?? "standalone";
-        const path = `${profile.id}/${folder}/${tournamentId}/cover.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("club-tournament-images")
-          .upload(path, imageFile, { upsert: true, contentType: imageFile.type });
-        if (upErr) {
+        try {
+          const { uploadMediaToR2 } = await import("@/lib/mediaUpload");
+          const folder = communityId ?? "standalone";
+          const { publicUrl } = await uploadMediaToR2(imageFile, {
+            folder: "club-tournament-images",
+            pathPrefix: `${profile.id}/${folder}/${tournamentId}`,
+          });
+          finalImageUrl = publicUrl;
+        } catch {
           throw new Error(
-            "Torneio salvo, mas a imagem não foi enviada. Verifique a migration 026 e o bucket club-tournament-images."
+            "Torneio salvo, mas a imagem não foi enviada. Verifique as variáveis R2 no .env."
           );
         }
-        const { data: urlData } = supabase.storage
-          .from("club-tournament-images")
-          .getPublicUrl(path);
-        // Cache-buster evita imagem antiga após trocar a capa
-        finalImageUrl = `${urlData.publicUrl}?v=${Date.now()}`;
       }
 
       if (tournamentId && finalImageUrl !== (tournament?.image_url ?? null)) {

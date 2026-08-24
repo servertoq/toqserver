@@ -68,11 +68,16 @@ export async function renderCroppedPostImageFile(
   const sx = image.naturalWidth / 2 - cropWInImage / 2 - crop.offsetX / displayScale;
   const sy = image.naturalHeight / 2 - cropHInImage / 2 - crop.offsetY / displayScale;
 
-  // Saída ~2x viewport, limitada a 1600 no maior lado
-  const maxSide = 1600;
-  const outScale = Math.min(2, maxSide / Math.max(viewportW, viewportH));
-  const outW = Math.round(viewportW * outScale);
-  const outH = Math.round(viewportH * outScale);
+  // Saída na resolução real do recorte na foto (não no viewport da UI).
+  const maxSide = 4096;
+  let outW = Math.max(1, Math.round(cropWInImage));
+  let outH = Math.max(1, Math.round(cropHInImage));
+  const longest = Math.max(outW, outH);
+  if (longest > maxSide) {
+    const scale = maxSide / longest;
+    outW = Math.max(1, Math.round(outW * scale));
+    outH = Math.max(1, Math.round(outH * scale));
+  }
 
   const canvas = document.createElement("canvas");
   canvas.width = outW;
@@ -80,6 +85,8 @@ export async function renderCroppedPostImageFile(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas não suportado");
 
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
   ctx.drawImage(image, sx, sy, cropWInImage, cropHInImage, 0, 0, outW, outH);
 
   return new Promise((resolve, reject) => {
@@ -89,10 +96,10 @@ export async function renderCroppedPostImageFile(
           reject(new Error("Falha ao gerar imagem"));
           return;
         }
-        resolve(new File([blob], fileName, { type: "image/jpeg" }));
+        resolve(new File([blob], fileName.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" }));
       },
       "image/jpeg",
-      0.9
+      0.95
     );
   });
 }
