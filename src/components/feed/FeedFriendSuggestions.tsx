@@ -9,6 +9,7 @@ import { fetchFriendSuggestions, type FriendSuggestion } from "@/lib/friendSugge
 import { profileDisplayName } from "@/lib/profile";
 import { profilePath } from "@/lib/publicProfile";
 import { HScroll } from "@/components/shared/HScroll";
+import { useSingleSubmit } from "@/lib/useSingleSubmit";
 
 const RAIL_PAGE_SIZE = 4;
 const CAROUSEL_SIZE = 8;
