@@ -23,10 +23,10 @@ type Props = {
 };
 
 const actionPrimary =
-  "flex w-full items-center justify-center rounded-xl bg-[var(--toq-profile-accent)] px-4 py-2.5 text-xs font-bold text-white transition hover:opacity-90 disabled:opacity-50";
+  "profile-outline-btn !border-[var(--toq-profile-accent)] !bg-[var(--toq-profile-accent)] !text-white disabled:opacity-50";
 
 const actionSecondary =
-  "flex w-full items-center justify-center rounded-xl border border-[var(--toq-profile-border)] bg-[var(--toq-card)] px-4 py-2.5 text-xs font-bold text-[var(--toq-profile-navy)] transition hover:border-[var(--toq-profile-accent)] hover:bg-[var(--toq-profile-accent-soft)] disabled:opacity-50";
+  "profile-outline-btn disabled:opacity-50";
 
 const actionMuted =
   "flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-[var(--toq-profile-muted)] transition hover:bg-[var(--toq-profile-accent-soft)] hover:text-[var(--toq-profile-navy)] disabled:opacity-50";

@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile, useUpdateAppProfile } from "@/components/app/AppShell";
-import { appContentClass } from "@/lib/layout";
+import { profileContentClass } from "@/lib/layout";
 import type {
   DominantHand,
   ExperienceBand,
@@ -190,7 +190,7 @@ function PerfilPageContent() {
 
   return (
     <>
-      <main className={appContentClass}>
+      <main className={profileContentClass}>
         {loading ? (
           <p className="text-sm text-[var(--toq-text-muted)]">Carregando perfil…</p>
         ) : profile ? (
@@ -251,7 +251,7 @@ export default function PerfilPage() {
   return (
     <Suspense
       fallback={
-        <main className={appContentClass}>
+        <main className={profileContentClass}>
           <p className="text-sm text-[var(--toq-text-muted)]">Carregando perfil…</p>
         </main>
       }

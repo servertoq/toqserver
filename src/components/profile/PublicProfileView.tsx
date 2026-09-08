@@ -25,7 +25,7 @@ import { useAppProfile } from "@/components/app/AppShell";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { PlayerProfileDashboard } from "@/components/profile/PlayerProfileDashboard";
 import { PublicProfileFriendActions } from "@/components/profile/PublicProfileFriendActions";
-import { appContentClass } from "@/lib/layout";
+import { profileContentClass } from "@/lib/layout";
 
 type Props = { username: string };
 
@@ -194,8 +194,10 @@ export function PublicProfileView({ username }: Props) {
 
   return (
     <>
-      <FeedTopBar />
-      <main className={appContentClass}>
+      <div className="hidden md:block">
+        <FeedTopBar />
+      </div>
+      <main className={profileContentClass}>
         {loading ? (
           <p className="text-sm text-[var(--toq-text-muted)]">Carregando perfil…</p>
         ) : error || !profile ? (

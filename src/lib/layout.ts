@@ -2,6 +2,10 @@
 export const appContentClass =
   "mx-auto w-full max-w-6xl px-4 pt-6 pb-[calc(var(--app-mobile-bottom-nav-h)+1.75rem)] sm:px-6 md:pb-6 lg:max-w-7xl lg:px-8";
 
+/** Perfil no mobile: tela cheia como no print, sem card flutuando. */
+export const profileContentClass =
+  "mx-auto w-full max-w-6xl px-0 pt-0 pb-[calc(var(--app-mobile-bottom-nav-h)+1.1rem)] md:px-6 md:pt-6 md:pb-6 lg:max-w-7xl lg:px-8";
+
 export const appTopBarClass =
   "mx-auto w-full max-w-6xl px-4 py-3 sm:px-6 lg:max-w-7xl lg:px-8";
 

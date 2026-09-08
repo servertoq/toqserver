@@ -198,6 +198,11 @@ body {
     padding-top: var(--app-mobile-header-h);
     scroll-padding-bottom: calc(var(--app-mobile-bottom-nav-h) + 1rem);
   }
+
+  .feed-layout-main:has(.profile-page) {
+    background: var(--toq-card);
+    background-image: none;
+  }
 }
 
 @media (max-width: 767px) {
@@ -5226,6 +5231,7 @@ button {
 
 .profile-dashboard {
   background: var(--toq-card);
+  overflow: visible;
 }
 
 [data-theme="dark"] .profile-dashboard {
@@ -5282,31 +5288,86 @@ button {
 
 .profile-hero-card {
   background: var(--toq-card);
+  padding: 0.75rem 0 1.25rem;
+}
+
+.profile-identity {
+  margin-top: 1.1rem;
+  text-align: center;
+}
+
+.profile-identity-name {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--toq-profile-navy);
+}
+
+.profile-identity-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+}
+
+.profile-identity-location {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+  color: var(--toq-profile-muted);
+  font-size: 0.9rem;
+}
+
+.profile-hero-actions {
+  width: min(100% - 2rem, 26rem);
+  margin: 1rem auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-outline-btn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1.5px solid var(--toq-profile-accent);
+  border-radius: 0.9rem;
+  padding: 0.7rem 1rem;
+  color: var(--toq-profile-accent);
+  font-size: 0.86rem;
+  font-weight: 700;
+  background: transparent;
 }
 
 .profile-photo-carousel {
   position: relative;
   margin: 0 auto;
-  width: min(100%, 28rem);
+  width: 100%;
+  overflow: visible;
 }
 
 .profile-photo-track {
   position: relative;
-  height: clamp(17rem, 58vw, 22rem);
+  height: 17.25rem;
 }
 
 .profile-photo-slide {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 68%;
+  width: 54%;
   height: 100%;
   overflow: hidden;
   border: 0;
-  border-radius: 1.25rem;
+  border-radius: 1.15rem;
   padding: 0;
   background: var(--toq-profile-ring-bg);
-  transform: translate(-50%, -50%) scale(0.86);
+  transform: translate(-50%, -50%) scale(0.88);
   opacity: 0;
   pointer-events: none;
   transition: transform 0.28s ease, opacity 0.28s ease, left 0.28s ease;
@@ -5346,11 +5407,21 @@ button {
 }
 
 .profile-photo-slide.is-prev {
-  left: 18%;
+  left: 27%;
 }
 
 .profile-photo-slide.is-next {
-  left: 82%;
+  left: 73%;
+}
+
+.profile-photo-edit {
+  display: flex;
+  margin: 0.65rem auto 0;
+  border: 0;
+  background: transparent;
+  color: var(--toq-profile-accent);
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .profile-photo-nav {
@@ -5381,12 +5452,35 @@ button {
 }
 
 @media (min-width: 768px) {
+  .profile-dashboard {
+    overflow: hidden;
+    border: 1px solid var(--toq-profile-border);
+    border-radius: 1.5rem;
+  }
+
+  .profile-hero-card {
+    padding: 1.5rem 2rem 1.35rem;
+  }
+
   .profile-photo-nav {
     display: flex;
   }
 
   .profile-photo-carousel {
     width: min(100%, 34rem);
+  }
+
+  .profile-photo-track {
+    height: clamp(18rem, 42vw, 22rem);
+  }
+
+  .profile-photo-slide {
+    width: 64%;
+  }
+
+  .profile-main,
+  .profile-edit-wrap {
+    padding: 1.5rem 2rem 2rem;
   }
 }
 
@@ -5414,7 +5508,11 @@ button {
 .profile-tabs-bar {
   border-top: 1px solid var(--toq-profile-border);
   border-bottom: 1px solid var(--toq-profile-border);
-  padding: 0 0.75rem;
+  padding: 0 0.35rem;
+}
+
+.profile-tab-icon {
+  display: none;
 }
 
 .profile-tab-link {
@@ -5424,10 +5522,10 @@ button {
   flex-shrink: 0;
   border: 0;
   background: transparent;
-  padding: 0.9rem 0.7rem;
-  color: var(--toq-profile-muted);
-  font-size: 0.82rem;
-  font-weight: 700;
+  padding: 0.85rem 0.7rem;
+  color: #8b93a1;
+  font-size: 0.92rem;
+  font-weight: 600;
   white-space: nowrap;
   box-shadow: inset 0 -2px 0 transparent;
 }
@@ -5686,11 +5784,34 @@ button {
 }
 
 .profile-section-label {
-  font-size: 0.65rem;
+  font-size: 0.82rem;
   font-weight: 800;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--toq-profile-muted);
+  color: var(--toq-profile-navy);
+}
+
+.profile-main,
+.profile-edit-wrap {
+  min-width: 0;
+  padding: 1.15rem 1rem 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .profile-tab-icon {
+    display: inline-flex;
+  }
+
+  .profile-tab-link {
+    font-size: 0.82rem;
+  }
+
+  .profile-hero-actions a,
+  .profile-hero-actions button {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
 }
 
 /* Mesma tipografia dos demais campos do resumo (text-sm) ? evita CEP maior no mobile */

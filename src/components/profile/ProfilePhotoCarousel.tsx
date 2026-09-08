@@ -5,9 +5,10 @@ import { useEffect, useRef, useState } from "react";
 type Props = {
   urls: string[];
   name: string;
+  onEdit?: () => void;
 };
 
-export function ProfilePhotoCarousel({ urls, name }: Props) {
+export function ProfilePhotoCarousel({ urls, name, onEdit }: Props) {
   const [index, setIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const urlsKey = urls.join("|");
@@ -47,6 +48,11 @@ export function ProfilePhotoCarousel({ urls, name }: Props) {
             <div className="profile-photo-fallback">{initial}</div>
           </div>
         </div>
+        {onEdit && (
+          <button type="button" className="profile-photo-edit" onClick={onEdit}>
+            Editar fotos
+          </button>
+        )}
       </div>
     );
   }
@@ -111,6 +117,11 @@ export function ProfilePhotoCarousel({ urls, name }: Props) {
             ))}
           </div>
         </>
+      )}
+      {onEdit && (
+        <button type="button" className="profile-photo-edit" onClick={onEdit}>
+          Editar fotos
+        </button>
       )}
     </div>
   );

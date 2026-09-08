@@ -183,14 +183,16 @@ export function PlayerProfileDashboard({
     const items: { id: ProfileTab; label: string; icon: keyof typeof TAB_ICONS }[] = [
       { id: "resumo", label: "Resumo", icon: "grid" },
       { id: "torneios", label: "Torneios", icon: "trophy" },
-      { id: "partidas", label: "Partidas", icon: "trophy" },
       { id: "amigos", label: "Amigos", icon: "users" },
       { id: "publicacoes", label: "Publicações", icon: "posts" },
       { id: "clubes", label: "Clubes", icon: "clubs" },
     ];
     if (isOwnProfile) {
-      items.splice(1, 0, { id: "agenda", label: "Agenda", icon: "calendar" });
+      items.splice(2, 0, { id: "agenda", label: "Agenda", icon: "calendar" });
+      items.splice(3, 0, { id: "partidas", label: "Partidas", icon: "trophy" });
       items.push({ id: "suporte", label: "Suporte", icon: "support" });
+    } else {
+      items.splice(2, 0, { id: "partidas", label: "Partidas", icon: "trophy" });
     }
     return items;
   }, [isOwnProfile]);
@@ -198,8 +200,8 @@ export function PlayerProfileDashboard({
   if (editing && isOwnProfile) {
     return (
       <div className="profile-page">
-        <div className="profile-dashboard overflow-hidden rounded-3xl border border-[var(--toq-profile-border)]">
-          <div className="p-4 sm:p-6 lg:p-8">
+        <div className="profile-dashboard">
+          <div className="profile-edit-wrap">
             <ProfileEditPanel
               profileId={profileId}
               username={username}
@@ -232,24 +234,23 @@ export function PlayerProfileDashboard({
 
   return (
     <div className="profile-page">
-      <div className="profile-dashboard overflow-hidden rounded-3xl border border-[var(--toq-profile-border)]">
-        <div className="profile-hero-card px-4 pb-5 pt-5 sm:px-6 lg:px-10">
-          <ProfilePhotoCarousel urls={carouselUrls} name={shownName} />
+      <div className="profile-dashboard">
+        <div className="profile-hero-card">
+          <ProfilePhotoCarousel
+            urls={carouselUrls}
+            name={shownName}
+            onEdit={isOwnProfile && !headerActions ? () => setEditing(true) : undefined}
+          />
 
-          <div className="mt-5 text-center">
-            <h2 className="text-xl font-bold tracking-tight text-[var(--toq-profile-navy)] sm:text-2xl">
-              @{username}
-            </h2>
-            {displayName?.trim() && displayName.trim() !== username && (
-              <p className="mt-0.5 text-sm text-[var(--toq-profile-muted)]">{shownName}</p>
-            )}
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
+          <div className="profile-identity">
+            <h2 className="profile-identity-name">@{username}</h2>
+            <div className="profile-identity-badges">
               <ProfilePlayerLevelBadge level={playerLevel} />
               <StaffBadge role={staffRole} />
             </div>
             {locationLabel && (
-              <p className="mt-2 inline-flex items-center justify-center gap-1.5 text-sm text-[var(--toq-profile-muted)]">
-                <svg className="h-4 w-4 text-[var(--toq-profile-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <p className="profile-identity-location">
+                <svg className="h-4 w-4 shrink-0 text-[var(--toq-profile-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 21s7-5.4 7-11a7 7 0 10-14 0c0 5.6 7 11 7 11z" />
                   <circle cx="12" cy="10" r="2.5" />
                 </svg>
@@ -263,27 +264,15 @@ export function PlayerProfileDashboard({
             )}
           </div>
 
-          <div className="profile-hero-actions mx-auto mt-5 flex w-full max-w-md flex-col gap-2">
+          <div className="profile-hero-actions">
             {isOwnProfile && !headerActions && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setEditing(true)}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--toq-profile-accent)] px-4 py-2.5 text-sm font-bold text-white transition hover:opacity-90"
-                >
-                  Editar perfil
-                </button>
-                <Link
-                  href={profilePath(username)}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--toq-profile-accent)] px-4 py-2.5 text-sm font-bold text-[var(--toq-profile-accent)] transition hover:bg-[var(--toq-profile-accent-soft)]"
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                  Ver meu perfil como outra pessoa
-                </Link>
-              </>
+              <Link href={profilePath(username)} className="profile-outline-btn">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                Ver meu perfil como outra pessoa
+              </Link>
             )}
             {headerActions}
           </div>
@@ -298,14 +287,14 @@ export function PlayerProfileDashboard({
                 onClick={() => setTab(item.id)}
                 className={`profile-tab-link ${tab === item.id ? "is-active" : ""}`}
               >
-                {TAB_ICONS[item.icon]}
+                <span className="profile-tab-icon">{TAB_ICONS[item.icon]}</span>
                 {item.label}
               </button>
             ))}
           </div>
         </nav>
 
-        <div className="min-w-0 p-4 sm:p-6 lg:p-8">
+        <div className="profile-main">
           {tab === "resumo" && (
             <div className="space-y-8">
               {bio ? (
