@@ -228,7 +228,6 @@ export function FeedPage() {
         )}
 
         <section>
-          <h2 className="toq-section-label mb-3 hidden md:block">Feed geral</h2>
           {posts.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
               <p className="text-sm font-semibold text-[var(--toq-navy)]">Nenhum post ainda</p>

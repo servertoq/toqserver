@@ -118,7 +118,11 @@ export function ClubMemberArea({
 
       {mobileHeader ? <div className="md:hidden">{mobileHeader}</div> : null}
 
-      <div className="min-h-0 rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] px-4 pb-8 pt-1 md:rounded-none md:border-0 md:px-5 md:pt-0">
+      <div
+        className={`min-h-0 rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] pb-8 pt-1 md:rounded-none md:border-0 md:pt-0 ${
+          tab === "feed" ? "px-0 md:px-0" : "px-4 md:px-5"
+        }`}
+      >
         {!guestShopOnly && tab === "feed" && (
           <ClubFeedPanel
             posts={posts}

@@ -18,6 +18,7 @@ import { PostMediaGrid } from "./PostMediaGrid";
 import { PollBlock } from "./PollBlock";
 import { MatchInterestBlock } from "./MatchInterestBlock";
 import { PostOwnerMenu } from "./PostOwnerMenu";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { ReportButton } from "@/components/report/ReportButton";
 import { PlanBadge } from "@/components/shared/PlanBadge";
 import { StaffBadge } from "@/components/shared/StaffBadge";
@@ -44,7 +45,7 @@ export function PostCard({
   onCommentCountChange,
   highlightPost = false,
   highlightCommentId = null,
-  fullBleed = false,
+  fullBleed = true,
   onEditPost,
   onDeletePost,
   enrolledCoachListingIds,
@@ -121,7 +122,7 @@ export function PostCard({
       id={`post-${post.id}`}
       className={
         fullBleed
-          ? `post-card post-card--bleed bg-white border-b border-slate-200 md:rounded-2xl md:border md:p-4 md:shadow-sm ${
+          ? `post-card post-card--bleed bg-white border-b border-slate-200 md:rounded-2xl md:border md:shadow-sm ${
               highlightPost
                 ? "ring-2 ring-inset ring-[var(--toq-accent-soft)] md:ring-[var(--toq-accent-soft)]"
                 : "md:border-slate-200"
@@ -135,10 +136,10 @@ export function PostCard({
     >
       <header
         className={`flex items-start gap-3 ${
-          fullBleed ? "post-card__header mb-0 px-4 py-3 md:mb-3 md:px-0 md:py-0" : "mb-3"
+          fullBleed ? "post-card__header mb-0 px-4 py-3" : "mb-3"
         }`}
       >
-        <PostAvatar src={post.author.avatar_url} name={post.author.username} />
+        <ProfileAvatar src={post.author.avatar_url} name={post.author.username} size="sm" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <Link
@@ -210,7 +211,7 @@ export function PostCard({
         ) : null}
       </header>
 
-      <div className={fullBleed ? "post-card__body px-4 pb-3 md:px-0 md:pb-0" : undefined}>
+      <div className={fullBleed ? "post-card__body px-4 pb-3" : undefined}>
       {post.title && (
         <h3 className="mb-2 text-base font-bold text-[var(--toq-navy)]">{post.title}</h3>
       )}
@@ -273,7 +274,7 @@ export function PostCard({
       <div
         className={`flex items-center gap-4 ${
           fullBleed
-            ? "post-card__actions border-t border-slate-100 px-4 py-3 md:mt-3 md:px-0 md:py-0 md:pt-3"
+            ? "post-card__actions border-t border-slate-100 px-4 py-3"
             : "mt-3 border-t border-slate-100 pt-3"
         }`}
       >
@@ -301,7 +302,7 @@ export function PostCard({
       </div>
 
       {showComments && (
-        <div className={fullBleed ? "px-4 pb-3 md:px-0 md:pb-0" : undefined}>
+        <div className={fullBleed ? "px-4 pb-3" : undefined}>
           <CommentsPanel
             postId={post.id}
             currentUserId={currentUserId}
@@ -315,19 +316,5 @@ export function PostCard({
         </div>
       )}
     </article>
-  );
-}
-
-function PostAvatar({ src, name }: { src: string | null; name: string }) {
-  if (src) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
-    );
-  }
-  return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--toq-sky)] text-sm font-bold text-white">
-      {name.charAt(0).toUpperCase()}
-    </div>
   );
 }

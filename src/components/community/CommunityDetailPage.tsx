@@ -507,12 +507,13 @@ export function CommunityDetailPage({
                     </p>
                   </div>
                 ) : (
-                  <ul className="space-y-4">
+                  <ul className="feed-post-list space-y-0 md:space-y-4">
                     {posts.map((post) => (
                       <li key={post.id}>
                         <PostCard
                           post={post}
                           currentUserId={profile.id}
+                          fullBleed
                           highlightPost={post.id === highlightPostId}
                           highlightCommentId={
                             post.id === highlightPostId ? highlightCommentId : null

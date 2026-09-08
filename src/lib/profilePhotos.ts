@@ -27,16 +27,10 @@ export function mapProfilePhotoRows(raw: unknown): ProfilePhoto[] {
   );
 }
 
-export function profileCarouselUrls(
-  photos: ProfilePhoto[] | null | undefined,
-  avatarUrl?: string | null
-): string[] {
-  const urls = sortProfilePhotos(photos)
+export function profileCarouselUrls(photos: ProfilePhoto[] | null | undefined): string[] {
+  return sortProfilePhotos(photos)
     .map((p) => p.url?.trim())
     .filter((u): u is string => Boolean(u));
-  if (urls.length > 0) return urls;
-  const avatar = avatarUrl?.trim();
-  return avatar ? [avatar] : [];
 }
 
 export async function fetchProfilePhotos(
@@ -51,21 +45,6 @@ export async function fetchProfilePhotos(
     .order("created_at");
   if (error) throw new Error(error.message);
   return mapProfilePhotoRows(data);
-}
-
-export async function syncProfileAvatarFromPhotos(
-  supabase: SupabaseClient,
-  userId: string,
-  photos: ProfilePhoto[]
-): Promise<string | null> {
-  const first = sortProfilePhotos(photos)[0];
-  const nextUrl = first?.url ?? null;
-  const { error } = await supabase
-    .from("profiles")
-    .update({ avatar_url: nextUrl })
-    .eq("id", userId);
-  if (error) throw new Error(error.message);
-  return nextUrl;
 }
 
 export async function uploadProfilePhoto(

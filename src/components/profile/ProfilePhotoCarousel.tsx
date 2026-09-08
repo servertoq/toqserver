@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { ChevronIcon } from "@/components/shared/HScroll";
 
 type Props = {
   urls: string[];
@@ -68,9 +69,11 @@ export function ProfilePhotoCarousel({ urls, name, onEdit }: Props) {
           </div>
         </div>
         {onEdit && (
-          <button type="button" className="profile-photo-edit" onClick={onEdit}>
-            Editar fotos
-          </button>
+          <div className="profile-photo-footer">
+            <button type="button" className="profile-photo-edit" onClick={onEdit}>
+              Editar fotos
+            </button>
+          </div>
         )}
       </div>
     );
@@ -84,52 +87,59 @@ export function ProfilePhotoCarousel({ urls, name, onEdit }: Props) {
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <div className="profile-photo-track">
-        {urls.map((url, i) => {
-          const offset = i - safeIndex;
-          const state =
-            offset === 0 ? "is-active" : offset === -1 ? "is-prev" : offset === 1 ? "is-next" : "is-hidden";
-          return (
-            <button
-              key={`${url}-${i}`}
-              type="button"
-              className={`profile-photo-slide ${state}`}
-              onClick={() => {
-                if (offset !== 0) {
-                  go(i);
-                  return;
+      <div className="profile-photo-stage">
+        <div className="profile-photo-track">
+          {urls.map((url, i) => {
+            const offset = i - safeIndex;
+            const state =
+              offset === 0 ? "is-active" : offset === -1 ? "is-prev" : offset === 1 ? "is-next" : "is-hidden";
+            return (
+              <button
+                key={`${url}-${i}`}
+                type="button"
+                className={`profile-photo-slide ${state}`}
+                onClick={() => {
+                  if (offset !== 0) {
+                    go(i);
+                    return;
+                  }
+                  setLightbox(true);
+                }}
+                aria-label={
+                  offset === 0 ? `Ver foto ${i + 1} em tamanho real` : `Ver foto ${i + 1}`
                 }
-                setLightbox(true);
-              }}
-              aria-label={
-                offset === 0 ? `Ver foto ${i + 1} em tamanho real` : `Ver foto ${i + 1}`
-              }
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt="" draggable={false} />
+              </button>
+            );
+          })}
+        </div>
+
+        {count > 1 && (
+          <>
+            <button
+              type="button"
+              className="profile-photo-nav profile-photo-nav--prev"
+              aria-label="Foto anterior"
+              onClick={() => go(safeIndex - 1)}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt="" draggable={false} />
+              <ChevronIcon dir="left" size={18} />
             </button>
-          );
-        })}
+            <button
+              type="button"
+              className="profile-photo-nav profile-photo-nav--next"
+              aria-label="Próxima foto"
+              onClick={() => go(safeIndex + 1)}
+            >
+              <ChevronIcon dir="right" size={18} />
+            </button>
+          </>
+        )}
       </div>
 
-      {count > 1 && (
-        <>
-          <button
-            type="button"
-            className="profile-photo-nav profile-photo-nav--prev"
-            aria-label="Foto anterior"
-            onClick={() => go(safeIndex - 1)}
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            className="profile-photo-nav profile-photo-nav--next"
-            aria-label="Próxima foto"
-            onClick={() => go(safeIndex + 1)}
-          >
-            ›
-          </button>
+      <div className="profile-photo-footer">
+        {count > 1 && (
           <div className="profile-photo-dots" role="tablist" aria-label="Fotos do perfil">
             {urls.map((_, i) => (
               <button
@@ -143,13 +153,13 @@ export function ProfilePhotoCarousel({ urls, name, onEdit }: Props) {
               />
             ))}
           </div>
-        </>
-      )}
-      {onEdit && (
-        <button type="button" className="profile-photo-edit" onClick={onEdit}>
-          Editar fotos
-        </button>
-      )}
+        )}
+        {onEdit && (
+          <button type="button" className="profile-photo-edit" onClick={onEdit}>
+            Editar fotos
+          </button>
+        )}
+      </div>
 
       {mounted &&
         lightbox &&
@@ -173,7 +183,7 @@ export function ProfilePhotoCarousel({ urls, name, onEdit }: Props) {
                   aria-label="Foto anterior"
                   onClick={() => go(safeIndex - 1)}
                 >
-                  ‹
+                  <ChevronIcon dir="left" size={20} />
                 </button>
                 <button
                   type="button"
@@ -181,7 +191,7 @@ export function ProfilePhotoCarousel({ urls, name, onEdit }: Props) {
                   aria-label="Próxima foto"
                   onClick={() => go(safeIndex + 1)}
                 >
-                  ›
+                  <ChevronIcon dir="right" size={20} />
                 </button>
               </>
             )}

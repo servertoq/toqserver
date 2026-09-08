@@ -10,6 +10,18 @@ type Props = {
   ariaLabel?: string;
 };
 
+export function ChevronIcon({ dir, size = 16 }: { dir: "left" | "right"; size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d={dir === "left" ? "M15 6l-6 6 6 6" : "M9 6l6 6-6 6"}
+      />
+    </svg>
+  );
+}
+
 export function HScroll({
   children,
   className = "",
@@ -65,7 +77,7 @@ export function HScroll({
           aria-label="Ver opções anteriores"
           onClick={() => scrollByPage(-1)}
         >
-          ‹
+          <ChevronIcon dir="left" />
         </button>
       )}
       <div
@@ -83,7 +95,7 @@ export function HScroll({
           aria-label="Ver mais opções"
           onClick={() => scrollByPage(1)}
         >
-          ›
+          <ChevronIcon dir="right" />
         </button>
       )}
     </div>

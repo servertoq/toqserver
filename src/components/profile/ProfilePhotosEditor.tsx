@@ -6,7 +6,6 @@ import {
   PROFILE_PHOTOS_MAX,
   deleteProfilePhoto,
   reorderProfilePhotos,
-  syncProfileAvatarFromPhotos,
   uploadProfilePhoto,
 } from "@/lib/profilePhotos";
 import type { ProfilePhoto } from "@/types/profile";
@@ -14,7 +13,7 @@ import type { ProfilePhoto } from "@/types/profile";
 type Props = {
   userId: string;
   photos: ProfilePhoto[];
-  onChange: (photos: ProfilePhoto[], avatarUrl: string | null) => void;
+  onChange: (photos: ProfilePhoto[]) => void;
 };
 
 export function ProfilePhotosEditor({ userId, photos, onChange }: Props) {
@@ -26,8 +25,7 @@ export function ProfilePhotosEditor({ userId, photos, onChange }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   async function persist(next: ProfilePhoto[]) {
-    const avatarUrl = await syncProfileAvatarFromPhotos(supabase, userId, next);
-    onChange(next, avatarUrl);
+    onChange(next);
   }
 
   async function handlePick(file: File | null) {
@@ -94,8 +92,8 @@ export function ProfilePhotosEditor({ userId, photos, onChange }: Props) {
     <section className="profile-edit-block">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="profile-section-label">Fotos do perfil</p>
-          <p className="mt-1 text-xs text-[var(--toq-profile-muted)]">Arraste para reordenar</p>
+          <p className="profile-section-label">Fotos do carrossel</p>
+          <p className="mt-1 text-xs text-[var(--toq-profile-muted)]">Até 5 fotos extras, além da foto de perfil</p>
         </div>
       </div>
 
@@ -124,7 +122,6 @@ export function ProfilePhotosEditor({ userId, photos, onChange }: Props) {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={photo.url} alt="" />
-            {index === 0 && <span className="profile-photos-editor-main">Principal</span>}
             <button
               type="button"
               className="profile-photos-editor-remove"
@@ -155,7 +152,7 @@ export function ProfilePhotosEditor({ userId, photos, onChange }: Props) {
       </ul>
 
       <p className="mt-3 text-xs text-[var(--toq-profile-muted)]">
-        Até {PROFILE_PHOTOS_MAX} fotos. A primeira será sua foto principal.
+        Arraste para reordenar. Essas fotos aparecem só no carrossel do perfil.
       </p>
 
       <input

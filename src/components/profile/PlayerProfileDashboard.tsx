@@ -22,6 +22,7 @@ import type { ProfileClubPreview, ProfileFriendPreview, ProfilePhoto } from "@/t
 import { profileCarouselUrls } from "@/lib/profilePhotos";
 import { ProfilePresenceBadge } from "./ProfilePresenceBadge";
 import { ProfilePlayerLevelBadge } from "./ProfilePlayerLevelBadge";
+import { ProfileAvatar } from "./ProfileAvatar";
 import { StaffBadge } from "@/components/shared/StaffBadge";
 import { PostCard } from "@/components/feed/PostCard";
 import { AgendaPage } from "@/components/agenda/AgendaPage";
@@ -80,7 +81,7 @@ type Props = {
   supportForm?: ReactNode;
   onResumoSaved?: () => void;
   onAvatarUpdated?: (avatarUrl: string | null) => void;
-  onPhotosUpdated?: (photos: ProfilePhoto[], avatarUrl: string | null) => void;
+  onPhotosUpdated?: (photos: ProfilePhoto[]) => void;
   initialTab?: ProfileTab;
 };
 
@@ -178,7 +179,7 @@ export function PlayerProfileDashboard({
 
   const shownName = profileDisplayName({ display_name: displayName, username });
   const locationLabel = formatProfileLocation(address.city, address.state);
-  const carouselUrls = profileCarouselUrls(photos, avatarUrl);
+  const carouselUrls = profileCarouselUrls(photos);
 
   const navTabs = useMemo(() => {
     const items: { id: ProfileTab; label: string; icon: keyof typeof TAB_ICONS }[] = [
@@ -206,6 +207,7 @@ export function PlayerProfileDashboard({
             <ProfileEditPanel
               profileId={profileId}
               username={username}
+              avatarUrl={avatarUrl}
               photos={photos}
               bio={bio}
               gender={gender}
@@ -219,10 +221,8 @@ export function PlayerProfileDashboard({
               playStyle={playStyle}
               favoriteCourt={favoriteCourt}
               onClose={() => setEditing(false)}
-              onPhotosChanged={(nextPhotos, nextAvatar) => {
-                onPhotosUpdated?.(nextPhotos, nextAvatar);
-                onAvatarUpdated?.(nextAvatar);
-              }}
+              onPhotosChanged={(nextPhotos) => onPhotosUpdated?.(nextPhotos)}
+              onAvatarChanged={(nextAvatar) => onAvatarUpdated?.(nextAvatar)}
               onSaved={() => {
                 onResumoSaved?.();
               }}
@@ -237,13 +237,19 @@ export function PlayerProfileDashboard({
     <div className="profile-page">
       <div className="profile-dashboard">
         <div className="profile-hero-card">
-          <ProfilePhotoCarousel
-            urls={carouselUrls}
-            name={shownName}
-            onEdit={isOwnProfile && !headerActions ? () => setEditing(true) : undefined}
-          />
+          {carouselUrls.length > 0 && (
+            <ProfilePhotoCarousel urls={carouselUrls} name={shownName} />
+          )}
 
           <div className="profile-identity">
+            <div className="profile-identity-avatar">
+              <ProfileAvatar src={avatarUrl} name={shownName} size="md" />
+            </div>
+            {isOwnProfile && !headerActions && (
+              <button type="button" className="profile-photo-edit" onClick={() => setEditing(true)}>
+                Editar fotos
+              </button>
+            )}
             <h2 className="profile-identity-name">@{username}</h2>
             <div className="profile-identity-badges">
               <ProfilePlayerLevelBadge level={playerLevel} />
@@ -344,12 +350,13 @@ export function PlayerProfileDashboard({
               {posts.length === 0 ? (
                 <p className="text-sm text-[var(--toq-profile-muted)]">Nenhuma publicação visível.</p>
               ) : (
-                <ul className="space-y-4">
+                <ul className="feed-post-list space-y-0 md:space-y-4">
                   {posts.map((post) => (
                     <li key={post.id}>
                       <PostCard
                         post={post}
                         currentUserId={currentUserId}
+                        fullBleed
                         onLikeToggle={onLikeToggle}
                         onCommentCountChange={() => {}}
                       />

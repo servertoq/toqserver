@@ -21,12 +21,14 @@ import { planLabel } from "@/lib/plans";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import type { UserPlan } from "@/types/plans";
 import type { ProfilePhoto } from "@/types/profile";
+import { ProfileAvatarEditor } from "./ProfileAvatarEditor";
 import { ProfilePhotosEditor } from "./ProfilePhotosEditor";
 import { ProfileMeuJogoSection } from "./ProfileMeuJogoSection";
 
 type Props = {
   profileId: string;
   username: string;
+  avatarUrl: string | null;
   photos: ProfilePhoto[];
   bio: string;
   gender: GenderType;
@@ -40,13 +42,15 @@ type Props = {
   playStyle: PlayStyle | null;
   favoriteCourt: FavoriteCourt | null;
   onClose: () => void;
-  onPhotosChanged: (photos: ProfilePhoto[], avatarUrl: string | null) => void;
+  onPhotosChanged: (photos: ProfilePhoto[]) => void;
+  onAvatarChanged: (avatarUrl: string | null) => void;
   onSaved: () => void;
 };
 
 export function ProfileEditPanel({
   profileId,
   username,
+  avatarUrl,
   photos,
   bio: initialBio,
   gender: initialGender,
@@ -61,6 +65,7 @@ export function ProfileEditPanel({
   favoriteCourt: initialCourt,
   onClose,
   onPhotosChanged,
+  onAvatarChanged,
   onSaved,
 }: Props) {
   const supabase = createClient();
@@ -150,6 +155,12 @@ export function ProfileEditPanel({
       </div>
 
       <div className="space-y-8">
+        <ProfileAvatarEditor
+          profileId={profileId}
+          name={username}
+          avatarUrl={avatarUrl}
+          onUpdated={onAvatarChanged}
+        />
         <ProfilePhotosEditor userId={profileId} photos={photos} onChange={onPhotosChanged} />
 
         <section className="profile-edit-block">

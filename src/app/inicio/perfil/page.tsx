@@ -230,10 +230,8 @@ function PerfilPageContent() {
               setProfile((current) => (current ? { ...current, avatar_url: url } : current));
               updateAppProfile({ avatar_url: url });
             }}
-            onPhotosUpdated={(nextPhotos, url) => {
+            onPhotosUpdated={(nextPhotos) => {
               setPhotos(nextPhotos);
-              setProfile((current) => (current ? { ...current, avatar_url: url } : current));
-              updateAppProfile({ avatar_url: url });
             }}
           />
         ) : (
