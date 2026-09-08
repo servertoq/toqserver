@@ -79,8 +79,8 @@ export function ProfileAvatarEditor({ profileId, name, avatarUrl: initialAvatarU
         });
         const ok = await persistAvatar(publicUrl);
         if (ok) URL.revokeObjectURL(previewUrl);
-      } catch {
-        setError("Não foi possível enviar a foto.");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Não foi possível enviar a foto.");
       }
     });
   }

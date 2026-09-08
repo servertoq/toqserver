@@ -202,7 +202,7 @@ export async function uploadMediaToR2(
     });
   } catch {
     throw new Error(
-      "Upload bloqueado pelo navegador (CORS). No Cloudflare → R2 → bucket toq-tennis → Settings → CORS, cole o JSON de docs/r2-cors.json."
+      "Upload bloqueado pelo navegador (CORS). No Cloudflare → R2 → bucket toq-tennis → Settings → CORS, cole docs/r2-cors.json (AllowedHeaders: Content-Type, não *)."
     );
   }
 

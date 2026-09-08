@@ -7,7 +7,7 @@
       "https://toqtennis.com.br"
     ],
     "AllowedMethods": ["GET", "PUT", "HEAD", "POST"],
-    "AllowedHeaders": ["*"],
+    "AllowedHeaders": ["Content-Type"],
     "ExposeHeaders": ["ETag", "Content-Type"],
     "MaxAgeSeconds": 3600
   }

@@ -84,16 +84,19 @@ export function ProfileSidebarAvatar({
     setCropSrc(null);
   }
 
-  async function uploadAvatar(file: File): Promise<string | null> {
+  async function uploadAvatar(file: File): Promise<{ url: string | null; error: string | null }> {
     try {
       const { uploadMediaToR2 } = await import("@/lib/mediaUpload");
       const { publicUrl } = await uploadMediaToR2(file, {
         folder: "avatars",
         pathPrefix: `${profileId}/avatar`,
       });
-      return publicUrl;
-    } catch {
-      return null;
+      return { url: publicUrl, error: null };
+    } catch (err) {
+      return {
+        url: null,
+        error: err instanceof Error ? err.message : "Não foi possível enviar a foto.",
+      };
     }
   }
 
@@ -122,9 +125,9 @@ export function ProfileSidebarAvatar({
 
     await guard(async () => {
       setError(null);
-      const uploadedUrl = await uploadAvatar(file);
+      const { url: uploadedUrl, error: uploadErr } = await uploadAvatar(file);
       if (!uploadedUrl) {
-        setError("Não foi possível enviar a foto.");
+        setError(uploadErr ?? "Não foi possível enviar a foto.");
         return;
       }
 
