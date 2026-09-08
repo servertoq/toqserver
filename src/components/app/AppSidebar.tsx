@@ -363,8 +363,8 @@ function MobileHeader({
           <span
             className="app-mobile-header-logo-mark"
             style={{
-              maskImage: "url(/imagens_publicas/logo_transp.png)",
-              WebkitMaskImage: "url(/imagens_publicas/logo_transp.png)",
+              maskImage: "url(/imagens_publicas/logo_sidebar.png)",
+              WebkitMaskImage: "url(/imagens_publicas/logo_sidebar.png)",
               maskSize: "contain",
               WebkitMaskSize: "contain",
               maskRepeat: "no-repeat",

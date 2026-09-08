@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import type { ClubTab } from "@/types/clubFeatures";
+import { HScroll } from "@/components/shared/HScroll";
 
 const TABS: { id: ClubTab; label: string; icon: (active: boolean) => ReactNode }[] = [
   {
@@ -88,7 +89,7 @@ export function ClubTabs({
     : TABS.filter((t) => t.id !== "shop" || shopEnabled);
 
   return (
-    <div className="club-tabs-bar" role="tablist" aria-label="Seções do clube">
+    <HScroll innerClassName="club-tabs-bar" innerRole="tablist" ariaLabel="Seções do clube">
       {visible.map((tab) => {
         const isActive = active === tab.id;
         return (
@@ -105,6 +106,6 @@ export function ClubTabs({
           </button>
         );
       })}
-    </div>
+    </HScroll>
   );
 }

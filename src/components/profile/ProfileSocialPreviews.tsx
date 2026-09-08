@@ -4,7 +4,8 @@ import Link from "next/link";
 import { groupDetailHref } from "@/lib/communityGroup";
 import { formatMemberSince } from "@/lib/publicProfile";
 import { profilePath } from "@/lib/publicProfile";
-import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { HScroll } from "@/components/shared/HScroll";
+import { ProfileAvatar } from "./ProfileAvatar";
 import type { FeedPost } from "@/types/feed";
 import type { ProfileClubPreview, ProfileFriendPreview } from "@/types/profile";
 
@@ -62,23 +63,23 @@ export function ProfileFriendsPreview({
       {friends.length === 0 ? (
         <p className="mt-4 text-sm text-[var(--toq-profile-muted)]">Nenhum amigo para mostrar.</p>
       ) : (
-        <ul className="profile-friends-row mt-4">
+        <HScroll innerClassName="profile-friends-row mt-4">
           {friends.map((friend) => (
-            <li key={friend.friend_id}>
+            <div key={friend.friend_id}>
               <Link href={profilePath(friend.username)} className="profile-friends-item">
                 <ProfileAvatar src={friend.avatar_url} name={friend.username} size="md" />
                 <span>@{friend.username}</span>
               </Link>
-            </li>
+            </div>
           ))}
           {extra > 0 && onSeeAll && (
-            <li>
+            <div>
               <button type="button" onClick={onSeeAll} className="profile-friends-more">
                 +{extra} mais
               </button>
-            </li>
+            </div>
           )}
-        </ul>
+        </HScroll>
       )}
     </section>
   );
@@ -120,9 +121,9 @@ export function ProfilePostsPreview({
       {thumbs.length === 0 ? (
         <p className="mt-4 text-sm text-[var(--toq-profile-muted)]">Nenhuma publicação com mídia ainda.</p>
       ) : (
-        <ul className="profile-posts-row mt-4">
+        <HScroll innerClassName="profile-posts-row mt-4">
           {thumbs.map((item) => (
-            <li key={item.id}>
+            <div key={item.id}>
               <button type="button" onClick={onSeeAll} className="profile-posts-thumb" aria-label="Ver publicação">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={item.url} alt="" />
@@ -132,32 +133,34 @@ export function ProfilePostsPreview({
                   </span>
                 )}
               </button>
-            </li>
+            </div>
           ))}
-        </ul>
+        </HScroll>
       )}
     </section>
   );
 }
 
-export function ProfileClubsList({
-  clubs,
-  clubCount,
+function MembershipList({
+  title,
+  empty,
+  items,
+  compact,
   onSeeAll,
-  compact = false,
 }: {
-  clubs: ProfileClubPreview[];
-  clubCount: number;
-  onSeeAll?: () => void;
+  title: string;
+  empty: string;
+  items: ProfileClubPreview[];
   compact?: boolean;
+  onSeeAll?: () => void;
 }) {
-  const list = compact ? clubs.slice(0, 4) : clubs;
+  const list = compact ? items.slice(0, 4) : items;
 
   return (
     <section>
       <div className="flex items-center justify-between gap-3">
-        <p className="profile-section-label">Clubes que participa</p>
-        {onSeeAll && clubCount > list.length && (
+        <p className="profile-section-label">{title}</p>
+        {onSeeAll && items.length > list.length && (
           <button
             type="button"
             onClick={onSeeAll}
@@ -168,25 +171,25 @@ export function ProfileClubsList({
         )}
       </div>
       {list.length === 0 ? (
-        <p className="mt-4 text-sm text-[var(--toq-profile-muted)]">Ainda não participa de clubes.</p>
+        <p className="mt-4 text-sm text-[var(--toq-profile-muted)]">{empty}</p>
       ) : (
         <ul className="mt-4 space-y-2">
-          {list.map((club) => (
-            <li key={club.community_id}>
-              <Link href={groupDetailHref(club.kind, club.slug)} className="profile-club-row">
-                {club.cover_image_url ? (
+          {list.map((item) => (
+            <li key={item.community_id}>
+              <Link href={groupDetailHref(item.kind, item.slug)} className="profile-club-row">
+                {item.cover_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={club.cover_image_url} alt="" className="profile-club-row-cover" />
+                  <img src={item.cover_image_url} alt="" className="profile-club-row-cover" />
                 ) : (
-                  <span className="profile-club-row-fallback">{club.name.charAt(0)}</span>
+                  <span className="profile-club-row-fallback">{item.name.charAt(0)}</span>
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold text-[var(--toq-profile-navy)]">
-                    {club.name}
+                    {item.name}
                   </span>
-                  {club.joined_at && (
+                  {item.joined_at && (
                     <span className="block text-xs text-[var(--toq-profile-muted)]">
-                      Membro desde {formatMemberSince(club.joined_at)}
+                      Membro desde {formatMemberSince(item.joined_at)}
                     </span>
                   )}
                 </span>
@@ -199,6 +202,39 @@ export function ProfileClubsList({
         </ul>
       )}
     </section>
+  );
+}
+
+export function ProfileClubsList({
+  clubs,
+  onSeeAll,
+  compact = false,
+}: {
+  clubs: ProfileClubPreview[];
+  clubCount?: number;
+  onSeeAll?: () => void;
+  compact?: boolean;
+}) {
+  const clubItems = clubs.filter((item) => item.kind === "club");
+  const communityItems = clubs.filter((item) => item.kind === "community");
+
+  return (
+    <div className="space-y-8">
+      <MembershipList
+        title="Clubes que participa"
+        empty="Ainda não participa de clubes."
+        items={clubItems}
+        compact={compact}
+        onSeeAll={onSeeAll}
+      />
+      <MembershipList
+        title="Comunidades"
+        empty="Ainda não participa de comunidades."
+        items={communityItems}
+        compact={compact}
+        onSeeAll={onSeeAll}
+      />
+    </div>
   );
 }
 

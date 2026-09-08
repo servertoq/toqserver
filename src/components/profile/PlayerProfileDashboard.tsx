@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { HScroll } from "@/components/shared/HScroll";
 import type {
   DominantHand,
   ExperienceBand,
@@ -279,7 +280,7 @@ export function PlayerProfileDashboard({
         </div>
 
         <nav className="profile-tabs-bar" aria-label="Seções do perfil">
-          <div className="profile-tabs-scroll">
+          <HScroll innerClassName="profile-tabs-scroll">
             {navTabs.map((item) => (
               <button
                 key={item.id}
@@ -291,7 +292,7 @@ export function PlayerProfileDashboard({
                 {item.label}
               </button>
             ))}
-          </div>
+          </HScroll>
         </nav>
 
         <div className="profile-main">

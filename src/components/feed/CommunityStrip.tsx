@@ -1,4 +1,5 @@
 ﻿import type { FeedCommunity } from "@/types/feed";
+import { HScroll } from "@/components/shared/HScroll";
 
 export function CommunityStrip({ communities }: { communities: FeedCommunity[] }) {
   if (communities.length === 0) return null;
@@ -6,7 +7,7 @@ export function CommunityStrip({ communities }: { communities: FeedCommunity[] }
   return (
     <section className="mb-6">
       <h2 className="mb-3 text-sm font-bold text-[var(--toq-navy)]">Comunidades</h2>
-      <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <HScroll innerClassName="flex gap-3 pb-1">
         {communities.map((c) => (
           <article
             key={c.id}
@@ -22,7 +23,7 @@ export function CommunityStrip({ communities }: { communities: FeedCommunity[] }
             </p>
           </article>
         ))}
-      </div>
+      </HScroll>
     </section>
   );
 }

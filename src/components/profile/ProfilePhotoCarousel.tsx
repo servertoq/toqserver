@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 type Props = {
   urls: string[];
@@ -10,11 +11,18 @@ type Props = {
 
 export function ProfilePhotoCarousel({ urls, name, onEdit }: Props) {
   const [index, setIndex] = useState(0);
+  const [lightbox, setLightbox] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const urlsKey = urls.join("|");
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     setIndex(0);
+    setLightbox(false);
   }, [urlsKey]);
 
   const count = urls.length;
@@ -39,6 +47,17 @@ export function ProfilePhotoCarousel({ urls, name, onEdit }: Props) {
     go(safeIndex + (delta > 0 ? 1 : -1));
   }
 
+  useEffect(() => {
+    if (!lightbox) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setLightbox(false);
+      if (e.key === "ArrowLeft") go(safeIndex - 1);
+      if (e.key === "ArrowRight") go(safeIndex + 1);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightbox, safeIndex, count]);
+
   if (count === 0) {
     const initial = name.charAt(0).toUpperCase() || "?";
     return (
@@ -57,6 +76,8 @@ export function ProfilePhotoCarousel({ urls, name, onEdit }: Props) {
     );
   }
 
+  const activeUrl = urls[safeIndex];
+
   return (
     <div
       className="profile-photo-carousel"
@@ -74,9 +95,15 @@ export function ProfilePhotoCarousel({ urls, name, onEdit }: Props) {
               type="button"
               className={`profile-photo-slide ${state}`}
               onClick={() => {
-                if (offset !== 0) go(i);
+                if (offset !== 0) {
+                  go(i);
+                  return;
+                }
+                setLightbox(true);
               }}
-              aria-label={offset === 0 ? `Foto ${i + 1} de ${count}` : `Ver foto ${i + 1}`}
+              aria-label={
+                offset === 0 ? `Ver foto ${i + 1} em tamanho real` : `Ver foto ${i + 1}`
+              }
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={url} alt="" draggable={false} />
@@ -123,6 +150,54 @@ export function ProfilePhotoCarousel({ urls, name, onEdit }: Props) {
           Editar fotos
         </button>
       )}
+
+      {mounted &&
+        lightbox &&
+        createPortal(
+          <div
+            className="profile-photo-lightbox"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Foto em tamanho real"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) setLightbox(false);
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={activeUrl} alt="" className="profile-photo-lightbox-img" />
+            {count > 1 && (
+              <>
+                <button
+                  type="button"
+                  className="profile-photo-lightbox-nav profile-photo-lightbox-nav--prev"
+                  aria-label="Foto anterior"
+                  onClick={() => go(safeIndex - 1)}
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  className="profile-photo-lightbox-nav profile-photo-lightbox-nav--next"
+                  aria-label="Próxima foto"
+                  onClick={() => go(safeIndex + 1)}
+                >
+                  ›
+                </button>
+              </>
+            )}
+            <p className="profile-photo-lightbox-count">
+              {safeIndex + 1}/{count}
+            </p>
+            <button
+              type="button"
+              className="profile-photo-lightbox-close"
+              onClick={() => setLightbox(false)}
+            >
+              Fechar
+            </button>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

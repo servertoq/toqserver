@@ -8,7 +8,7 @@ import { formatFriendRequestError } from "@/lib/friendRequest";
 import { fetchFriendSuggestions, type FriendSuggestion } from "@/lib/friendSuggestions";
 import { profileDisplayName } from "@/lib/profile";
 import { profilePath } from "@/lib/publicProfile";
-import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { HScroll } from "@/components/shared/HScroll";
 
 const RAIL_PAGE_SIZE = 4;
 const CAROUSEL_SIZE = 8;
@@ -114,7 +114,7 @@ export function FeedFriendSuggestions({ variant = "rail", className = "" }: Prop
             : "Faça login para ver sugestões."}
         </p>
       ) : variant === "carousel" ? (
-        <div className="feed-suggestions-carousel-track" role="list">
+        <HScroll innerClassName="feed-suggestions-carousel-track" innerRole="list">
           {suggestions.map((item) => {
             const name = profileDisplayName(item);
             const sent = sentIds.has(item.profile_id);
@@ -142,7 +142,7 @@ export function FeedFriendSuggestions({ variant = "rail", className = "" }: Prop
               </article>
             );
           })}
-        </div>
+        </HScroll>
       ) : (
         <ul className="feed-friend-suggestions-list">
           {suggestions.map((item) => {

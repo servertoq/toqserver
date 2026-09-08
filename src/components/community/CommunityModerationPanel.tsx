@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { UsernameSearchInput } from "@/components/shared/UsernameSearchInput";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { HScroll } from "@/components/shared/HScroll";
 import { canExpelMember, canModerate, memberCargoLabels, sortMembers } from "@/lib/community";
 import type { CommunityGroupKind, CommunityInvite, CommunityJoinRequest, CommunityMember, CommunityMemberRole } from "@/types/community";
 
@@ -237,7 +237,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
   return (
     <section className="mb-6 toq-card p-4">
       <h2 className="text-sm font-bold text-[var(--toq-navy)]">Moderação</h2>
-      <div className="mt-3 flex flex-nowrap gap-1.5 overflow-x-auto">
+      <HScroll innerClassName="mt-3 flex flex-nowrap gap-1.5">
         <button
           type="button"
           onClick={() => setTab("requests")}
@@ -271,7 +271,7 @@ export function CommunityModerationPanel({ communityId, groupKind, myRole, onCha
         >
           Membros ({members.length})
         </button>
-      </div>
+      </HScroll>
 
       {loading ? (
         <p className="mt-4 text-xs text-[var(--toq-text-muted)]">Carregando…</p>
