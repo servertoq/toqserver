@@ -5,7 +5,15 @@ import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile, useUpdateAppProfile } from "@/components/app/AppShell";
 import { appContentClass } from "@/lib/layout";
-import type { GenderType, PlayerLevelType } from "@/lib/profile";
+import type {
+  DominantHand,
+  ExperienceBand,
+  FavoriteCourt,
+  GenderType,
+  PlayFrequency,
+  PlayerLevelType,
+  PlayStyle,
+} from "@/lib/profile";
 import { FriendsPanel } from "@/components/profile/FriendsPanel";
 import type { EditableProfile } from "@/components/profile/ProfileEditForm";
 import { ProfileSupportForm } from "@/components/profile/ProfileSupportForm";
@@ -16,8 +24,10 @@ import {
 import { addressFromRow } from "@/lib/address";
 import { fetchCoachListingsForPosts, mapPostRow } from "@/lib/feed";
 import { POST_SELECT } from "@/lib/posts";
+import { fetchProfilePhotos } from "@/lib/profilePhotos";
 import { enrichPostsWithStaffRoles } from "@/lib/staff";
 import type { FeedPost } from "@/types/feed";
+import type { ProfileClubPreview, ProfileFriendPreview, ProfilePhoto } from "@/types/profile";
 
 function resolveInitialTab(tab: string | null): ProfileTab | undefined {
   if (tab === "agenda") return "agenda";
@@ -35,13 +45,16 @@ function PerfilPageContent() {
   const [friendCount, setFriendCount] = useState(0);
   const [clubCount, setClubCount] = useState(0);
   const [postCount, setPostCount] = useState(0);
+  const [photos, setPhotos] = useState<ProfilePhoto[]>([]);
+  const [friendsPreview, setFriendsPreview] = useState<ProfileFriendPreview[]>([]);
+  const [clubs, setClubs] = useState<ProfileClubPreview[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     const { data } = await supabase
       .from("profiles")
       .select(
-        "id, username, display_name, email, avatar_url, birth_date, gender, bio, player_level, created_at, plan, show_plan_badge, address_zip, address_street, address_number, address_neighborhood, address_complement, address_city, address_state"
+        "id, username, display_name, email, avatar_url, birth_date, gender, bio, player_level, created_at, plan, show_plan_badge, address_zip, address_street, address_number, address_neighborhood, address_complement, address_city, address_state, dominant_hand, experience_band, play_frequency, play_style, favorite_court"
       )
       .eq("id", appProfile.id)
       .single();
@@ -57,18 +70,48 @@ function PerfilPageContent() {
         plan: (data.plan as EditableProfile["plan"]) ?? "free",
         show_plan_badge: data.show_plan_badge ?? true,
         address: addressFromRow(data),
+        dominant_hand: (data.dominant_hand as DominantHand | null) ?? null,
+        experience_band: (data.experience_band as ExperienceBand | null) ?? null,
+        play_frequency: (data.play_frequency as PlayFrequency | null) ?? null,
+        play_style: (data.play_style as PlayStyle | null) ?? null,
+        favorite_court: (data.favorite_court as FavoriteCourt | null) ?? null,
       });
     } else {
       setProfile(null);
     }
 
-    const { data: stats } = await supabase.rpc("get_profile_public_stats", {
-      p_profile_id: appProfile.id,
-    });
+    const [{ data: stats }, profilePhotos, { data: friendRows }, { data: clubRows }] =
+      await Promise.all([
+        supabase.rpc("get_profile_public_stats", { p_profile_id: appProfile.id }),
+        fetchProfilePhotos(supabase, appProfile.id).catch(() => [] as ProfilePhoto[]),
+        supabase.rpc("get_profile_friends_preview", {
+          p_profile_id: appProfile.id,
+          p_limit: 8,
+        }),
+        supabase.rpc("get_profile_clubs", { p_profile_id: appProfile.id }),
+      ]);
     const stat = Array.isArray(stats) ? stats[0] : stats;
     setFriendCount(Number(stat?.friend_count ?? 0));
     setClubCount(Number(stat?.club_count ?? 0));
     setPostCount(Number(stat?.post_count ?? 0));
+    setPhotos(profilePhotos);
+    setFriendsPreview(
+      (Array.isArray(friendRows) ? friendRows : []).map((row) => ({
+        friend_id: String(row.friend_id),
+        username: String(row.username),
+        avatar_url: row.avatar_url ?? null,
+      }))
+    );
+    setClubs(
+      (Array.isArray(clubRows) ? clubRows : []).map((row) => ({
+        community_id: String(row.community_id),
+        name: String(row.name),
+        slug: String(row.slug),
+        cover_image_url: row.cover_image_url ?? null,
+        kind: row.kind === "community" ? "community" : "club",
+        joined_at: row.joined_at ?? null,
+      }))
+    );
 
     const { data: rawPosts } = await supabase
       .from("posts")
@@ -156,6 +199,7 @@ function PerfilPageContent() {
             username={profile.username}
             displayName={profile.display_name}
             avatarUrl={profile.avatar_url}
+            photos={photos}
             bio={profile.bio}
             birthDate={profile.birth_date}
             gender={profile.gender}
@@ -167,6 +211,13 @@ function PerfilPageContent() {
             address={profile.address}
             plan={profile.plan}
             staffRole={appProfile.staffRole}
+            dominantHand={profile.dominant_hand}
+            experienceBand={profile.experience_band}
+            playFrequency={profile.play_frequency}
+            playStyle={profile.play_style}
+            favoriteCourt={profile.favorite_court}
+            friendsPreview={friendsPreview}
+            clubs={clubs}
             posts={posts}
             currentUserId={appProfile.id}
             isOwnProfile
@@ -176,6 +227,11 @@ function PerfilPageContent() {
             supportForm={<ProfileSupportForm userId={appProfile.id} />}
             onResumoSaved={load}
             onAvatarUpdated={(url) => {
+              setProfile((current) => (current ? { ...current, avatar_url: url } : current));
+              updateAppProfile({ avatar_url: url });
+            }}
+            onPhotosUpdated={(nextPhotos, url) => {
+              setPhotos(nextPhotos);
               setProfile((current) => (current ? { ...current, avatar_url: url } : current));
               updateAppProfile({ avatar_url: url });
             }}

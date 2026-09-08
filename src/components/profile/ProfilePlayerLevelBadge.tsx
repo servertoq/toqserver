@@ -7,10 +7,10 @@ type Props = {
 };
 
 const LEVEL_STYLES: Record<PlayerLevelType, string> = {
-  iniciante: "bg-[var(--toq-profile-accent-soft)] text-[var(--toq-profile-accent)]",
-  intermediario: "bg-sky-500/15 text-sky-700",
-  avancado: "bg-violet-500/15 text-violet-700",
-  profissional: "bg-amber-500/15 text-amber-700",
+  iniciante: "border-[var(--toq-profile-accent)] text-[var(--toq-profile-accent)]",
+  intermediario: "border-sky-500 text-sky-700",
+  avancado: "border-violet-500 text-violet-700",
+  profissional: "border-amber-500 text-amber-700",
 };
 
 export function ProfilePlayerLevelBadge({ level, className = "" }: Props) {
@@ -19,7 +19,7 @@ export function ProfilePlayerLevelBadge({ level, className = "" }: Props) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${LEVEL_STYLES[level]} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${LEVEL_STYLES[level]} ${className}`}
       aria-label={`Nível: ${label}`}
     >
       {isPro ? (

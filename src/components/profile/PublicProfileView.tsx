@@ -7,11 +7,20 @@ import { fetchCoachListingsForPosts, mapPostRow } from "@/lib/feed";
 import { enrichPostsWithStaffRoles } from "@/lib/staff";
 import { addressFromRow } from "@/lib/address";
 import { POST_SELECT } from "@/lib/posts";
-import type { GenderType, PlayerLevelType } from "@/lib/profile";
+import type {
+  DominantHand,
+  ExperienceBand,
+  FavoriteCourt,
+  GenderType,
+  PlayFrequency,
+  PlayerLevelType,
+  PlayStyle,
+} from "@/lib/profile";
 import type { UserPlan } from "@/types/plans";
 import type { StaffRole } from "@/types/staff";
 import type { FeedPost } from "@/types/feed";
-import type { PublicProfile } from "@/types/profile";
+import type { ProfileClubPreview, ProfileFriendPreview, ProfilePhoto, PublicProfile } from "@/types/profile";
+import { fetchProfilePhotos } from "@/lib/profilePhotos";
 import { useAppProfile } from "@/components/app/AppShell";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
 import { PlayerProfileDashboard } from "@/components/profile/PlayerProfileDashboard";
@@ -25,6 +34,9 @@ export function PublicProfileView({ username }: Props) {
   const viewer = useAppProfile();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [photos, setPhotos] = useState<ProfilePhoto[]>([]);
+  const [friendsPreview, setFriendsPreview] = useState<ProfileFriendPreview[]>([]);
+  const [clubs, setClubs] = useState<ProfileClubPreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isOwnProfile = profile?.id === viewer.id;
@@ -46,15 +58,38 @@ export function PublicProfileView({ username }: Props) {
       return;
     }
 
-    const { data: stats } = await supabase.rpc("get_profile_public_stats", {
-      p_profile_id: row.id,
-    });
-
-    const { data: staffRole } = await supabase.rpc("get_staff_role", {
-      p_user_id: row.id,
-    });
+    const [{ data: stats }, { data: staffRole }, profilePhotos, { data: friendRows }, { data: clubRows }] =
+      await Promise.all([
+        supabase.rpc("get_profile_public_stats", { p_profile_id: row.id }),
+        supabase.rpc("get_staff_role", { p_user_id: row.id }),
+        fetchProfilePhotos(supabase, row.id).catch(() => [] as ProfilePhoto[]),
+        supabase.rpc("get_profile_friends_preview", {
+          p_profile_id: row.id,
+          p_limit: 8,
+        }),
+        supabase.rpc("get_profile_clubs", { p_profile_id: row.id }),
+      ]);
 
     const stat = Array.isArray(stats) ? stats[0] : stats;
+
+    setPhotos(profilePhotos);
+    setFriendsPreview(
+      (Array.isArray(friendRows) ? friendRows : []).map((friend) => ({
+        friend_id: String(friend.friend_id),
+        username: String(friend.username),
+        avatar_url: friend.avatar_url ?? null,
+      }))
+    );
+    setClubs(
+      (Array.isArray(clubRows) ? clubRows : []).map((club) => ({
+        community_id: String(club.community_id),
+        name: String(club.name),
+        slug: String(club.slug),
+        cover_image_url: club.cover_image_url ?? null,
+        kind: club.kind === "community" ? "community" : "club",
+        joined_at: club.joined_at ?? null,
+      }))
+    );
 
     setProfile({
       id: row.id,
@@ -73,6 +108,11 @@ export function PublicProfileView({ username }: Props) {
       club_count: Number(stat?.club_count ?? 0),
       last_seen_at: row.last_seen_at ?? null,
       address: addressFromRow(row),
+      dominant_hand: (row.dominant_hand as DominantHand | null) ?? null,
+      experience_band: (row.experience_band as ExperienceBand | null) ?? null,
+      play_frequency: (row.play_frequency as PlayFrequency | null) ?? null,
+      play_style: (row.play_style as PlayStyle | null) ?? null,
+      favorite_court: (row.favorite_court as FavoriteCourt | null) ?? null,
     });
 
     const { data: rawPosts, error: postsErr } = await supabase
@@ -171,6 +211,7 @@ export function PublicProfileView({ username }: Props) {
             username={profile.username}
             displayName={profile.display_name}
             avatarUrl={profile.avatar_url}
+            photos={photos}
             bio={profile.bio}
             birthDate={profile.birth_date}
             gender={profile.gender}
@@ -183,6 +224,13 @@ export function PublicProfileView({ username }: Props) {
             address={profile.address}
             plan={profile.plan}
             staffRole={profile.staff_role}
+            dominantHand={profile.dominant_hand}
+            experienceBand={profile.experience_band}
+            playFrequency={profile.play_frequency}
+            playStyle={profile.play_style}
+            favoriteCourt={profile.favorite_court}
+            friendsPreview={friendsPreview}
+            clubs={clubs}
             posts={posts}
             currentUserId={viewer.id}
             isOwnProfile={isOwnProfile}

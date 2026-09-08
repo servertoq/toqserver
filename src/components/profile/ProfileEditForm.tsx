@@ -8,8 +8,13 @@ import {
   PROFILE_BIO_MAX_LENGTH,
   profileDisplayName,
   validateDisplayName,
+  type DominantHand,
+  type ExperienceBand,
+  type FavoriteCourt,
   type GenderType,
+  type PlayFrequency,
   type PlayerLevelType,
+  type PlayStyle,
 } from "@/lib/profile";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import { type AddressFields, EMPTY_ADDRESS, profileLocationToDbPayload } from "@/lib/address";
@@ -33,6 +38,11 @@ export type EditableProfile = {
   address: AddressFields;
   plan: UserPlan;
   show_plan_badge: boolean;
+  dominant_hand: DominantHand | null;
+  experience_band: ExperienceBand | null;
+  play_frequency: PlayFrequency | null;
+  play_style: PlayStyle | null;
+  favorite_court: FavoriteCourt | null;
 };
 
 type Props = {

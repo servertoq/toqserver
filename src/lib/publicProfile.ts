@@ -22,3 +22,10 @@ export function formatAge(birthDate: string) {
 export function profilePath(username: string) {
   return `/inicio/jogador/${encodeURIComponent(username)}`;
 }
+
+export function formatProfileLocation(city?: string | null, state?: string | null) {
+  const c = city?.trim() ?? "";
+  const s = state?.trim().toUpperCase() ?? "";
+  if (c && s) return `${c} — ${s}`;
+  return c || s || "";
+}
