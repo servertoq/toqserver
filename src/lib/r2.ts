@@ -98,6 +98,23 @@ export async function createR2PresignedPut(opts: {
   };
 }
 
+export async function putR2Object(opts: {
+  key: string;
+  body: Buffer | Uint8Array;
+  contentType: string;
+}) {
+  const cfg = getR2Config();
+  const client = getR2Client();
+  await client.send(
+    new PutObjectCommand({
+      Bucket: cfg.bucket,
+      Key: opts.key,
+      Body: opts.body,
+      ContentType: opts.contentType,
+    })
+  );
+}
+
 export async function deleteR2Object(key: string) {
   const cfg = getR2Config();
   const client = getR2Client();

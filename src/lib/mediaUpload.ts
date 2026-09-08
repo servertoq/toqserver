@@ -158,14 +158,38 @@ export type UploadMediaResult = {
   contentType: string;
 };
 
-/**
- * Comprime (imagens) e envia direto ao R2 via URL pré-assinada (baixa memória no servidor).
- */
-export async function uploadMediaToR2(
-  file: File,
+async function uploadImageViaServer(
+  prepared: File,
   opts: { folder: MediaFolder; pathPrefix: string }
 ): Promise<UploadMediaResult> {
-  const prepared = await prepareMediaFile(file);
+  const form = new FormData();
+  form.append("file", prepared);
+  form.append("folder", opts.folder);
+  form.append("pathPrefix", opts.pathPrefix);
+
+  const res = await fetch("/api/media/upload", { method: "POST", body: form });
+  const data = (await res.json()) as {
+    publicUrl?: string;
+    key?: string;
+    contentType?: string;
+    error?: string;
+  };
+
+  if (!res.ok || !data.publicUrl || !data.key) {
+    throw new Error(data.error || "Não foi possível enviar a imagem.");
+  }
+
+  return {
+    publicUrl: `${data.publicUrl}?t=${Date.now()}`,
+    key: data.key,
+    contentType: data.contentType || prepared.type,
+  };
+}
+
+async function uploadViaPresignedUrl(
+  prepared: File,
+  opts: { folder: MediaFolder; pathPrefix: string }
+): Promise<UploadMediaResult> {
   const ext = mediaExtension(prepared);
 
   const presignRes = await fetch("/api/media/presign", {
@@ -218,6 +242,23 @@ export async function uploadMediaToR2(
     key: presign.key,
     contentType: prepared.type,
   };
+}
+
+/**
+ * Imagens: envia via API (same-origin, sem CORS).
+ * Vídeos: URL pré-assinada direto no R2.
+ */
+export async function uploadMediaToR2(
+  file: File,
+  opts: { folder: MediaFolder; pathPrefix: string }
+): Promise<UploadMediaResult> {
+  const prepared = await prepareMediaFile(file);
+
+  if (prepared.type.startsWith("image/")) {
+    return uploadImageViaServer(prepared, opts);
+  }
+
+  return uploadViaPresignedUrl(prepared, opts);
 }
 
 export async function deleteMediaFromR2(publicUrl: string): Promise<void> {
