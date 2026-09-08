@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { UsernameSearchInput } from "@/components/shared/UsernameSearchInput";
 import { HScroll } from "@/components/shared/HScroll";
 import { canExpelMember, canModerate, memberCargoLabels, sortMembers } from "@/lib/community";
