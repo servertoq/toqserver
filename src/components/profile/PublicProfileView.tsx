@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { fetchCoachListingsForPosts, mapPostRow } from "@/lib/feed";
+import { fetchCoachListingsForPosts, fetchMatchResultsForPosts, mapPostRow } from "@/lib/feed";
 import { enrichPostsWithStaffRoles } from "@/lib/staff";
 import { addressFromRow } from "@/lib/address";
 import { POST_SELECT } from "@/lib/posts";
@@ -150,6 +150,7 @@ export function PublicProfileView({ username }: Props) {
       }
 
       const coachListingsByPostId = await fetchCoachListingsForPosts(supabase, postIds);
+      const matchResultsByPostId = await fetchMatchResultsForPosts(supabase, postIds);
 
       setPosts(
         await enrichPostsWithStaffRoles(
@@ -161,7 +162,9 @@ export function PublicProfileView({ username }: Props) {
               commentsByPost[p.id] ?? 0,
               likedSet.has(p.id),
               new Set(coachListingsByPostId.keys()),
-              coachListingsByPostId
+              coachListingsByPostId,
+              undefined,
+              matchResultsByPostId
             )
           )
         )

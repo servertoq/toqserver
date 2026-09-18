@@ -59,12 +59,16 @@ function IconMessages({ active }: { active: boolean }) {
   );
 }
 
-function IconSearch({ active }: { active: boolean }) {
+function IconMatches({ active }: { active: boolean }) {
   return (
     <TabIcon>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.25 : 1.75}>
-        <circle cx="11" cy="11" r="7" />
-        <path strokeLinecap="round" d="M20 20l-3-3" />
+        <circle cx="12" cy="12" r="9" />
+        <path strokeLinecap="round" d="M12 3v18M3 12h18" />
+        <path
+          strokeLinecap="round"
+          d="M5.6 5.6c2.2 1.8 4.4 2.7 6.4 2.7s4.2-.9 6.4-2.7M5.6 18.4c2.2-1.8 4.4-2.7 6.4-2.7s4.2.9 6.4 2.7"
+        />
       </svg>
     </TabIcon>
   );
@@ -84,17 +88,17 @@ const TABS: TabItem[] = [
     match: (path) => path.startsWith("/inicio/clubes"),
   },
   {
+    href: "/inicio/partidas",
+    label: "Partidas",
+    icon: (active) => <IconMatches active={active} />,
+    match: (path) => path.startsWith("/inicio/partidas"),
+  },
+  {
     href: "/inicio/mensagens",
     label: "Conversas",
     icon: (active) => <IconMessages active={active} />,
     match: (path) =>
       path.startsWith("/inicio/mensagens") || path.startsWith("/inicio/conversar"),
-  },
-  {
-    href: "/inicio/buscar",
-    label: "Buscar",
-    icon: (active) => <IconSearch active={active} />,
-    match: (path) => path.startsWith("/inicio/buscar"),
   },
 ];
 

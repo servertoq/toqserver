@@ -68,6 +68,12 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
       : ""
   );
   const [shopEnabled, setShopEnabled] = useState(community.shop_enabled ?? false);
+  const [dayUseAllowOutsiders, setDayUseAllowOutsiders] = useState(
+    community.day_use_allow_outsiders ?? true
+  );
+  const [dayUsePrice, setDayUsePrice] = useState(
+    String(community.day_use_price ?? 0)
+  );
   const [shopWhatsapp, setShopWhatsapp] = useState(community.shop_whatsapp ?? "");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -157,6 +163,12 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
         payload.operating_hours = operatingHoursToJson(hours);
         payload.shop_enabled = shopEnabled;
         payload.shop_whatsapp = shopWhatsapp.trim() || null;
+        payload.day_use_allow_outsiders = dayUseAllowOutsiders;
+        const priceNum = Number(String(dayUsePrice).replace(",", "."));
+        payload.day_use_price =
+          dayUseAllowOutsiders && Number.isFinite(priceNum) && priceNum >= 0
+            ? Math.round(priceNum * 100) / 100
+            : 0;
         payload.instagram_url = contact.value.instagram_url;
         payload.contact_whatsapp = contact.value.contact_whatsapp;
       } else if (!isClub) {
@@ -303,6 +315,42 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
                     className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
                   />
                 </label>
+              </div>
+              <div className="space-y-3 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={dayUseAllowOutsiders}
+                    onChange={(e) => setDayUseAllowOutsiders(e.target.checked)}
+                    className="mt-1"
+                  />
+                  <span>
+                    <span className="text-sm font-semibold text-[var(--toq-navy)]">
+                      Permitir Day Use (não-membros)
+                    </span>
+                    <span className="block text-xs text-[var(--toq-text-muted)]">
+                      Se desligado, partidas do clube só aparecem e podem ser pedidas por
+                      membros.
+                    </span>
+                  </span>
+                </label>
+                {dayUseAllowOutsiders && (
+                  <label className="block">
+                    <span className="text-xs font-semibold text-[var(--toq-navy)]">
+                      Valor do Day Use (R$)
+                    </span>
+                    <input
+                      value={dayUsePrice}
+                      onChange={(e) => setDayUsePrice(e.target.value)}
+                      inputMode="decimal"
+                      placeholder="0 = gratuito"
+                      className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
+                    />
+                    <span className="mt-1 block text-[11px] text-[var(--toq-text-muted)]">
+                      Cobrado na confirmação de participação (pode ser 0).
+                    </span>
+                  </label>
+                )}
               </div>
               <div className="space-y-3 rounded-xl border border-[var(--toq-border)] bg-[var(--toq-surface)] p-4">
                 <label className="flex cursor-pointer items-start gap-3">

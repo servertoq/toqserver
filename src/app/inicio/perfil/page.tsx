@@ -22,7 +22,7 @@ import {
   type ProfileTab,
 } from "@/components/profile/PlayerProfileDashboard";
 import { addressFromRow } from "@/lib/address";
-import { fetchCoachListingsForPosts, mapPostRow } from "@/lib/feed";
+import { fetchCoachListingsForPosts, fetchMatchResultsForPosts, mapPostRow } from "@/lib/feed";
 import { POST_SELECT } from "@/lib/posts";
 import { fetchProfilePhotos } from "@/lib/profilePhotos";
 import { enrichPostsWithStaffRoles } from "@/lib/staff";
@@ -148,6 +148,7 @@ function PerfilPageContent() {
       }
 
       const coachListingsByPostId = await fetchCoachListingsForPosts(supabase, postIds);
+      const matchResultsByPostId = await fetchMatchResultsForPosts(supabase, postIds);
 
       setPosts(
         await enrichPostsWithStaffRoles(
@@ -159,7 +160,9 @@ function PerfilPageContent() {
               commentsByPost[p.id] ?? 0,
               likedSet.has(p.id),
               new Set(coachListingsByPostId.keys()),
-              coachListingsByPostId
+              coachListingsByPostId,
+              undefined,
+              matchResultsByPostId
             )
           )
         )

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { mapPostRow } from "@/lib/feed";
+import { mapPostRow, fetchMatchResultsForPosts } from "@/lib/feed";
 import { enrichPostsWithStaffRoles } from "@/lib/staff";
 import {
   canModerate,
@@ -190,6 +190,8 @@ export function CommunityDetailPage({
           }
         }
 
+        const matchResultsByPostId = await fetchMatchResultsForPosts(supabase, postIds);
+
         setPosts(
           await enrichPostsWithStaffRoles(
             supabase,
@@ -198,7 +200,11 @@ export function CommunityDetailPage({
                 row,
                 likesByPost[row.id] ?? 0,
                 commentsByPost[row.id] ?? 0,
-                likedSet.has(row.id)
+                likedSet.has(row.id),
+                undefined,
+                undefined,
+                undefined,
+                matchResultsByPostId
               )
             )
           )

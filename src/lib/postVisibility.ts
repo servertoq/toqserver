@@ -40,6 +40,7 @@ export function visibilityBadgeLabel(
   visibility: PostVisibility,
   inCommunity: boolean
 ): string | null {
+  if (visibility === "participants") return "Só jogadores";
   if (inCommunity && visibility === "public") return "Também no feed geral";
   if (!inCommunity && visibility === "private") return "Privado · amigos";
   if (inCommunity && visibility === "private") return "Só membros";

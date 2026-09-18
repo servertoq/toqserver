@@ -128,6 +128,18 @@ function IconTournaments({ active }: { active: boolean }) {
   );
 }
 
+function IconMatches({ active }: { active: boolean }) {
+  return (
+    <NavIcon>
+      <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} aria-hidden>
+        <circle cx="12" cy="12" r="9" />
+        <path strokeLinecap="round" d="M12 3v18M3 12h18" />
+        <path strokeLinecap="round" d="M5.6 5.6c2.2 1.8 4.4 2.7 6.4 2.7s4.2-.9 6.4-2.7M5.6 18.4c2.2-1.8 4.4-2.7 6.4-2.7s4.2.9 6.4 2.7" />
+      </svg>
+    </NavIcon>
+  );
+}
+
 function IconClub({ active }: { active: boolean }) {
   return (
     <NavIcon>
@@ -215,6 +227,12 @@ const NAV_ITEMS: NavItem[] = [
     label: "Clubes",
     icon: (active) => <IconClub active={active} />,
     match: (path) => path.startsWith("/inicio/clubes"),
+  },
+  {
+    href: "/inicio/partidas",
+    label: "Partidas",
+    icon: (active) => <IconMatches active={active} />,
+    match: (path) => path.startsWith("/inicio/partidas"),
   },
   {
     href: "/inicio/quadras",

@@ -27,6 +27,7 @@ const NOTIFICATION_SELECT = `
   support_ticket_id,
   coach_lesson_id,
   club_court_booking_id,
+  open_match_id,
   actor:profiles!notifications_actor_id_fkey(id, username, avatar_url),
   community:communities(id, name, slug, kind)
 `;
@@ -222,6 +223,16 @@ export function NotificationsBell({ compact = false }: { compact?: boolean }) {
     setActingId(null);
   }
 
+  async function respondOpenMatchInvite(matchId: string, accept: boolean) {
+    setActingId(matchId);
+    await supabase.rpc("respond_open_match_invite", {
+      p_match_id: matchId,
+      p_accept: accept,
+    });
+    await load();
+    setActingId(null);
+  }
+
   const dropdown =
     open &&
     typeof document !== "undefined" &&
@@ -264,10 +275,16 @@ export function NotificationsBell({ compact = false }: { compact?: boolean }) {
                 n.type === "community_join_request" && n.join_request_id && unread;
               const showInviteActions =
                 n.type === "community_invite" && n.community_invite_id && unread;
+              const showOpenMatchInviteActions =
+                n.type === "open_match_invite" && n.open_match_id && unread;
               const showCommunityLink =
                 n.type === "community_join" && n.community?.slug && href;
               const hasActions =
-                showFriendActions || showJoinActions || showInviteActions || showCommunityLink;
+                showFriendActions ||
+                showJoinActions ||
+                showInviteActions ||
+                showOpenMatchInviteActions ||
+                showCommunityLink;
 
               const content = (
                 <>
@@ -384,6 +401,27 @@ export function NotificationsBell({ compact = false }: { compact?: boolean }) {
                             type="button"
                             disabled={actingId === n.community_invite_id}
                             onClick={() => respondInvite(n.community_invite_id!, false)}
+                            className="rounded-lg toq-btn-outline px-3 py-1.5 text-[11px] font-semibold disabled:opacity-50"
+                          >
+                            Recusar
+                          </button>
+                        </>
+                      )}
+
+                      {showOpenMatchInviteActions && (
+                        <>
+                          <button
+                            type="button"
+                            disabled={actingId === n.open_match_id}
+                            onClick={() => respondOpenMatchInvite(n.open_match_id!, true)}
+                            className="rounded-lg toq-btn-primary px-3 py-1.5 text-[11px] font-bold text-white disabled:opacity-50"
+                          >
+                            Quero participar
+                          </button>
+                          <button
+                            type="button"
+                            disabled={actingId === n.open_match_id}
+                            onClick={() => respondOpenMatchInvite(n.open_match_id!, false)}
                             className="rounded-lg toq-btn-outline px-3 py-1.5 text-[11px] font-semibold disabled:opacity-50"
                           >
                             Recusar

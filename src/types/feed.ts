@@ -1,8 +1,15 @@
 import type { FeedClubCourt } from "@/types/courtManagement";
 
-export type PostType = "player" | "event" | "poll" | "coach" | "court" | "partida";
+export type PostType =
+  | "player"
+  | "event"
+  | "poll"
+  | "coach"
+  | "court"
+  | "partida"
+  | "match_result";
 
-export type PostVisibility = "public" | "private";
+export type PostVisibility = "public" | "private" | "participants";
 
 export type PostPollOption = {
   id: string;
@@ -52,6 +59,28 @@ export type FeedCoachListing = {
   contact_whatsapp: string;
 };
 
+export type MatchResultPlayer = {
+  user_id: string;
+  team: 1 | 2;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  skill_label: string;
+};
+
+export type MatchResultPayload = {
+  result_id: string;
+  open_match_id: string;
+  format: "1v1" | "2v2" | "club";
+  team1_score: number;
+  team2_score: number;
+  share_scope: "participants" | "general";
+  community_id: string | null;
+  location_label: string;
+  played_at: string;
+  players: MatchResultPlayer[];
+};
+
 export type FeedPost = {
   id: string;
   body: string;
@@ -71,6 +100,7 @@ export type FeedPost = {
   liked_by_me: boolean;
   poll: PostPollMeta | null;
   match_capacity: number | null;
+  match_result?: MatchResultPayload | null;
   is_boosted?: boolean;
   is_coach_listing?: boolean;
   coach_listing?: FeedCoachListing | null;

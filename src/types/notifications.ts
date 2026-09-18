@@ -17,7 +17,11 @@ export type NotificationType =
   | "coach_new_enrollment"
   | "coach_lesson_scheduled"
   | "court_booking_request"
-  | "match_interest";
+  | "match_interest"
+  | "open_match_cancelled"
+  | "open_match_removed"
+  | "open_match_invite"
+  | "open_match_join_request";
 
 export type AppNotification = {
   id: string;
@@ -33,6 +37,7 @@ export type AppNotification = {
   support_ticket_id: string | null;
   coach_lesson_id: string | null;
   club_court_booking_id: string | null;
+  open_match_id: string | null;
   actor: FeedProfile;
   community: { id: string; name: string; slug: string; kind?: "community" | "club" } | null;
 };

@@ -42,6 +42,14 @@ export function notificationMessage(n: AppNotification): string {
       return `${name} solicitou agendamento de uma quadra`;
     case "match_interest":
       return `${name} tem interesse em ir na sua partida`;
+    case "open_match_cancelled":
+      return `${name} excluiu a partida`;
+    case "open_match_removed":
+      return `${name} removeu você da partida`;
+    case "open_match_invite":
+      return `${name} convidou você para uma partida — confirme se quer pedir para entrar`;
+    case "open_match_join_request":
+      return `${name} aceitou o convite e pediu para entrar na partida`;
     default:
       return "Nova notificação";
   }
@@ -75,6 +83,15 @@ export function notificationHref(n: AppNotification): string | null {
     const base = slug ? groupDetailHref(kind, slug) : "/inicio/clubes";
     if (!n.post_id) return base;
     return `${base}?post=${encodeURIComponent(n.post_id)}`;
+  }
+
+  if (
+    n.type === "open_match_cancelled" ||
+    n.type === "open_match_removed" ||
+    n.type === "open_match_invite" ||
+    n.type === "open_match_join_request"
+  ) {
+    return "/inicio/partidas";
   }
 
   if (n.type === "community_invite") {
@@ -131,6 +148,7 @@ export function mapNotificationRow(row: {
   support_ticket_id: string | null;
   coach_lesson_id: string | null;
   club_court_booking_id: string | null;
+  open_match_id?: string | null;
   actor: FeedProfile | FeedProfile[] | null;
   community:
     | { id: string; name: string; slug: string; kind?: "community" | "club" }
@@ -154,6 +172,7 @@ export function mapNotificationRow(row: {
     support_ticket_id: row.support_ticket_id ?? null,
     coach_lesson_id: row.coach_lesson_id ?? null,
     club_court_booking_id: row.club_court_booking_id ?? null,
+    open_match_id: row.open_match_id ?? null,
     actor: actor ?? { id: "", username: "?", avatar_url: null },
     community: community ?? null,
   };

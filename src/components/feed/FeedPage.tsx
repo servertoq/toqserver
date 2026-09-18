@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { fetchClubCourtsForPosts, fetchCoachListingsForPosts, mapPostRow } from "@/lib/feed";
+import { fetchClubCourtsForPosts, fetchCoachListingsForPosts, fetchMatchResultsForPosts, mapPostRow } from "@/lib/feed";
 import { enrichPostsWithStaffRoles } from "@/lib/staff";
 import type { FeedPost } from "@/types/feed";
 import type { AgendaEvent } from "@/types/agenda";
@@ -75,6 +75,7 @@ export function FeedPage() {
     const likedSet = new Set<string>();
     const coachListingsByPostId = await fetchCoachListingsForPosts(supabase, postIds);
     const clubCourtsByPostId = await fetchClubCourtsForPosts(supabase, postIds);
+    const matchResultsByPostId = await fetchMatchResultsForPosts(supabase, postIds);
 
     const [{ data: enrollRows }, { data: profileRow }] = await Promise.all([
       supabase
@@ -117,7 +118,8 @@ export function FeedPage() {
         likedSet.has(row.id),
         new Set(coachListingsByPostId.keys()),
         coachListingsByPostId,
-        clubCourtsByPostId
+        clubCourtsByPostId,
+        matchResultsByPostId
       )
     );
     const [withStaff, boosted] = await Promise.all([

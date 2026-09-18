@@ -24,6 +24,10 @@ export type Community = {
   kind: CommunityGroupKind;
   shop_enabled: boolean;
   shop_whatsapp: string | null;
+  /** Visitantes (não-membros) podem pedir Day Use em partidas do clube. */
+  day_use_allow_outsiders?: boolean;
+  /** Valor do Day Use (0 = gratuito). */
+  day_use_price?: number;
   /** Contato do clube (opcional). */
   instagram_url?: string | null;
   contact_whatsapp?: string | null;

@@ -17,7 +17,9 @@ import { PostBody } from "./PostBody";
 import { PostMediaGrid } from "./PostMediaGrid";
 import { PollBlock } from "./PollBlock";
 import { MatchInterestBlock } from "./MatchInterestBlock";
+import { MatchResultBlock } from "./MatchResultBlock";
 import { PostOwnerMenu } from "./PostOwnerMenu";
+import { MatchResultVisibilityMenu } from "./MatchResultVisibilityMenu";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { ReportButton } from "@/components/report/ReportButton";
 import { PlanBadge } from "@/components/shared/PlanBadge";
@@ -67,7 +69,15 @@ export function PostCard({
     post.author.id === post.community.created_by;
   const isCoachListingPost = !!post.coach_listing || isCoachPost;
   const isCourtListingPost = !!post.club_court || isClubCourtPost;
-  const canManage = isAuthor && onEditPost && onDeletePost && !isCoachListingPost && !isCourtListingPost;
+  const isMatchResult = post.post_type === "match_result";
+  const canManage =
+    isAuthor &&
+    onEditPost &&
+    onDeletePost &&
+    !isCoachListingPost &&
+    !isCourtListingPost &&
+    !isMatchResult;
+  const canManageMatchResult = isAuthor && isMatchResult;
 
   useEffect(() => {
     if (highlightPost && articleRef.current) {
@@ -193,7 +203,13 @@ export function PostCard({
             </p>
           )}
         </div>
-        {canManage ? (
+        {canManageMatchResult ? (
+          <MatchResultVisibilityMenu
+            postId={post.id}
+            hasClub={!!(post.match_result?.community_id || post.community_id)}
+            onDelete={onDeletePost ? () => onDeletePost(post) : undefined}
+          />
+        ) : canManage ? (
           <PostOwnerMenu
             onEdit={() => onEditPost(post)}
             onDelete={() => onDeletePost(post)}
@@ -212,10 +228,16 @@ export function PostCard({
       </header>
 
       <div className={fullBleed ? "post-card__body px-4 pb-3" : undefined}>
-      {post.title && (
+      {isMatchResult && post.match_result ? (
+        <div className="mb-2">
+          <MatchResultBlock result={post.match_result} currentUserId={currentUserId} />
+        </div>
+      ) : null}
+      {post.title && !isMatchResult && (
         <h3 className="mb-2 text-base font-bold text-[var(--toq-navy)]">{post.title}</h3>
       )}
-      {(post.post_type === "event" || post.post_type === "partida") &&
+      {!isMatchResult &&
+        (post.post_type === "event" || post.post_type === "partida") &&
         (post.event_date || post.event_time) && (
         <p className="mb-2 text-xs font-semibold text-[var(--toq-sky)]">
           {post.post_type === "partida" ? "🎾" : "📅"}{" "}
@@ -225,7 +247,8 @@ export function PostCard({
             : null}
         </p>
       )}
-      {post.post_type === "poll" ? (
+      {!isMatchResult &&
+        (post.post_type === "poll" ? (
         post.body.trim() ? (
           <PostBody
             body={post.body}
@@ -235,7 +258,7 @@ export function PostCard({
         ) : null
       ) : post.body.trim() ? (
         <PostBody body={post.body} maxLines={isCoachPost || isClubCourtPost ? 5 : 6} />
-      ) : null}
+      ) : null)}
       {post.coach_listing && (
         <CoachListingPostActions
           listing={post.coach_listing}
