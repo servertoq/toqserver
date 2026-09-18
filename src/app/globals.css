@@ -3086,25 +3086,18 @@ body {
 
 
 .auth-splash-logo {
-  height: 3.25rem;
-  width: 10.5rem;
+  height: 9.75rem;
+  width: 19.5rem;
+  max-width: 100%;
   background: #ffffff;
 }
 
 .auth-splash-copy {
-  margin-top: 2rem;
-}
-
-.auth-splash-eyebrow {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(126, 176, 255, 0.92);
+  margin-top: 1.5rem;
 }
 
 .auth-splash-title {
-  margin-top: 0.625rem;
+  margin-top: 0;
   font-size: clamp(1.75rem, 5vw, 2.5rem);
   font-weight: 800;
   line-height: 1.1;
@@ -4247,12 +4240,13 @@ body {
   }
 
   .auth-splash-logo {
-    height: 3.75rem;
-    width: 12rem;
+    height: 11.25rem;
+    width: 100%;
+    max-width: 20.5rem;
   }
 
   .auth-splash-copy {
-    margin-top: 1.125rem;
+    margin-top: 1rem;
   }
 
   .auth-splash-title {
@@ -4467,12 +4461,13 @@ body {
   }
 
   .auth-splash-logo {
-    height: 3rem;
-    width: 9.75rem;
+    height: 8.25rem;
+    width: 100%;
+    max-width: 18rem;
   }
 
   .auth-splash-copy {
-    margin-top: 0.875rem;
+    margin-top: 0.75rem;
   }
 
   .auth-splash-title {

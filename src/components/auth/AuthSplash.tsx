@@ -58,7 +58,6 @@ export function AuthSplash({ onLogin, onRegister }: Props) {
           <div className="auth-splash-logo auth-hero-anim auth-hero-anim--1" style={logoMask} role="img" aria-label="Toq Tennis" />
 
           <div className="auth-splash-copy auth-hero-anim auth-hero-anim--2">
-            <p className="auth-splash-eyebrow">Toq Tennis</p>
             <h1 className="auth-splash-title">Evolua no tênis com quem joga de verdade</h1>
             <p className="auth-splash-sub">
               Partidas, aulas, arenas e comunidade em um só lugar.
