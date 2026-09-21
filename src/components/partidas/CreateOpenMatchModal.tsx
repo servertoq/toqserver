@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import {
   fetchAddressByCep,
@@ -8,9 +9,9 @@ import {
   formatProfileLocation,
   normalizeCep,
 } from "@/lib/address";
-import { createOpenMatch } from "@/lib/openMatches";
+import { createOpenMatch, OPEN_MATCH_COURT_SURFACES } from "@/lib/openMatches";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
-import type { OpenMatchFormat } from "@/types/openMatches";
+import type { OpenMatchCourtSurface, OpenMatchFormat } from "@/types/openMatches";
 
 type Props = {
   open: boolean;
@@ -27,6 +28,7 @@ function toLocalInputValue(d: Date) {
 export function CreateOpenMatchModal({ open, defaultCity = "", onClose, onCreated }: Props) {
   const supabase = createClient();
   const { isSubmitting, guard } = useSingleSubmit();
+  const [mounted, setMounted] = useState(false);
   const defaultStarts = useMemo(() => {
     const d = new Date();
     d.setHours(d.getHours() + 2, 0, 0, 0);
@@ -36,6 +38,8 @@ export function CreateOpenMatchModal({ open, defaultCity = "", onClose, onCreate
   const [format, setFormat] = useState<OpenMatchFormat>("2v2");
   const [skillLevel, setSkillLevel] = useState(3);
   const [courtName, setCourtName] = useState("");
+  const [clubName, setClubName] = useState("");
+  const [courtSurface, setCourtSurface] = useState<OpenMatchCourtSurface>("");
   const [cep, setCep] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
@@ -49,11 +53,17 @@ export function CreateOpenMatchModal({ open, defaultCity = "", onClose, onCreate
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (!open) return;
     setStartsAt(defaultStarts);
     setCep("");
     setCity(defaultCity);
     setState("");
+    setClubName("");
+    setCourtSurface("");
     setCepError(null);
     lastFetchedCep.current = null;
     setError(null);
@@ -92,10 +102,6 @@ export function CreateOpenMatchModal({ open, defaultCity = "", onClose, onCreate
       setCepLoading(false);
     }
   }
-
-  if (!open) return null;
-
-  const locationLabel = formatProfileLocation({ zip: cep, city, state });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -140,6 +146,8 @@ export function CreateOpenMatchModal({ open, defaultCity = "", onClose, onCreate
         startsAt: iso,
         password: usePassword ? password : undefined,
         notes,
+        clubName,
+        courtSurface,
       });
       if (createErr) {
         setError(createErr);
@@ -150,8 +158,12 @@ export function CreateOpenMatchModal({ open, defaultCity = "", onClose, onCreate
     });
   }
 
-  return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4">
+  if (!open || !mounted) return null;
+
+  const locationLabel = formatProfileLocation({ zip: cep, city, state });
+
+  return createPortal(
+    <div className="fixed inset-0 z-[90] flex items-end justify-center sm:items-center sm:p-4">
       <button
         type="button"
         className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
@@ -159,8 +171,8 @@ export function CreateOpenMatchModal({ open, defaultCity = "", onClose, onCreate
         onClick={onClose}
       />
       <form
-        onSubmit={handleSubmit}
-        className="relative z-[1] flex max-h-[min(92dvh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-[var(--toq-border)] bg-[var(--toq-card)] shadow-2xl sm:rounded-3xl"
+        onSubmit={(e) => void handleSubmit(e)}
+        className="relative z-[1] flex max-h-[min(92dvh,calc(100dvh-env(safe-area-inset-bottom,0px)))] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-[var(--toq-border)] bg-[var(--toq-card)] shadow-2xl sm:max-h-[min(92dvh,720px)] sm:rounded-3xl"
       >
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--toq-border)] px-5 py-4">
           <h2 className="text-lg font-bold text-[var(--toq-text)]">Criar partida</h2>
@@ -173,7 +185,7 @@ export function CreateOpenMatchModal({ open, defaultCity = "", onClose, onCreate
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 [-webkit-overflow-scrolling:touch]">
           {error && (
             <p
               className="mb-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400"
@@ -247,6 +259,18 @@ export function CreateOpenMatchModal({ open, defaultCity = "", onClose, onCreate
 
           <label className="mb-3 block">
             <span className="text-xs font-semibold uppercase tracking-wide text-[var(--toq-text-muted)]">
+              Nome do clube (opcional)
+            </span>
+            <input
+              value={clubName}
+              onChange={(e) => setClubName(e.target.value.slice(0, 80))}
+              placeholder="Ex.: Lacio Clube"
+              className="mt-1 w-full rounded-xl toq-input px-3 py-2.5 text-sm text-[var(--toq-text)]"
+            />
+          </label>
+
+          <label className="mb-3 block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--toq-text-muted)]">
               Nome da quadra
             </span>
             <input
@@ -256,6 +280,24 @@ export function CreateOpenMatchModal({ open, defaultCity = "", onClose, onCreate
               required
               className="mt-1 w-full rounded-xl toq-input px-3 py-2.5 text-sm text-[var(--toq-text)]"
             />
+          </label>
+
+          <label className="mb-3 block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--toq-text-muted)]">
+              Tipo de quadra
+            </span>
+            <select
+              value={courtSurface}
+              onChange={(e) => setCourtSurface(e.target.value as OpenMatchCourtSurface)}
+              className="mt-1 w-full rounded-xl toq-input px-3 py-2.5 text-sm text-[var(--toq-text)]"
+            >
+              <option value="">Não informado</option>
+              {OPEN_MATCH_COURT_SURFACES.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
           </label>
 
           <div className="mb-3">
@@ -289,9 +331,7 @@ export function CreateOpenMatchModal({ open, defaultCity = "", onClose, onCreate
               />
             </label>
             {cepLoading && (
-              <p className="mt-1.5 text-[11px] text-[var(--toq-text-muted)]">
-                Buscando cidade…
-              </p>
+              <p className="mt-1.5 text-[11px] text-[var(--toq-text-muted)]">Buscando cidade…</p>
             )}
             {cepError && (
               <p className="mt-1.5 text-[11px] text-red-400" role="alert">
@@ -299,9 +339,7 @@ export function CreateOpenMatchModal({ open, defaultCity = "", onClose, onCreate
               </p>
             )}
             {locationLabel && !cepLoading && !cepError && (
-              <p className="mt-1.5 text-sm font-semibold text-[var(--toq-text)]">
-                {locationLabel}
-              </p>
+              <p className="mt-1.5 text-sm font-semibold text-[var(--toq-text)]">{locationLabel}</p>
             )}
           </div>
 
@@ -368,6 +406,7 @@ export function CreateOpenMatchModal({ open, defaultCity = "", onClose, onCreate
           </button>
         </div>
       </form>
-    </div>
+    </div>,
+    document.body
   );
 }

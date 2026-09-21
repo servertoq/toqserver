@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile } from "@/components/app/AppShell";
 import { appContentClass } from "@/lib/layout";
@@ -32,7 +33,12 @@ export function PartidasPage() {
   const [joinPassword, setJoinPassword] = useState("");
   const [manageTarget, setManageTarget] = useState<OpenMatchDetail | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [portalReady, setPortalReady] = useState(false);
   const { isSubmitting, guard } = useSingleSubmit();
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -41,7 +47,7 @@ export function PartidasPage() {
     if (searchErr) {
       setError(
         searchErr.includes("search_open_matches") || searchErr.includes("Could not find")
-          ? "Execute as migrations de partidas (088–092) no Supabase."
+          ? "Execute as migrations de partidas (088–100) no Supabase."
           : searchErr
       );
       setItems([]);
@@ -237,62 +243,65 @@ export function PartidasPage() {
         onCreated={() => void load()}
       />
 
-      {joinTarget && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4">
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/60"
-            aria-label="Fechar"
-            onClick={() => setJoinTarget(null)}
-          />
-          <div className="relative z-[1] w-full max-w-md rounded-t-3xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-5 sm:rounded-3xl">
-            <h3 className="text-base font-bold text-[var(--toq-text)]">
-              Entrar na partida #{joinTarget.match_number}
-            </h3>
-            {joinTarget.has_password ? (
-              <p className="mt-1 text-sm text-[var(--toq-text-muted)]">
-                Esta partida é protegida. Digite a senha para entrar.
-              </p>
-            ) : (
-              <p className="mt-1 text-sm text-[var(--toq-text-muted)]">
-                Seu pedido será enviado ao criador para aceite.
-              </p>
-            )}
-            {joinTarget.has_password && (
-              <input
-                type="password"
-                value={joinPassword}
-                onChange={(e) => setJoinPassword(e.target.value)}
-                placeholder="Senha"
-                className="mt-3 w-full rounded-xl toq-input px-3 py-2.5 text-sm text-[var(--toq-text)]"
-                autoFocus
-              />
-            )}
-            {actionError && (
-              <p className="mt-2 text-sm text-red-400" role="alert">
-                {actionError}
-              </p>
-            )}
-            <div className="mt-4 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setJoinTarget(null)}
-                className="flex-1 rounded-xl border border-[var(--toq-border)] py-2.5 text-sm font-semibold text-[var(--toq-text)]"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={() => void handleJoinConfirm()}
-                className="flex-1 rounded-xl bg-[var(--toq-accent)] py-2.5 text-sm font-bold text-white disabled:opacity-50"
-              >
-                {isSubmitting ? "…" : joinTarget.has_password ? "Entrar" : "Pedir para entrar"}
-              </button>
+      {portalReady &&
+        joinTarget &&
+        createPortal(
+          <div className="fixed inset-0 z-[90] flex items-end justify-center sm:items-center sm:p-4">
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/60"
+              aria-label="Fechar"
+              onClick={() => setJoinTarget(null)}
+            />
+            <div className="relative z-[1] w-full max-w-md rounded-t-3xl border border-[var(--toq-border)] bg-[var(--toq-card)] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-3xl">
+              <h3 className="text-base font-bold text-[var(--toq-text)]">
+                Entrar na partida #{joinTarget.match_number}
+              </h3>
+              {joinTarget.has_password ? (
+                <p className="mt-1 text-sm text-[var(--toq-text-muted)]">
+                  Esta partida é protegida. Digite a senha para entrar.
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-[var(--toq-text-muted)]">
+                  Seu pedido será enviado ao criador para aceite.
+                </p>
+              )}
+              {joinTarget.has_password && (
+                <input
+                  type="password"
+                  value={joinPassword}
+                  onChange={(e) => setJoinPassword(e.target.value)}
+                  placeholder="Senha"
+                  className="mt-3 w-full rounded-xl toq-input px-3 py-2.5 text-sm text-[var(--toq-text)]"
+                  autoFocus
+                />
+              )}
+              {actionError && (
+                <p className="mt-2 text-sm text-red-400" role="alert">
+                  {actionError}
+                </p>
+              )}
+              <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setJoinTarget(null)}
+                  className="flex-1 rounded-xl border border-[var(--toq-border)] py-2.5 text-sm font-semibold text-[var(--toq-text)]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={() => void handleJoinConfirm()}
+                  className="flex-1 rounded-xl bg-[var(--toq-accent)] py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                >
+                  {isSubmitting ? "…" : joinTarget.has_password ? "Entrar" : "Pedir para entrar"}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
       {dayUseTarget && (
         <DayUseJoinModal

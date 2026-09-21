@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { mapPostRow, fetchMatchResultsForPosts } from "@/lib/feed";
@@ -68,6 +69,11 @@ export function CommunityDetailPage({
   const [showGalleryManager, setShowGalleryManager] = useState(false);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [galleryPortalReady, setGalleryPortalReady] = useState(false);
+
+  useEffect(() => {
+    setGalleryPortalReady(true);
+  }, []);
 
   const isMember = myRole !== null;
 
@@ -520,6 +526,7 @@ export function CommunityDetailPage({
                           post={post}
                           currentUserId={profile.id}
                           fullBleed
+                          hideCommunityContext
                           highlightPost={post.id === highlightPostId}
                           highlightCommentId={
                             post.id === highlightPostId ? highlightCommentId : null
@@ -594,42 +601,47 @@ export function CommunityDetailPage({
         />
       )}
 
-      {showGalleryManager && community && canModerate(myRole) && (
-        <div
-          className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
-          role="presentation"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setShowGalleryManager(false);
-          }}
-        >
+      {galleryPortalReady &&
+        showGalleryManager &&
+        community &&
+        canModerate(myRole) &&
+        createPortal(
           <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="club-gallery-title"
-            className="flex max-h-[min(92dvh,100%)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] shadow-xl sm:rounded-2xl"
-            onMouseDown={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+            role="presentation"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) setShowGalleryManager(false);
+            }}
           >
-            <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--toq-border)] px-4 py-3">
-              <h2 id="club-gallery-title" className="text-base font-bold text-[var(--toq-navy)]">
-                Fotos do {groupKind === "club" ? "clube" : "grupo"}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setShowGalleryManager(false)}
-                className="rounded-lg px-2 py-1 text-sm text-[var(--toq-text-muted)] hover:bg-[var(--toq-surface)]"
-              >
-                Fechar
-              </button>
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="club-gallery-title"
+              className="flex max-h-[min(92dvh,100%)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] shadow-xl sm:rounded-2xl"
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--toq-border)] px-4 py-3">
+                <h2 id="club-gallery-title" className="text-base font-bold text-[var(--toq-navy)]">
+                  Fotos do {groupKind === "club" ? "clube" : "grupo"}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowGalleryManager(false)}
+                  className="rounded-lg px-2 py-1 text-sm text-[var(--toq-text-muted)] hover:bg-[var(--toq-surface)]"
+                >
+                  Fechar
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] [-webkit-overflow-scrolling:touch]">
+                <CommunityGalleryManager
+                  communityId={community.id}
+                  onChanged={() => void load()}
+                />
+              </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              <CommunityGalleryManager
-                communityId={community.id}
-                onChanged={() => void load()}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
       {ownerActionUi}
 

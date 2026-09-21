@@ -171,7 +171,7 @@ export function PlayerProfileDashboard({
   initialTab,
 }: Props) {
   const [tab, setTab] = useState<ProfileTab>(initialTab ?? "resumo");
-  const [editing, setEditing] = useState(false);
+  const [editMode, setEditMode] = useState<"full" | "photos" | null>(null);
 
   useEffect(() => {
     if (initialTab) setTab(initialTab);
@@ -199,7 +199,7 @@ export function PlayerProfileDashboard({
     return items;
   }, [isOwnProfile]);
 
-  if (editing && isOwnProfile) {
+  if (editMode && isOwnProfile) {
     return (
       <div className="profile-page">
         <div className="profile-dashboard">
@@ -220,7 +220,8 @@ export function PlayerProfileDashboard({
               playFrequency={playFrequency}
               playStyle={playStyle}
               favoriteCourt={favoriteCourt}
-              onClose={() => setEditing(false)}
+              mode={editMode}
+              onClose={() => setEditMode(null)}
               onPhotosChanged={(nextPhotos) => onPhotosUpdated?.(nextPhotos)}
               onAvatarChanged={(nextAvatar) => onAvatarUpdated?.(nextAvatar)}
               onSaved={() => {
@@ -246,9 +247,22 @@ export function PlayerProfileDashboard({
               <ProfileAvatar src={avatarUrl} name={shownName} size="md" />
             </div>
             {isOwnProfile && !headerActions && (
-              <button type="button" className="profile-photo-edit" onClick={() => setEditing(true)}>
-                Editar fotos
-              </button>
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  className="profile-photo-edit"
+                  onClick={() => setEditMode("photos")}
+                >
+                  Editar fotos
+                </button>
+                <button
+                  type="button"
+                  className="profile-photo-edit"
+                  onClick={() => setEditMode("full")}
+                >
+                  Editar perfil
+                </button>
+              </div>
             )}
             <h2 className="profile-identity-name">@{username}</h2>
             <div className="profile-identity-badges">

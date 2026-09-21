@@ -1,6 +1,7 @@
 export type OpenMatchFormat = "1v1" | "2v2" | "club";
 export type OpenMatchStatus = "open" | "full" | "cancelled" | "done";
 export type OpenMatchPlayerStatus = "confirmed" | "pending" | "rejected" | "invited";
+export type OpenMatchCourtSurface = "" | "saibro" | "hard" | "grama" | "indoor";
 
 export type OpenMatchListItem = {
   id: string;
@@ -11,6 +12,8 @@ export type OpenMatchListItem = {
   skill_level: number;
   court_name: string;
   city: string;
+  club_name: string;
+  court_surface: OpenMatchCourtSurface;
   community_id: string | null;
   community_name: string | null;
   community_cover_url: string | null;
@@ -52,6 +55,8 @@ export type OpenMatchDetail = {
   skill_level: number;
   court_name: string;
   city: string;
+  club_name: string;
+  court_surface: OpenMatchCourtSurface;
   community_id: string | null;
   community_name: string | null;
   community_cover_url: string | null;
@@ -81,6 +86,8 @@ export type CreateOpenMatchInput = {
   password?: string;
   communityId?: string | null;
   notes?: string;
+  clubName?: string;
+  courtSurface?: OpenMatchCourtSurface;
 };
 
 export type UpdateOpenMatchInput = {

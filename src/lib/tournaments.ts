@@ -252,9 +252,7 @@ export async function fetchAllTournaments(
     .order("created_at", { ascending: false });
 
   if (error) return [];
-  return (data ?? [])
-    .map((row) => mapTournamentRow(row as RawTournamentRow))
-    .filter((t) => !t.community_id || t.community != null);
+  return (data ?? []).map((row) => mapTournamentRow(row as RawTournamentRow));
 }
 
 export async function fetchMyStandaloneTournaments(

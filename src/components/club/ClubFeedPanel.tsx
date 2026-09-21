@@ -70,6 +70,7 @@ export function ClubFeedPanel({
                 post={post}
                 currentUserId={profileId}
                 fullBleed
+                hideCommunityContext
                 highlightPost={post.id === highlightPostId}
                 highlightCommentId={post.id === highlightPostId ? highlightCommentId : null}
                 onLikeToggle={async (postId, liked) => {

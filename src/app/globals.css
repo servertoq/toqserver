@@ -80,20 +80,39 @@
   }
 }
 
+html {
+  height: 100%;
+}
+
 html,
 body {
-  height: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
   overflow: hidden;
 }
 
+body {
+  height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+}
+
 .feed-layout {
-  height: 100dvh;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  max-height: 100%;
   max-height: 100dvh;
+  max-height: -webkit-fill-available;
   overflow: hidden;
 }
 
 .feed-layout-main {
   flex: 1 1 auto;
+  align-self: stretch;
   min-height: 0;
   min-width: 0;
   overflow-x: hidden;
@@ -745,35 +764,109 @@ body {
   background: var(--toq-surface);
 }
 
-@media (max-width: 420px) {
+@media (max-width: 767px) {
+  .club-ranking-podium {
+    gap: 0.5rem;
+    padding: 0.75rem 0.25rem 0.5rem;
+    align-items: stretch;
+  }
+
+  .club-ranking-podium-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .club-ranking-podium-row--1,
+  .club-ranking-podium-row--2,
+  .club-ranking-podium-row--3 {
+    gap: 0.5rem;
+  }
+
   .club-ranking-slot:not(.club-ranking-slot--compact) {
-    width: min(100%, 7.75rem);
+    width: 100%;
+    max-width: none;
+  }
+
+  .club-ranking-slot:not(.club-ranking-slot--compact) .club-ranking-slot-body {
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--toq-border);
+    background: var(--toq-card);
+    gap: 0.65rem;
+  }
+
+  .club-ranking-slot--gold:not(.club-ranking-slot--compact) .club-ranking-slot-body {
+    border-color: color-mix(in srgb, #f59e0b 45%, var(--toq-border));
+    background: color-mix(in srgb, #f59e0b 10%, var(--toq-card));
+  }
+
+  .club-ranking-slot--silver:not(.club-ranking-slot--compact) .club-ranking-slot-body {
+    border-color: color-mix(in srgb, #94a3b8 40%, var(--toq-border));
+    background: color-mix(in srgb, #94a3b8 8%, var(--toq-card));
+  }
+
+  .club-ranking-slot--bronze:not(.club-ranking-slot--compact) .club-ranking-slot-body {
+    border-color: color-mix(in srgb, #ea580c 40%, var(--toq-border));
+    background: color-mix(in srgb, #ea580c 8%, var(--toq-card));
+  }
+
+  .club-ranking-rank {
+    width: 2.25rem;
+    font-size: 0.9375rem;
+  }
+
+  .club-ranking-avatar--lg,
+  .club-ranking-avatar--md,
+  .club-ranking-avatar--sm {
+    width: 2.5rem;
+    height: 2.5rem;
   }
 
   .club-ranking-slot-name {
-    font-size: 0.625rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+  }
+
+  .club-ranking-slot-score {
+    font-size: 0.75rem;
+  }
+
+  .club-ranking-pedestal {
+    display: none;
+  }
+
+  .club-ranking-top-note {
+    order: -1;
+    margin: 0 0 0.25rem;
+    text-align: left;
+    font-size: 0.6875rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .club-ranking-slot:not(.club-ranking-slot--compact) {
+    width: 100%;
+  }
+
+  .club-ranking-slot-name {
+    font-size: 0.8125rem;
   }
 
   .club-ranking-avatar--lg {
-    width: 2.75rem;
-    height: 2.75rem;
+    width: 2.5rem;
+    height: 2.5rem;
   }
 
   .club-ranking-avatar--md {
-    width: 2.35rem;
-    height: 2.35rem;
+    width: 2.5rem;
+    height: 2.5rem;
   }
 
-  .club-ranking-pedestal--rank-1 {
-    height: 2.75rem;
-  }
-
-  .club-ranking-pedestal--rank-2 {
-    height: 2rem;
-  }
-
+  .club-ranking-pedestal--rank-1,
+  .club-ranking-pedestal--rank-2,
   .club-ranking-pedestal--rank-3 {
-    height: 1.5rem;
+    display: none;
   }
 }
 
@@ -1044,7 +1137,9 @@ body {
   display: flex;
   flex-direction: column;
   width: var(--app-sidebar-collapsed-w);
+  height: 100%;
   height: 100dvh;
+  height: -webkit-fill-available;
   overflow: hidden;
   border-right: 2px solid #000000;
   background: var(--toq-accent);
@@ -1189,8 +1284,8 @@ body {
 
 .app-mobile-header-logo-mark {
   display: block;
-  width: 8.5rem;
-  height: 2.55rem;
+  width: 7.5rem;
+  height: 2.25rem;
   background: var(--toq-navy);
 }
 
@@ -1376,7 +1471,9 @@ body {
   left: 0;
   z-index: 58;
   width: min(280px, 88vw);
+  height: 100%;
   height: 100dvh;
+  height: -webkit-fill-available;
   border-right: 2px solid #000000;
   background: var(--toq-accent);
   color: #ffffff;

@@ -106,7 +106,7 @@ export function ClubMemberArea({
   }, [pathname, router, searchParams]);
 
   return (
-    <div className="mt-4 space-y-3 md:mt-6 md:space-y-0 md:overflow-hidden md:toq-card-lg">
+    <div className="mt-4 space-y-3 md:mt-6 md:flex md:min-h-[calc(100dvh-9rem)] md:flex-col md:space-y-0 md:overflow-hidden md:toq-card-lg">
       <div className="overflow-hidden rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] md:rounded-none md:border-0 md:bg-transparent">
         <ClubTabs
           active={tab}
@@ -119,7 +119,7 @@ export function ClubMemberArea({
       {mobileHeader ? <div className="md:hidden">{mobileHeader}</div> : null}
 
       <div
-        className={`min-h-0 rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] pb-8 pt-1 md:rounded-none md:border-0 md:pt-0 ${
+        className={`min-h-0 rounded-2xl border border-[var(--toq-border)] bg-[var(--toq-card)] pb-8 pt-1 md:flex-1 md:rounded-none md:border-0 md:pt-0 ${
           tab === "feed" ? "px-0 md:px-0" : "px-4 md:px-5"
         }`}
       >

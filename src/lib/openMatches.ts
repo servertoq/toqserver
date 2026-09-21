@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   CreateOpenMatchInput,
+  OpenMatchCourtSurface,
   OpenMatchDetail,
   OpenMatchFormat,
   OpenMatchListItem,
@@ -18,6 +19,22 @@ export function openMatchFormatLabel(format: string) {
   if (format === "1v1") return "Jogo de simples";
   if (format === "club") return "Partida do clube";
   return "Jogo de duplas";
+}
+
+export const OPEN_MATCH_COURT_SURFACES: {
+  value: Exclude<OpenMatchCourtSurface, "">;
+  label: string;
+}[] = [
+  { value: "saibro", label: "Saibro" },
+  { value: "hard", label: "Rápida / hard" },
+  { value: "grama", label: "Grama" },
+  { value: "indoor", label: "Coberta / indoor" },
+];
+
+export function courtSurfaceLabel(surface: string | null | undefined) {
+  const v = String(surface ?? "").trim();
+  if (!v) return null;
+  return OPEN_MATCH_COURT_SURFACES.find((s) => s.value === v)?.label ?? v;
 }
 
 export function formatDayUsePrice(price: number) {
@@ -51,6 +68,13 @@ function mapFormat(raw: unknown): OpenMatchFormat {
   return "2v2";
 }
 
+function mapCourtSurface(raw: unknown): OpenMatchCourtSurface {
+  if (raw === "saibro" || raw === "hard" || raw === "grama" || raw === "indoor") {
+    return raw;
+  }
+  return "";
+}
+
 function mapListRow(row: Record<string, unknown>): OpenMatchListItem {
   return {
     id: String(row.id),
@@ -61,6 +85,8 @@ function mapListRow(row: Record<string, unknown>): OpenMatchListItem {
     skill_level: Number(row.skill_level),
     court_name: String(row.court_name ?? ""),
     city: String(row.city ?? ""),
+    club_name: String(row.club_name ?? ""),
+    court_surface: mapCourtSurface(row.court_surface),
     community_id: row.community_id ? String(row.community_id) : null,
     community_name: row.community_name ? String(row.community_name) : null,
     community_cover_url: row.community_cover_url ? String(row.community_cover_url) : null,
@@ -117,6 +143,8 @@ export async function createOpenMatch(
     p_password: input.password?.trim() || null,
     p_community_id: input.communityId || null,
     p_notes: input.notes?.trim() || "",
+    p_club_name: input.clubName?.trim() || "",
+    p_court_surface: input.courtSurface?.trim() || "",
   });
   if (error) return { id: null, error: error.message };
   return { id: data ? String(data) : null, error: null };
@@ -277,6 +305,8 @@ export async function getOpenMatchDetail(
       skill_level: Number(raw.skill_level),
       court_name: String(raw.court_name ?? ""),
       city: String(raw.city ?? ""),
+      club_name: String(raw.club_name ?? ""),
+      court_surface: mapCourtSurface(raw.court_surface),
       community_id: raw.community_id ? String(raw.community_id) : null,
       community_name: raw.community_name ? String(raw.community_name) : null,
       community_cover_url: raw.community_cover_url

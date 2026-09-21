@@ -41,6 +41,8 @@ type Props = {
   playFrequency: PlayFrequency | null;
   playStyle: PlayStyle | null;
   favoriteCourt: FavoriteCourt | null;
+  /** full = perfil completo · photos = só avatar e fotos */
+  mode?: "full" | "photos";
   onClose: () => void;
   onPhotosChanged: (photos: ProfilePhoto[]) => void;
   onAvatarChanged: (avatarUrl: string | null) => void;
@@ -63,6 +65,7 @@ export function ProfileEditPanel({
   playFrequency: initialFreq,
   playStyle: initialStyle,
   favoriteCourt: initialCourt,
+  mode = "full",
   onClose,
   onPhotosChanged,
   onAvatarChanged,
@@ -151,7 +154,9 @@ export function ProfileEditPanel({
             <path strokeLinecap="round" d="M15 6l-6 6 6 6" />
           </svg>
         </button>
-        <h2 className="text-lg font-bold text-[var(--toq-profile-navy)]">Editar perfil</h2>
+        <h2 className="text-lg font-bold text-[var(--toq-profile-navy)]">
+          {mode === "photos" ? "Editar fotos" : "Editar perfil"}
+        </h2>
       </div>
 
       <div className="space-y-8">
@@ -163,6 +168,16 @@ export function ProfileEditPanel({
         />
         <ProfilePhotosEditor userId={profileId} photos={photos} onChange={onPhotosChanged} />
 
+        {mode === "photos" ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-xl toq-btn-primary px-4 py-3 text-sm font-bold text-white"
+          >
+            Concluir
+          </button>
+        ) : (
+          <>
         <section className="profile-edit-block">
           <p className="profile-section-label">Sobre você</p>
           <div className="mt-4 space-y-4">
@@ -306,6 +321,8 @@ export function ProfileEditPanel({
             </p>
           )}
         </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,32 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
+import { CLUB_POLICIES } from "@/lib/clubPolicies";
 import { formatDayUsePrice } from "@/lib/openMatches";
 import type { OpenMatchListItem } from "@/types/openMatches";
-
-const CLUB_POLICIES = [
-  {
-    title: "Respeito acima de tudo",
-    body: "Sem palavrões ou atitudes desrespeitosas.",
-  },
-  {
-    title: "Vista a camisa",
-    body: "Não é permitido jogar sem camisa.",
-  },
-  {
-    title: "Espírito esportivo",
-    body: "Tênis é um esporte clássico. Mantenha a educação dentro e fora da quadra.",
-  },
-  {
-    title: "Cuide do clube",
-    body: "Preserve as quadras, equipamentos e áreas comuns.",
-  },
-  {
-    title: "Fair play sempre",
-    body: "Honestidade e respeito em cada ponto.",
-  },
-] as const;
 
 type Props = {
   match: OpenMatchListItem;
@@ -43,6 +22,7 @@ export function DayUseJoinModal({
   submitting = false,
   error = null,
 }: Props) {
+  const [mounted, setMounted] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [step, setStep] = useState<"info" | "policies">("info");
   const clubName = match.community_name ?? "Clube";
@@ -51,16 +31,22 @@ export function DayUseJoinModal({
     .join(" – ");
   const priceLabel = formatDayUsePrice(match.day_use_price);
 
-  return (
-    <div className="fixed inset-0 z-[85] flex items-end justify-center sm:items-center sm:p-4">
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[90] flex items-end justify-center sm:items-center sm:p-4">
       <button
         type="button"
         className="absolute inset-0 bg-black/60"
         aria-label="Fechar"
         onClick={onClose}
       />
-      <div className="relative z-[1] flex max-h-[min(92dvh,720px)] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-[var(--toq-border)] bg-[var(--toq-card)] sm:rounded-3xl">
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5">
+      <div className="relative z-[1] flex max-h-[min(92dvh,calc(100dvh-env(safe-area-inset-bottom,0px)))] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-[var(--toq-border)] bg-[var(--toq-card)] sm:max-h-[min(92dvh,720px)] sm:rounded-3xl">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
           {step === "info" ? (
             <>
               <h2 className="text-lg font-bold text-[var(--toq-text)]">
@@ -198,6 +184,7 @@ export function DayUseJoinModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

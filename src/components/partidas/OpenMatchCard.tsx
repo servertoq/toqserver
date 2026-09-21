@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { CLUB_POLICIES } from "@/lib/clubPolicies";
 import { profileDisplayName } from "@/lib/profile";
 import { profilePath } from "@/lib/publicProfile";
 import {
   formatMatchSkillLevel,
   formatMatchWhen,
   formatDayUsePrice,
+  courtSurfaceLabel,
   openMatchFormatLabel,
   openMatchSpotsLeft,
   shortPlayerName,
@@ -76,6 +79,7 @@ export function OpenMatchCard({
   onManage,
   onRespondInvite,
 }: Props) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const confirmed = players.filter((p) => p.status === "confirmed");
   const team1 = confirmed.filter((p) => p.team === 1);
   const team2 = confirmed.filter((p) => p.team === 2);
@@ -109,6 +113,10 @@ export function OpenMatchCard({
 
   const isClubMatch = Boolean(match.community_id);
   const showTeams = match.format !== "club";
+  const notes = match.notes.trim();
+  const hasMoreDetails = isClubMatch;
+  const displayClubName = match.community_name || match.club_name.trim() || null;
+  const surfaceLabel = courtSurfaceLabel(match.court_surface);
 
   return (
     <article
@@ -139,10 +147,10 @@ export function OpenMatchCard({
         </div>
       </div>
 
-      {isClubMatch && match.community_name && (
+      {displayClubName && (
         <div className="px-4 pb-1 sm:px-5">
-          <p className="text-sm font-semibold text-[var(--toq-text)]">{match.community_name}</p>
-          {!match.viewer_is_member && (
+          <p className="text-sm font-semibold text-[var(--toq-text)]">{displayClubName}</p>
+          {isClubMatch && !match.viewer_is_member && (
             <p className="text-[11px] text-[var(--toq-text-muted)]">
               Day use: {formatDayUsePrice(match.day_use_price)}
             </p>
@@ -224,6 +232,15 @@ export function OpenMatchCard({
       </div>
       )}
 
+      {notes && (
+        <div className="border-t border-[var(--toq-border)] px-4 py-3 sm:px-5">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--toq-text-muted)]">
+            Observação
+          </p>
+          <p className="mt-1 text-sm leading-snug text-[var(--toq-text)]">{notes}</p>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-[var(--toq-border)] px-4 py-3 text-xs text-[var(--toq-text-muted)] sm:px-5">
         <span className="inline-flex items-center gap-1.5">
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -237,6 +254,7 @@ export function OpenMatchCard({
             <path d="M4 20V8l8-4 8 4v12M9 20v-6h6v6" />
           </svg>
           {match.court_name}
+          {surfaceLabel ? ` · ${surfaceLabel}` : ""}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -255,6 +273,45 @@ export function OpenMatchCard({
           </span>
         )}
       </div>
+
+      {hasMoreDetails && (
+        <div className="border-t border-[var(--toq-border)] px-4 py-2.5 sm:px-5">
+          <button
+            type="button"
+            onClick={() => setDetailsOpen((v) => !v)}
+            className="inline-flex items-center gap-1 text-xs font-bold text-[var(--toq-accent)]"
+            aria-expanded={detailsOpen}
+          >
+            {detailsOpen ? "Ver menos" : "Ver mais"}
+            <svg
+              className={`h-3.5 w-3.5 transition ${detailsOpen ? "rotate-180" : ""}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              aria-hidden
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+
+          {detailsOpen && (
+            <div className="mt-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--toq-text-muted)]">
+                Políticas do clube
+              </p>
+              <ul className="mt-2 space-y-2">
+                {CLUB_POLICIES.map((rule) => (
+                  <li key={rule.title} className="text-sm leading-snug text-[var(--toq-text)]">
+                    <span className="font-semibold">{rule.title}.</span>{" "}
+                    <span className="text-[var(--toq-text-muted)]">{rule.body}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--toq-border)] px-4 py-3 sm:px-5">
         <p className="flex items-center gap-2 text-sm">

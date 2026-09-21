@@ -34,6 +34,8 @@ type Props = {
   highlightPost?: boolean;
   highlightCommentId?: string | null;
   fullBleed?: boolean;
+  /** Esconde "em [clube/grupo]" — use no feed interno do clube/comunidade. */
+  hideCommunityContext?: boolean;
   onEditPost?: (post: FeedPost) => void;
   onDeletePost?: (post: FeedPost) => void;
   enrolledCoachListingIds?: Set<string>;
@@ -48,6 +50,7 @@ export function PostCard({
   highlightPost = false,
   highlightCommentId = null,
   fullBleed = true,
+  hideCommunityContext = false,
   onEditPost,
   onDeletePost,
   enrolledCoachListingIds,
@@ -70,6 +73,11 @@ export function PostCard({
   const isCoachListingPost = !!post.coach_listing || isCoachPost;
   const isCourtListingPost = !!post.club_court || isClubCourtPost;
   const isMatchResult = post.post_type === "match_result";
+  const showPostTypeBadge =
+    isCoachPost ||
+    isClubCourtPost ||
+    post.post_type === "event" ||
+    post.post_type === "poll";
   const canManage =
     isAuthor &&
     onEditPost &&
@@ -164,25 +172,25 @@ export function PostCard({
               show={!isCoachPost && canShowPlanBadge(post.author.plan, post.author.show_plan_badge)}
             />
             {isCommunityCreator && (
-              <span className="rounded-full bg-[var(--toq-accent-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--toq-accent)]">
+              <span className="rounded-full border border-[var(--toq-accent)] bg-transparent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--toq-accent)]">
                 Criador
               </span>
             )}
-            <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-                post.post_type === "event"
-                  ? "bg-[var(--toq-sky)]/15 text-[var(--toq-sky)]"
-                  : post.post_type === "poll"
-                    ? "bg-violet-100 text-violet-700"
-                    : isCoachPost
-                      ? "bg-emerald-100 text-emerald-800"
-                      : isClubCourtPost
-                        ? "bg-sky-100 text-sky-800"
-                        : "bg-slate-100 text-[var(--toq-text-muted)]"
-              }`}
-            >
-              {isCoachPost ? "Professor" : isClubCourtPost ? "Quadra" : postTypeLabel(post.post_type)}
-            </span>
+            {showPostTypeBadge && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                  post.post_type === "event"
+                    ? "bg-[var(--toq-sky)]/15 text-[var(--toq-sky)]"
+                    : post.post_type === "poll"
+                      ? "bg-violet-100 text-violet-700"
+                      : isCoachPost
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-sky-100 text-sky-800"
+                }`}
+              >
+                {isCoachPost ? "Professor" : isClubCourtPost ? "Quadra" : postTypeLabel(post.post_type)}
+              </span>
+            )}
             {visBadge && (
               <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
                 {visBadge}
@@ -197,7 +205,7 @@ export function PostCard({
               {formatTimeAgo(post.created_at)}
             </span>
           </div>
-          {post.community && (
+          {post.community && !hideCommunityContext && (
             <p className="mt-0.5 text-xs text-[var(--toq-text-muted)]">
               em <span className="font-semibold text-[var(--toq-navy)]">{post.community.name}</span>
             </p>

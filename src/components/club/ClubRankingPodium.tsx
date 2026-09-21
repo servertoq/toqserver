@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ClubRankingEntry } from "@/types/clubFeatures";
 
 const TOP_N = 5;
@@ -96,8 +96,21 @@ function PodiumSlot({ rank, entry, unitLabel, tier, canManage, onRemove, compact
   );
 }
 
+function useIsMobileRanking() {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const sync = () => setMobile(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  return mobile;
+}
+
 export function ClubRankingPodium({ entries, unitLabel, canManage, onRemove }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const mobile = useIsMobileRanking();
   const top = entries.slice(0, TOP_N);
   const rest = entries.slice(TOP_N);
   const [first, second, third, fourth, fifth] = top;
@@ -107,6 +120,44 @@ export function ClubRankingPodium({ entries, unitLabel, canManage, onRemove }: P
       <p className="px-4 py-8 text-center text-xs text-[var(--toq-text-muted)]">
         Nenhum jogador nesta categoria ainda.
       </p>
+    );
+  }
+
+  if (mobile) {
+    const visible = expanded ? entries : top;
+    return (
+      <div className="club-ranking-podium club-ranking-podium--list">
+        <p className="club-ranking-top-note">Classificação · do 1º ao último</p>
+        <ul className="club-ranking-more-list">
+          {visible.map((entry, i) => {
+            const rank = i + 1;
+            return (
+              <li key={entry.id}>
+                <PodiumSlot
+                  rank={rank}
+                  entry={entry}
+                  unitLabel={unitLabel}
+                  tier={tierForRank(rank)}
+                  canManage={canManage}
+                  onRemove={onRemove}
+                  compact
+                />
+              </li>
+            );
+          })}
+        </ul>
+        {rest.length > 0 && (
+          <button
+            type="button"
+            className="club-ranking-more-btn"
+            onClick={() => setExpanded((v) => !v)}
+          >
+            {expanded
+              ? "Ver menos"
+              : `Ver mais (+${rest.length} ${rest.length === 1 ? "jogador" : "jogadores"})`}
+          </button>
+        )}
+      </div>
     );
   }
 
