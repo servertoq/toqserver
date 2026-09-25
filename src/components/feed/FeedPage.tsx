@@ -221,7 +221,7 @@ export function FeedPage() {
 
   return (
     <>
-      <div className="feed-page-mobile md:contents">
+      <div className="feed-page-mobile flex min-h-0 flex-1 flex-col md:contents">
         <FeedHomeLayout onOpenCreatePost={() => setPostModalOpen(true)}>
         {error && (
           <p className="mb-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600" role="alert">
