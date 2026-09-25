@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { completeOpenMatch } from "@/lib/openMatches";
+import { validateThreeSetInputs } from "@/lib/matchResultSets";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
 import type { OpenMatchDetail } from "@/types/openMatches";
+import { MatchScoreboardEdit } from "@/components/partidas/MatchScoreboard";
 
 type Props = {
   match: OpenMatchDetail;
@@ -12,11 +14,16 @@ type Props = {
   onDone: () => void;
 };
 
+const DEFAULT_SETS = [
+  { team1: "", team2: "" },
+  { team1: "", team2: "" },
+  { team1: "", team2: "" },
+];
+
 export function CompleteMatchResultModal({ match, onClose, onDone }: Props) {
   const supabase = createClient();
   const { isSubmitting, guard } = useSingleSubmit();
-  const [team1Score, setTeam1Score] = useState("6");
-  const [team2Score, setTeam2Score] = useState("4");
+  const [sets, setSets] = useState(DEFAULT_SETS);
   const [shareScope, setShareScope] = useState<"participants" | "general">("participants");
   const [error, setError] = useState<string | null>(null);
 
@@ -24,20 +31,30 @@ export function CompleteMatchResultModal({ match, onClose, onDone }: Props) {
   const team1 = confirmed.filter((p) => p.team === 1);
   const team2 = confirmed.filter((p) => p.team === 2);
 
+  function updateSet(index: number, side: "team1" | "team2", value: string) {
+    setSets((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index]!, [side]: value };
+      return next;
+    });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const s1 = Number(team1Score);
-    const s2 = Number(team2Score);
-    if (!Number.isInteger(s1) || !Number.isInteger(s2) || s1 < 0 || s2 < 0) {
-      setError("Informe placares válidos (números inteiros).");
+
+    const parsed = validateThreeSetInputs(sets);
+    if (!parsed.ok) {
+      setError(parsed.message);
       return;
     }
 
     await guard(async () => {
       const { error: err } = await completeOpenMatch(supabase, match.id, {
-        team1Score: s1,
-        team2Score: s2,
+        sets: parsed.values.map((s) => ({
+          team1: s.team1!,
+          team2: s.team2!,
+        })),
         shareScope,
       });
       if (err) {
@@ -59,14 +76,14 @@ export function CompleteMatchResultModal({ match, onClose, onDone }: Props) {
       />
       <form
         onSubmit={handleSubmit}
-        className="relative z-[1] w-full max-w-md overflow-hidden rounded-t-3xl border border-[var(--toq-border)] bg-[var(--toq-card)] sm:rounded-3xl"
+        className="relative z-[1] w-full max-w-md overflow-hidden rounded-t-3xl border border-[var(--toq-border)] bg-[var(--toq-card)] sm:max-w-lg sm:rounded-3xl"
       >
         <div className="border-b border-[var(--toq-border)] px-5 py-4">
           <h3 className="text-base font-bold text-[var(--toq-text)]">
             Registrar placar #{match.match_number}
           </h3>
           <p className="mt-1 text-xs text-[var(--toq-text-muted)]">
-            O resultado aparece no feed de quem jogou.
+            Informe a pontuação de cada equipe nos três sets. O placar aparece no feed de quem jogou.
           </p>
         </div>
 
@@ -77,37 +94,12 @@ export function CompleteMatchResultModal({ match, onClose, onDone }: Props) {
             </p>
           )}
 
-          <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
-            <label className="block text-center">
-              <span className="text-[11px] font-semibold text-[var(--toq-text-muted)]">
-                Time 1
-              </span>
-              <p className="mt-1 truncate text-xs text-[var(--toq-text)]">
-                {team1.map((p) => `@${p.username}`).join(" + ") || "—"}
-              </p>
-              <input
-                inputMode="numeric"
-                value={team1Score}
-                onChange={(e) => setTeam1Score(e.target.value.replace(/\D/g, "").slice(0, 2))}
-                className="mt-2 w-full rounded-xl toq-input px-3 py-3 text-center text-2xl font-bold text-[var(--toq-text)]"
-              />
-            </label>
-            <span className="pb-3 text-lg font-bold text-[var(--toq-text-muted)]">—</span>
-            <label className="block text-center">
-              <span className="text-[11px] font-semibold text-[var(--toq-text-muted)]">
-                Time 2
-              </span>
-              <p className="mt-1 truncate text-xs text-[var(--toq-text)]">
-                {team2.map((p) => `@${p.username}`).join(" + ") || "—"}
-              </p>
-              <input
-                inputMode="numeric"
-                value={team2Score}
-                onChange={(e) => setTeam2Score(e.target.value.replace(/\D/g, "").slice(0, 2))}
-                className="mt-2 w-full rounded-xl toq-input px-3 py-3 text-center text-2xl font-bold text-[var(--toq-text)]"
-              />
-            </label>
-          </div>
+          <MatchScoreboardEdit
+            team1={team1}
+            team2={team2}
+            sets={sets}
+            onSetChange={updateSet}
+          />
 
           <fieldset className="space-y-2">
             <legend className="text-xs font-semibold uppercase tracking-wide text-[var(--toq-text-muted)]">

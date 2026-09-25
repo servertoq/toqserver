@@ -338,15 +338,22 @@ export async function completeOpenMatch(
   supabase: SupabaseClient,
   matchId: string,
   input: {
-    team1Score: number;
-    team2Score: number;
+    sets: { team1: number; team2: number }[];
     shareScope: "participants" | "general";
   }
 ): Promise<{ resultId: string | null; error: string | null }> {
+  if (input.sets.length !== 3) {
+    return { resultId: null, error: "Informe os três sets." };
+  }
+  const [s1, s2, s3] = input.sets;
   const { data, error } = await supabase.rpc("complete_open_match", {
     p_match_id: matchId,
-    p_team1_score: input.team1Score,
-    p_team2_score: input.team2Score,
+    p_set1_team1: s1.team1,
+    p_set1_team2: s1.team2,
+    p_set2_team1: s2.team1,
+    p_set2_team2: s2.team2,
+    p_set3_team1: s3.team1,
+    p_set3_team2: s3.team2,
     p_share_scope: input.shareScope,
   });
   if (error) return { resultId: null, error: error.message };

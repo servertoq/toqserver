@@ -68,12 +68,25 @@ export type MatchResultPlayer = {
   skill_label: string;
 };
 
+export type MatchSetScore = {
+  team1: number | null;
+  team2: number | null;
+};
+
 export type MatchResultPayload = {
   result_id: string;
   open_match_id: string;
   format: "1v1" | "2v2" | "club";
+  /** Sets vencidos (derivado dos games por set). */
   team1_score: number;
   team2_score: number;
+  set1_team1?: number | null;
+  set1_team2?: number | null;
+  set2_team1?: number | null;
+  set2_team2?: number | null;
+  set3_team1?: number | null;
+  set3_team2?: number | null;
+  sets?: MatchSetScore[];
   share_scope: "participants" | "general";
   community_id: string | null;
   location_label: string;

@@ -1,4 +1,5 @@
 import { mapMentionRows } from "@/lib/mentions";
+import { matchResultSetsFromRow } from "@/lib/matchResultSets";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   FeedComment,
@@ -264,7 +265,7 @@ export async function fetchMatchResultsForPosts(
     supabase
       .from("open_match_results")
       .select(
-        "id, open_match_id, format, team1_score, team2_score, share_scope, community_id, location_label, played_at"
+        "id, open_match_id, format, team1_score, team2_score, set1_team1, set1_team2, set2_team1, set2_team2, set3_team1, set3_team2, share_scope, community_id, location_label, played_at"
       )
       .in("id", resultIds),
     supabase
@@ -296,12 +297,20 @@ export async function fetchMatchResultsForPosts(
     const rid = String(link.result_id);
     const r = resultById.get(rid);
     if (!r) continue;
+    const sets = matchResultSetsFromRow(r);
     map.set(postId, {
       result_id: rid,
       open_match_id: String(r.open_match_id),
       format: r.format === "1v1" ? "1v1" : r.format === "club" ? "club" : "2v2",
       team1_score: Number(r.team1_score ?? 0),
       team2_score: Number(r.team2_score ?? 0),
+      set1_team1: r.set1_team1 != null ? Number(r.set1_team1) : null,
+      set1_team2: r.set1_team2 != null ? Number(r.set1_team2) : null,
+      set2_team1: r.set2_team1 != null ? Number(r.set2_team1) : null,
+      set2_team2: r.set2_team2 != null ? Number(r.set2_team2) : null,
+      set3_team1: r.set3_team1 != null ? Number(r.set3_team1) : null,
+      set3_team2: r.set3_team2 != null ? Number(r.set3_team2) : null,
+      sets,
       share_scope: r.share_scope === "participants" ? "participants" : "general",
       community_id: r.community_id ? String(r.community_id) : null,
       location_label: String(r.location_label ?? ""),
