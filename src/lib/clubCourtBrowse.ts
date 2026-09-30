@@ -71,8 +71,12 @@ export async function fetchBrowsableClubCourts(
     })
     .map((row) => {
       const community = Array.isArray(row.community) ? row.community[0] : row.community;
-      const images = Array.isArray(row.images) ? row.images : row.images ? [row.images] : [];
-      const plans = Array.isArray(row.plans) ? row.plans : row.plans ? [row.plans] : [];
+      const images = [...(Array.isArray(row.images) ? row.images : row.images ? [row.images] : [])].sort(
+        (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+      );
+      const plans = [...(Array.isArray(row.plans) ? row.plans : row.plans ? [row.plans] : [])].sort(
+        (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+      );
       const hours = Array.isArray(row.hours) ? row.hours : row.hours ? [row.hours] : [];
       const { community: _c, images: _i, plans: _p, hours: _h, ...court } = row;
       return {
@@ -121,8 +125,12 @@ export async function fetchClubCourtDetail(
   }
 
   const community = Array.isArray(data.community) ? data.community[0] : data.community;
-  const images = Array.isArray(data.images) ? data.images : data.images ? [data.images] : [];
-  const plans = Array.isArray(data.plans) ? data.plans : data.plans ? [data.plans] : [];
+  const images = [...(Array.isArray(data.images) ? data.images : data.images ? [data.images] : [])].sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+  );
+  const plans = [...(Array.isArray(data.plans) ? data.plans : data.plans ? [data.plans] : [])].sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+  );
   const hours = Array.isArray(data.hours) ? data.hours : data.hours ? [data.hours] : [];
   const blocks = Array.isArray(data.blocks) ? data.blocks : data.blocks ? [data.blocks] : [];
   const { community: _c, images: _i, plans: _p, hours: _h, blocks: _b, ...court } = data;

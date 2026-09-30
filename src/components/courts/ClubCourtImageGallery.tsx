@@ -6,6 +6,7 @@ type CourtImage = { url: string; sort_order: number };
 
 type Props = {
   images?: CourtImage[] | null;
+  /** card = capa na listagem (sem scroll, para o toque abrir o link); detail = carrossel na página da quadra */
   variant?: "card" | "detail";
 };
 
@@ -32,7 +33,7 @@ export function ClubCourtImageGallery({ images, variant = "card" }: Props) {
     setIndex(Math.max(0, Math.min(sorted.length - 1, next)));
   };
 
-  if (sorted.length === 1) {
+  if (variant === "card" || sorted.length === 1) {
     return (
       <div className={wrapClass}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -41,6 +42,19 @@ export function ClubCourtImageGallery({ images, variant = "card" }: Props) {
           alt=""
           className={`${aspectClass} w-full object-cover ${variant === "card" ? "rounded-xl" : ""}`}
         />
+        {variant === "card" && sorted.length > 1 && (
+          <span
+            className="pointer-events-none absolute bottom-2 right-2 rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white"
+            aria-hidden
+          >
+            {sorted.length} fotos
+          </span>
+        )}
+        {variant === "card" && sorted.length > 1 && (
+          <p className="sr-only">
+            Esta quadra tem {sorted.length} fotos. Abra o card para ver todas.
+          </p>
+        )}
       </div>
     );
   }
@@ -50,9 +64,7 @@ export function ClubCourtImageGallery({ images, variant = "card" }: Props) {
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        className={`flex ${aspectClass} snap-x snap-mandatory overflow-x-auto overscroll-x-contain ${
-          variant === "card" ? "rounded-xl" : ""
-        } [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
+        className={`flex ${aspectClass} snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
         aria-label={`Fotos da quadra, ${sorted.length} imagens`}
       >
         {sorted.map((img) => (

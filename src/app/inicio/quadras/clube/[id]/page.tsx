@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { fetchClubCourtDetail } from "@/lib/clubCourtBrowse";
@@ -19,7 +20,24 @@ export default async function ClubCourtPublicPage({
   if (!user) redirect("/");
 
   const court = await fetchClubCourtDetail(supabase, id, user.id);
-  if (!court) redirect("/inicio/quadras");
+  if (!court) {
+    return (
+      <>
+        <FeedTopBar />
+        <main className={appContentClass}>
+          <p className="text-sm text-[var(--toq-text-muted)]">
+            Esta quadra não está disponível ou você não tem permissão para ver os detalhes.
+          </p>
+          <Link
+            href="/inicio/quadras"
+            className="mt-4 inline-block text-sm font-semibold text-[var(--toq-sky)]"
+          >
+            ← Voltar às quadras
+          </Link>
+        </main>
+      </>
+    );
+  }
 
   return (
     <>
