@@ -158,7 +158,9 @@ export function OnlineFriendsStrip({
 
   const carousel = (
     <div
-      className={`online-friends-carousel ${edgeToEdge ? "online-friends-carousel--edge" : ""}`}
+      className={`online-friends-carousel ${edgeToEdge ? "online-friends-carousel--edge" : ""} ${
+        edgeToEdge && canScrollLeft ? "online-friends-carousel--fade-start" : ""
+      } ${edgeToEdge && canScrollRight ? "online-friends-carousel--fade-end" : ""}`}
       style={{ maxWidth: edgeToEdge ? undefined : CAROUSEL_MAX_WIDTH }}
     >
       {canScrollLeft && (
@@ -168,7 +170,7 @@ export function OnlineFriendsStrip({
         ref={scrollRef}
         className={`online-friends-scroll flex gap-5 overflow-x-auto py-3 ${
           centered ? "justify-center" : ""
-        } ${edgeToEdge ? "px-4" : ""}`}
+        } ${edgeToEdge ? "online-friends-scroll--edge px-4" : ""}`}
       >
         {stripItems.map((item) =>
           item.key === "me" && onOpenCreatePost ? (

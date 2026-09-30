@@ -44,6 +44,7 @@ export type PublicProfile = {
   club_count: number;
   last_seen_at: string | null;
   address: AddressFields;
+  profile_details_friends_only?: boolean;
 } & ProfileGameFields;
 
 export type ProfileFriendPreview = {

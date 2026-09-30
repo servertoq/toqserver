@@ -15,7 +15,6 @@ import type { Community, CommunityGroupKind, CommunityMemberRole } from "@/types
 import type { FeedPost } from "@/types/feed";
 import { type CreatePostSubmitData, toCreatePostInput } from "@/lib/createPost";
 import { useAppProfile } from "@/components/app/AppShell";
-import { appContentClass } from "@/lib/layout";
 import { createPostWithMedia, POST_SELECT } from "@/lib/posts";
 import { CreatePostBox } from "@/components/feed/CreatePostBox";
 import { FeedTopBar } from "@/components/feed/FeedTopBar";
@@ -441,13 +440,18 @@ export function CommunityDetailPage({
 
   return (
     <>
-      <FeedTopBar />
-      <main className={appContentClass}>
+      <div className="hidden md:block">
+        <FeedTopBar />
+      </div>
+      <main
+        className="mx-auto w-full max-w-6xl px-4 pt-1 pb-[calc(var(--app-mobile-bottom-nav-h)+1.75rem)] sm:px-6 md:pb-6 md:pt-6 lg:max-w-7xl lg:px-8"
+      >
         <Link
           href={config.basePath}
-          className="mb-3 inline-block text-xs font-semibold text-[var(--toq-sky)] md:mb-4"
+          className="mb-2 inline-flex items-center gap-1 text-xs font-semibold text-[var(--toq-sky)] md:mb-4"
         >
-          ← {config.backLabel}
+          <span aria-hidden="true">←</span>
+          <span>{config.backLabel}</span>
         </Link>
 
         {/* Desktop: capa + card acima das abas */}

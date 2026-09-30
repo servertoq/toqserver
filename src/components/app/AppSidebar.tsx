@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { StaffRole } from "@/types/staff";
+import { FeedPeopleSearch } from "@/components/feed/FeedPeopleSearch";
 import { NotificationsBell } from "@/components/feed/NotificationsBell";
 
 export type AppProfile = {
@@ -396,6 +397,7 @@ function MobileHeader({
         </Link>
       </div>
       <div className="app-mobile-header-actions">
+        <FeedPeopleSearch variant="mobileHeader" />
         <NotificationsBell />
       </div>
     </header>
@@ -432,8 +434,8 @@ function MobileDrawer({
         inert={open ? undefined : true}
       >
         <div className="app-mobile-drawer-inner">
-          <ToqLogo className="mb-6" />
-          <nav className="flex flex-col gap-1">
+          <ToqLogo className="mb-4 shrink-0" />
+          <nav className="app-mobile-drawer-nav flex flex-col gap-1" aria-label="Menu principal">
             {navItems.map((item) => (
               <NavLink
                 key={item.href}
@@ -443,10 +445,10 @@ function MobileDrawer({
                 onNavigate={onClose}
               />
             ))}
-            <div className="mt-2 border-t border-white/15 pt-2">
-              <LogoutButton onLogout={onClose} />
-            </div>
           </nav>
+          <div className="app-mobile-drawer-footer">
+            <LogoutButton onLogout={onClose} />
+          </div>
         </div>
       </aside>
     </>

@@ -346,8 +346,9 @@ export function CommunitySettingsForm({ community, groupKind, onSaved, onClose }
                       placeholder="0 = gratuito"
                       className="mt-1 w-full rounded-lg toq-input px-3 py-2 text-sm text-[var(--toq-navy)]"
                     />
-                    <span className="mt-1 block text-[11px] text-[var(--toq-text-muted)]">
-                      Cobrado na confirmação de participação (pode ser 0).
+                    <span className="mt-1 block text-[11px] leading-relaxed text-[var(--toq-text-muted)]">
+                      Visitantes veem o valor no card da partida (badge &quot;Day use&quot;) e ao
+                      tocar em Entrar. Cobrado na confirmação de participação (use 0 para gratuito).
                     </span>
                   </label>
                 )}

@@ -39,6 +39,7 @@ export function PublicProfileView({ username }: Props) {
   const [clubs, setClubs] = useState<ProfileClubPreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFriend, setIsFriend] = useState(false);
   const isOwnProfile = profile?.id === viewer.id;
 
   const load = useCallback(async () => {
@@ -58,16 +59,35 @@ export function PublicProfileView({ username }: Props) {
       return;
     }
 
+    const { data: friendshipRows } = await supabase
+      .from("friendships")
+      .select("user_id")
+      .or(
+        `and(user_id.eq.${viewer.id},friend_id.eq.${row.id}),and(user_id.eq.${row.id},friend_id.eq.${viewer.id})`
+      )
+      .limit(1);
+
+    const viewerIsFriend = (friendshipRows?.length ?? 0) > 0;
+    setIsFriend(viewerIsFriend);
+
+    const friendsOnlyDetails = Boolean(row.profile_details_friends_only);
+    const canSeeDetails =
+      row.id === viewer.id || !friendsOnlyDetails || viewerIsFriend;
+
     const [{ data: stats }, { data: staffRole }, profilePhotos, { data: friendRows }, { data: clubRows }] =
       await Promise.all([
         supabase.rpc("get_profile_public_stats", { p_profile_id: row.id }),
         supabase.rpc("get_staff_role", { p_user_id: row.id }),
         fetchProfilePhotos(supabase, row.id).catch(() => [] as ProfilePhoto[]),
-        supabase.rpc("get_profile_friends_preview", {
-          p_profile_id: row.id,
-          p_limit: 8,
-        }),
-        supabase.rpc("get_profile_clubs", { p_profile_id: row.id }),
+        canSeeDetails
+          ? supabase.rpc("get_profile_friends_preview", {
+              p_profile_id: row.id,
+              p_limit: 8,
+            })
+          : Promise.resolve({ data: [] }),
+        canSeeDetails
+          ? supabase.rpc("get_profile_clubs", { p_profile_id: row.id })
+          : Promise.resolve({ data: [] }),
       ]);
 
     const stat = Array.isArray(stats) ? stats[0] : stats;
@@ -113,14 +133,18 @@ export function PublicProfileView({ username }: Props) {
       play_frequency: (row.play_frequency as PlayFrequency | null) ?? null,
       play_style: (row.play_style as PlayStyle | null) ?? null,
       favorite_court: (row.favorite_court as FavoriteCourt | null) ?? null,
+      profile_details_friends_only: friendsOnlyDetails,
     });
 
-    const { data: rawPosts, error: postsErr } = await supabase
-      .from("posts")
-      .select(POST_SELECT)
-      .eq("author_id", row.id)
-      .order("created_at", { ascending: false })
-      .limit(30);
+    if (!canSeeDetails) {
+      setPosts([]);
+    } else {
+      const { data: rawPosts, error: postsErr } = await supabase
+        .from("posts")
+        .select(POST_SELECT)
+        .eq("author_id", row.id)
+        .order("created_at", { ascending: false })
+        .limit(30);
 
     if (!postsErr && rawPosts) {
       const postIds = rawPosts.map((p) => p.id);
@@ -171,6 +195,7 @@ export function PublicProfileView({ username }: Props) {
       );
     } else {
       setPosts([]);
+    }
     }
 
     setLoading(false);
@@ -240,6 +265,11 @@ export function PublicProfileView({ username }: Props) {
             currentUserId={viewer.id}
             isOwnProfile={isOwnProfile}
             onLikeToggle={handleLikeToggle}
+            restrictDetailsForViewer={
+              !isOwnProfile &&
+              Boolean(profile.profile_details_friends_only) &&
+              !isFriend
+            }
             headerActions={
               isOwnProfile ? (
                 <Link

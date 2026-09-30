@@ -157,7 +157,7 @@ export function PartidasPage() {
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="rounded-2xl bg-[var(--toq-accent)] px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-90"
+            className="toq-btn-primary rounded-2xl px-4 py-2.5 text-sm font-bold text-white shadow-sm"
           >
             + Criar partida
           </button>
@@ -213,7 +213,7 @@ export function PartidasPage() {
             <button
               type="button"
               onClick={() => setCreateOpen(true)}
-              className="mt-5 rounded-full bg-[var(--toq-accent)] px-5 py-2.5 text-xs font-bold text-white"
+              className="toq-btn-primary mt-5 rounded-full px-5 py-2.5 text-xs font-bold text-white"
             >
               Criar partida
             </button>

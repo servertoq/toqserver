@@ -26,14 +26,26 @@ type Props = {
   onRespondInvite?: (match: OpenMatchListItem, accept: boolean) => void;
 };
 
+function playerCardLabel(
+  p: { user_id: string; username: string; display_name: string | null },
+  currentUserId: string
+) {
+  if (p.user_id === currentUserId) return "Você";
+  const name = p.display_name?.trim();
+  if (name) return name;
+  return `@${p.username}`;
+}
+
 function TeamAvatars({
   players,
   fallbackName,
   fallbackAvatar,
+  avatarSize = "sm",
 }: {
   players: { username: string; display_name: string | null; avatar_url: string | null }[];
   fallbackName?: string;
   fallbackAvatar?: string | null;
+  avatarSize?: "sm" | "md";
 }) {
   const list =
     players.length > 0
@@ -57,7 +69,7 @@ function TeamAvatars({
                 display_name: p.display_name,
                 username: p.username,
               })}
-              size="sm"
+              size={avatarSize}
             />
           </div>
         ))}
@@ -97,21 +109,20 @@ export function OpenMatchCard({
 
   const team1Label =
     team1.length > 0
-      ? team1
-          .map((p) =>
-            p.user_id === currentUserId
-              ? "Você"
-              : shortPlayerName(p.display_name, p.username)
-          )
-          .join(" + ")
-      : shortPlayerName(match.creator_display_name, match.creator_username);
+      ? team1.map((p) => playerCardLabel(p, currentUserId)).join(" + ")
+      : match.creator_display_name?.trim() ||
+        `@${match.creator_username}`;
 
   const team2Label =
     team2.length > 0
-      ? team2.map((p) => shortPlayerName(p.display_name, p.username)).join(" + ")
+      ? team2.map((p) => playerCardLabel(p, currentUserId)).join(" + ")
       : "Aguardando";
 
   const isClubMatch = Boolean(match.community_id);
+  const showDayUseToVisitor =
+    isClubMatch && !match.viewer_is_member && match.day_use_allow_outsiders;
+  const avatarSize = match.format === "1v1" ? "md" : "sm";
+  const skillLabel = formatMatchSkillLevel(match.skill_level);
   const showTeams = match.format !== "club";
   const notes = match.notes.trim();
   const hasMoreDetails = isClubMatch;
@@ -131,9 +142,14 @@ export function OpenMatchCard({
           <span className="rounded-full bg-[var(--toq-accent-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--toq-accent)]">
             {openMatchFormatLabel(match.format)}
           </span>
+          <span className="rounded-full bg-[var(--toq-input-bg)] px-2.5 py-1 text-[10px] font-semibold text-[var(--toq-text-muted)]">
+            Nível {skillLabel}
+          </span>
           {isClubMatch && (
             <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-400">
-              {match.viewer_is_member ? "Seu clube" : "Day use"}
+              {match.viewer_is_member
+                ? "Seu clube"
+                : `Day use · ${formatDayUsePrice(match.day_use_price)}`}
             </span>
           )}
         </div>
@@ -150,9 +166,9 @@ export function OpenMatchCard({
       {displayClubName && (
         <div className="px-4 pb-1 sm:px-5">
           <p className="text-sm font-semibold text-[var(--toq-text)]">{displayClubName}</p>
-          {isClubMatch && !match.viewer_is_member && (
-            <p className="text-[11px] text-[var(--toq-text-muted)]">
-              Day use: {formatDayUsePrice(match.day_use_price)}
+          {showDayUseToVisitor && (
+            <p className="text-[11px] font-medium text-emerald-400/90">
+              Day use para visitantes: {formatDayUsePrice(match.day_use_price)}
             </p>
           )}
         </div>
@@ -169,12 +185,13 @@ export function OpenMatchCard({
             }))}
             fallbackName={match.creator_username}
             fallbackAvatar={match.creator_avatar_url}
+            avatarSize={avatarSize}
           />
-          <p className="mt-2 truncate text-sm font-semibold text-[var(--toq-text)]">
+          <p
+            className="mt-2 line-clamp-2 break-words text-sm font-semibold leading-snug text-[var(--toq-text)]"
+            title={team1Label}
+          >
             {team1Label}
-          </p>
-          <p className="text-[11px] text-[var(--toq-text-muted)]">
-            Nível {formatMatchSkillLevel(match.skill_level)}
           </p>
         </div>
 
@@ -189,15 +206,17 @@ export function OpenMatchCard({
               display_name: p.display_name,
               avatar_url: p.avatar_url,
             }))}
+            avatarSize={avatarSize}
           />
-          <p className="mt-2 truncate text-sm font-semibold text-[var(--toq-text)]">
+          <p
+            className="mt-2 line-clamp-2 break-words text-sm font-semibold leading-snug text-[var(--toq-text)]"
+            title={team2Label}
+          >
             {team2Label}
           </p>
-          <p className="text-[11px] text-[var(--toq-text-muted)]">
-            {team2.length > 0
-              ? `Nível ${formatMatchSkillLevel(match.skill_level)}`
-              : "Vagas abertas"}
-          </p>
+          {team2.length === 0 && (
+            <p className="mt-0.5 text-[11px] text-[var(--toq-text-muted)]">Vagas abertas</p>
+          )}
         </div>
       </div>
       ) : (
@@ -270,6 +289,14 @@ export function OpenMatchCard({
               <circle cx="12" cy="10" r="2.5" />
             </svg>
             {match.city}
+          </span>
+        )}
+        {showDayUseToVisitor && (
+          <span className="inline-flex items-center gap-1.5 font-medium text-emerald-400/90">
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2v20M5 9h14" strokeLinecap="round" />
+            </svg>
+            Day use {formatDayUsePrice(match.day_use_price)}
           </span>
         )}
       </div>

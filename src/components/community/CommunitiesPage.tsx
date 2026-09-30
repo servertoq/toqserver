@@ -258,7 +258,7 @@ export function CommunitiesPage({ groupKind = "community" }: { groupKind?: Commu
               {canCreateGroup && (
                 <Link
                   href={config.createHref}
-                  className="toq-btn-primary rounded-xl px-4 py-2 text-sm text-white"
+                  className="toq-btn-primary rounded-xl px-4 py-2 text-sm font-bold text-white"
                 >
                   {config.createButton}
                 </Link>

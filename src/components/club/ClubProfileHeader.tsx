@@ -87,7 +87,7 @@ export function ClubProfileHeader({
             <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-[var(--toq-navy)] to-[var(--toq-accent)] ring-2 ring-[var(--toq-border)]">
               {avatarSrc ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
+                <img src={avatarSrc} alt="" className="community-avatar-img" />
               ) : (
                 <span className="flex h-full w-full items-center justify-center text-sm font-bold text-white">
                   {community.name.charAt(0).toUpperCase()}

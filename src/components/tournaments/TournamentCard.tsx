@@ -163,7 +163,7 @@ export function TournamentCard({
               rel="noopener noreferrer"
               className="inline-flex shrink-0 items-center justify-center rounded-lg bg-[#25D366] px-2.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-[#1ebe5d]"
             >
-              Inscrever
+              Inscrever-se
             </a>
           ) : null}
         </div>

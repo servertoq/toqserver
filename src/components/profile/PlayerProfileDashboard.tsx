@@ -83,6 +83,8 @@ type Props = {
   onAvatarUpdated?: (avatarUrl: string | null) => void;
   onPhotosUpdated?: (photos: ProfilePhoto[]) => void;
   initialTab?: ProfileTab;
+  /** Perfil restrito a amigos — visitante não amigo vê só o básico. */
+  restrictDetailsForViewer?: boolean;
 };
 
 const TAB_ICONS = {
@@ -169,6 +171,7 @@ export function PlayerProfileDashboard({
   onAvatarUpdated,
   onPhotosUpdated,
   initialTab,
+  restrictDetailsForViewer = false,
 }: Props) {
   const [tab, setTab] = useState<ProfileTab>(initialTab ?? "resumo");
   const [editMode, setEditMode] = useState<"full" | "photos" | null>(null);
@@ -182,6 +185,9 @@ export function PlayerProfileDashboard({
   const carouselUrls = profileCarouselUrls(photos);
 
   const navTabs = useMemo(() => {
+    if (restrictDetailsForViewer) {
+      return [] as { id: ProfileTab; label: string; icon: keyof typeof TAB_ICONS }[];
+    }
     const items: { id: ProfileTab; label: string; icon: keyof typeof TAB_ICONS }[] = [
       { id: "resumo", label: "Resumo", icon: "grid" },
       { id: "torneios", label: "Torneios", icon: "trophy" },
@@ -197,7 +203,7 @@ export function PlayerProfileDashboard({
       items.splice(2, 0, { id: "partidas", label: "Partidas", icon: "trophy" });
     }
     return items;
-  }, [isOwnProfile]);
+  }, [isOwnProfile, restrictDetailsForViewer]);
 
   if (editMode && isOwnProfile) {
     return (
@@ -238,7 +244,7 @@ export function PlayerProfileDashboard({
     <div className="profile-page">
       <div className="profile-dashboard">
         <div className="profile-hero-card">
-          {carouselUrls.length > 0 && (
+          {carouselUrls.length > 0 && !restrictDetailsForViewer && (
             <ProfilePhotoCarousel urls={carouselUrls} name={shownName} />
           )}
 
@@ -299,24 +305,38 @@ export function PlayerProfileDashboard({
           </div>
         </div>
 
-        <nav className="profile-tabs-bar" aria-label="Seções do perfil">
-          <HScroll innerClassName="profile-tabs-scroll">
-            {navTabs.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setTab(item.id)}
-                className={`profile-tab-link ${tab === item.id ? "is-active" : ""}`}
-              >
-                <span className="profile-tab-icon">{TAB_ICONS[item.icon]}</span>
-                {item.label}
-              </button>
-            ))}
-          </HScroll>
-        </nav>
+        {navTabs.length > 0 && (
+          <nav className="profile-tabs-bar" aria-label="Seções do perfil">
+            <HScroll innerClassName="profile-tabs-scroll">
+              {navTabs.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setTab(item.id)}
+                  className={`profile-tab-link ${tab === item.id ? "is-active" : ""}`}
+                >
+                  <span className="profile-tab-icon">{TAB_ICONS[item.icon]}</span>
+                  {item.label}
+                </button>
+              ))}
+            </HScroll>
+          </nav>
+        )}
 
         <div className="profile-main">
-          {tab === "resumo" && (
+          {restrictDetailsForViewer && (
+            <div className="rounded-2xl border border-[var(--toq-profile-border)] bg-[var(--toq-profile-accent-soft)] px-4 py-5 text-center">
+              <p className="text-sm font-semibold text-[var(--toq-profile-navy)]">
+                Perfil restrito a amigos
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-[var(--toq-profile-muted)]">
+                Este jogador escolheu mostrar partidas, publicações, amigos, clubes e Meu jogo apenas
+                para amigos. Envie uma solicitação de amizade para ver o perfil completo.
+              </p>
+            </div>
+          )}
+
+          {!restrictDetailsForViewer && tab === "resumo" && (
             <div className="space-y-8">
               {bio ? (
                 <p className="text-sm leading-relaxed text-[var(--toq-profile-navy)]">{bio}</p>
@@ -350,15 +370,15 @@ export function PlayerProfileDashboard({
             </div>
           )}
 
-          {tab === "agenda" && isOwnProfile && <AgendaPage embedded />}
+          {!restrictDetailsForViewer && tab === "agenda" && isOwnProfile && <AgendaPage embedded />}
 
-          {tab === "partidas" && (
+          {!restrictDetailsForViewer && tab === "partidas" && (
             <ProfileCourtMatchesPanel userId={profileId} isOwnProfile={isOwnProfile} />
           )}
 
-          {tab === "torneios" && <ProfileTournamentsEmpty />}
+          {!restrictDetailsForViewer && tab === "torneios" && <ProfileTournamentsEmpty />}
 
-          {tab === "publicacoes" && (
+          {!restrictDetailsForViewer && tab === "publicacoes" && (
             <div className="space-y-4">
               <p className="profile-section-label">Publicações ({postCount})</p>
               {posts.length === 0 ? (
@@ -381,16 +401,18 @@ export function PlayerProfileDashboard({
             </div>
           )}
 
-          {tab === "amigos" &&
+          {!restrictDetailsForViewer && tab === "amigos" &&
             (isOwnProfile && friendsPanel ? (
               friendsPanel
             ) : (
               <ProfileFriendsPreview friends={friendsPreview} friendCount={friendCount} />
             ))}
 
-          {tab === "clubes" && <ProfileClubsList clubs={clubs} clubCount={clubCount} />}
+          {!restrictDetailsForViewer && tab === "clubes" && (
+            <ProfileClubsList clubs={clubs} clubCount={clubCount} />
+          )}
 
-          {tab === "suporte" && isOwnProfile && supportForm}
+          {!restrictDetailsForViewer && tab === "suporte" && isOwnProfile && supportForm}
         </div>
       </div>
     </div>

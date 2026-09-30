@@ -626,7 +626,9 @@ body {
 }
 
 .feed-layout-main .profile-avatar-img,
-.profile-avatar-img {
+.profile-avatar-img,
+.feed-layout-main .community-avatar-img,
+.community-avatar-img {
   display: block;
   width: 100%;
   height: 100%;
@@ -1307,8 +1309,127 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  width: 2.75rem;
+  gap: 0.125rem;
+  width: auto;
+  min-width: 2.75rem;
   flex-shrink: 0;
+}
+
+.app-mobile-header-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--toq-navy);
+}
+
+.app-mobile-header-icon-btn svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.mobile-people-search-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+}
+
+.mobile-people-search-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.mobile-people-search-sheet-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--app-mobile-header-h);
+  max-height: calc(100dvh - var(--app-mobile-header-h));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--toq-border);
+  background: var(--toq-card);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-people-search-sheet-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--toq-border);
+}
+
+.mobile-people-search-sheet-icon {
+  display: flex;
+  color: var(--toq-text-muted);
+}
+
+.mobile-people-search-sheet-icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.mobile-people-search-sheet-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--toq-text);
+  outline: none;
+}
+
+.mobile-people-search-sheet-cancel {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--toq-accent);
+}
+
+.mobile-people-search-sheet-results {
+  max-height: min(24rem, calc(100dvh - var(--app-mobile-header-h) - 4rem));
+  overflow-y: auto;
+  padding: 0.25rem 0;
+  margin: 0;
+  list-style: none;
+}
+
+.mobile-people-search-sheet-results .feed-people-search-empty,
+.mobile-people-search-sheet-results .feed-people-search-result {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.feed-people-search-empty {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--toq-text-muted);
+}
+
+.feed-people-search-result {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  transition: background 0.15s ease;
+}
+
+.feed-people-search-result:hover {
+  background: var(--toq-surface);
+}
+
+[data-theme="dark"] .app-mobile-header-icon-btn {
+  color: #f5f5f5;
 }
 
 .app-plus-menu-btn {
@@ -1466,7 +1587,7 @@ body {
 .app-mobile-drawer-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 55;
+  z-index: 64;
   border: none;
   background: rgba(5, 16, 36, 0.5);
   opacity: 0;
@@ -1483,11 +1604,14 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 58;
+  bottom: 0;
+  z-index: 65;
   width: min(280px, 88vw);
   height: 100%;
   height: 100dvh;
   height: -webkit-fill-available;
+  max-height: 100dvh;
+  max-height: -webkit-fill-available;
   border-right: 2px solid #000000;
   background: var(--toq-accent);
   color: #ffffff;
@@ -1502,10 +1626,32 @@ body {
 }
 
 .app-mobile-drawer-inner {
+  display: flex;
+  flex-direction: column;
   height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: calc(var(--app-mobile-header-h) + 0.75rem) 0.75rem 0;
+}
+
+.app-mobile-drawer-nav {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: calc(var(--app-mobile-header-h) + 1rem) 0.75rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: 0.5rem;
+}
+
+.app-mobile-drawer-footer {
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.75rem 0 calc(var(--app-mobile-bottom-nav-h) + 0.35rem + env(safe-area-inset-bottom, 0px));
+  background: inherit;
+}
+
+body:has(.app-mobile-drawer--open) .app-mobile-bottom-nav {
+  z-index: 50;
 }
 
 .app-mobile-drawer svg {
@@ -5280,6 +5426,38 @@ button {
 .online-friends-carousel--edge {
   width: 100%;
   max-width: none;
+}
+
+.online-friends-scroll--edge {
+  padding-right: 2rem;
+  scroll-padding-inline: 1rem;
+}
+
+.online-friends-carousel--fade-start::before,
+.online-friends-carousel--fade-end::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.online-friends-carousel--fade-start::before {
+  left: 0;
+  background: linear-gradient(to right, var(--toq-surface) 15%, transparent);
+}
+
+.online-friends-carousel--fade-end::after {
+  right: 0;
+  background: linear-gradient(to left, var(--toq-surface) 15%, transparent);
+}
+
+@media (max-width: 767px) {
+  .online-friends-carousel--edge .online-friends-nav {
+    display: none;
+  }
 }
 
 .online-friends-nav {

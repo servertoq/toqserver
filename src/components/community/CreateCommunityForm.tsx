@@ -24,6 +24,7 @@ import {
   processCommunityCoverSelection,
 } from "@/lib/communityCoverImage";
 import { parseClubContactInputs } from "@/lib/clubContact";
+import { appContentClass } from "@/lib/layout";
 
 export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: CommunityGroupKind }) {
   const config = COMMUNITY_GROUP_CONFIG[groupKind];
@@ -199,7 +200,7 @@ export function CreateCommunityForm({ groupKind = "community" }: { groupKind?: C
   return (
     <>
       <FeedTopBar />
-      <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 lg:max-w-4xl lg:px-8">
+      <main className={`${appContentClass} max-w-3xl lg:max-w-4xl`}>
         <h1 className="text-xl font-bold text-[var(--toq-navy)]">{config.createTitle}</h1>
         <p className="mt-1 text-sm text-[var(--toq-text-muted)]">
           {isClub

@@ -18,6 +18,7 @@ import type {
 import { useAppProfile } from "@/components/app/AppShell";
 import { ClubCourtAgendaModal } from "./ClubCourtAgendaModal";
 import { CourtBookingDialog } from "@/components/court/CourtBookingDialog";
+import { ClubCourtImageGallery } from "@/components/courts/ClubCourtImageGallery";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { syncClubCourtFeedPost } from "@/lib/clubCourtListings";
 import type { CourtRentalVisibility } from "@/types/courtManagement";
@@ -1023,12 +1024,7 @@ export function ClubCourtsPanel({
         <ul className="mt-4 grid gap-4 sm:grid-cols-2">
           {courts.map((court) => (
             <li key={court.id} className="toq-card-lg overflow-hidden">
-              {court.images?.[0] && (
-                <div className="overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={court.images[0].url} alt="" className="aspect-[4/3] w-full object-cover" />
-                </div>
-              )}
+              <ClubCourtImageGallery images={court.images} variant="detail" />
               <div className="p-4 pb-5">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-bold text-[var(--toq-navy)]">{court.name}</h3>

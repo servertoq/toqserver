@@ -3,6 +3,8 @@
 import { appContentClass } from "@/lib/layout";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ChangePasswordForm } from "./ChangePasswordForm";
+import { DeleteAccountSection } from "./DeleteAccountSection";
+import { ProfilePrivacySettings } from "./ProfilePrivacySettings";
 import { ProfileUrlForm } from "./ProfileUrlForm";
 import { ThemeSettings } from "./ThemeSettings";
 
@@ -34,11 +36,27 @@ export function SettingsPage() {
           </section>
 
           <section className="settings-card">
+            <h2 className="settings-card-title">Privacidade do perfil</h2>
+            <p className="settings-card-desc">
+              Controle o que outras pessoas veem antes de virarem suas amigas no Toq.
+            </p>
+            <ProfilePrivacySettings />
+          </section>
+
+          <section className="settings-card">
             <h2 className="settings-card-title">Senha</h2>
             <p className="settings-card-desc">
               Altere a senha usada para entrar com e-mail e senha.
             </p>
             <ChangePasswordForm />
+          </section>
+
+          <section className="settings-card border-red-100">
+            <h2 className="settings-card-title text-red-700">Excluir conta</h2>
+            <p className="settings-card-desc">
+              Remova permanentemente seu perfil e dados após o período de carência.
+            </p>
+            <DeleteAccountSection />
           </section>
         </div>
       </main>

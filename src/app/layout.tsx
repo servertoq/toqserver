@@ -25,8 +25,21 @@ export const metadata: Metadata = {
   title: "Toq Tennis",
   description: "Rede social e plataforma de jogos de tênis — feed, comunidades e partidas",
   icons: {
-    icon: "/imagens_publicas/logo.jpg",
-    apple: "/imagens_publicas/logo.jpg",
+    icon: [
+      { url: "/imagens_publicas/favicon.png", sizes: "32x32", type: "image/png" },
+      { url: "/imagens_publicas/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [
+      {
+        url: "/imagens_publicas/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Toq Tennis",
   },
 };
 

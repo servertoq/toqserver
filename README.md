@@ -29,5 +29,5 @@ Acesse [http://localhost:3000](http://localhost:3000) — tela única de login/c
 
 ## Logo
 
-- Original: `imagens_publicas/logo.jpg`
-- Servida pelo Next.js: `public/imagens_publicas/logo.jpg` (favicon e UI)
+- Ícone do app (favicon / “Adicionar à tela inicial”): `public/imagens_publicas/app-icon-source.png` — regenere tamanhos com `node scripts/generate-app-icons.mjs`
+- UI no site: `logo_sidebar.png`, `logo_transp.png`, etc. em `public/imagens_publicas/`

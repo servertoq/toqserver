@@ -9,6 +9,7 @@ import { recordClubCourtListingView } from "@/lib/courtManagement";
 import { fetchClubCourtDetail, type BrowsableClubCourt } from "@/lib/clubCourtBrowse";
 import { groupDetailHref } from "@/lib/communityGroup";
 import { CourtBookingDialog } from "@/components/court/CourtBookingDialog";
+import { ClubCourtImageGallery } from "@/components/courts/ClubCourtImageGallery";
 
 export function ClubCourtBrowseCard({ court }: { court: BrowsableClubCourt }) {
   const minPrice = (court.plans ?? [])
@@ -23,10 +24,7 @@ export function ClubCourtBrowseCard({ court }: { court: BrowsableClubCourt }) {
       href={`/inicio/quadras/clube/${court.id}`}
       className="block overflow-hidden toq-card p-4 shadow-sm transition hover:border-[var(--toq-sky)]/40 hover:shadow-md"
     >
-      {court.images?.[0] && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={court.images[0].url} alt="" className="mb-3 aspect-[16/10] w-full rounded-xl object-cover sm:aspect-[4/3]" />
-      )}
+      <ClubCourtImageGallery images={court.images} variant="card" />
       <h3 className="font-bold text-[var(--toq-navy)]">{court.name}</h3>
       {!rentalOpen && (
         <span className="mt-1 inline-block rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600">
@@ -123,10 +121,7 @@ export function ClubCourtDetailPage({ court: initial }: { court: BrowsableClubCo
       </Link>
 
       <article className="overflow-hidden toq-card-lg">
-        {court.images?.[0] && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={court.images[0].url} alt="" className="aspect-[16/10] w-full object-cover" />
-        )}
+        <ClubCourtImageGallery images={court.images} variant="detail" />
         <div className="p-5 sm:p-6">
           <h1 className="text-xl font-bold text-[var(--toq-navy)]">{court.name}</h1>
           {court.community?.slug && (
