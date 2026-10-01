@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAppProfile, useUpdateAppProfile } from "@/components/app/AppShell";
@@ -49,38 +49,55 @@ function PerfilPageContent() {
   const [friendsPreview, setFriendsPreview] = useState<ProfileFriendPreview[]>([]);
   const [clubs, setClubs] = useState<ProfileClubPreview[]>([]);
   const [loading, setLoading] = useState(true);
+  const loadGeneration = useRef(0);
 
-  const load = useCallback(async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select(
-        "id, username, display_name, email, avatar_url, birth_date, gender, bio, player_level, created_at, plan, show_plan_badge, address_zip, address_street, address_number, address_neighborhood, address_complement, address_city, address_state, dominant_hand, experience_band, play_frequency, play_style, favorite_court"
-      )
-      .eq("id", appProfile.id)
-      .single();
+  const load = useCallback(
+    async (options?: { silent?: boolean }) => {
+      const silent = options?.silent ?? false;
+      const generation = ++loadGeneration.current;
 
-    if (data) {
-      setProfile({
-        ...data,
-        id: data.id ?? appProfile.id,
-        gender: data.gender as GenderType,
-        bio: data.bio ?? "",
-        player_level: (data.player_level as PlayerLevelType) ?? "iniciante",
-        display_name: data.display_name ?? null,
-        plan: (data.plan as EditableProfile["plan"]) ?? "free",
-        show_plan_badge: data.show_plan_badge ?? true,
-        address: addressFromRow(data),
-        dominant_hand: (data.dominant_hand as DominantHand | null) ?? null,
-        experience_band: (data.experience_band as ExperienceBand | null) ?? null,
-        play_frequency: (data.play_frequency as PlayFrequency | null) ?? null,
-        play_style: (data.play_style as PlayStyle | null) ?? null,
-        favorite_court: (data.favorite_court as FavoriteCourt | null) ?? null,
-      });
-    } else {
-      setProfile(null);
-    }
+      if (!silent) {
+        setLoading(true);
+      }
 
-    const [{ data: stats }, profilePhotos, { data: friendRows }, { data: clubRows }] =
+      try {
+        const { data, error: profileError } = await supabase
+          .from("profiles")
+          .select(
+            "id, username, display_name, email, avatar_url, birth_date, gender, bio, player_level, created_at, plan, show_plan_badge, address_zip, address_street, address_number, address_neighborhood, address_complement, address_city, address_state, dominant_hand, experience_band, play_frequency, play_style, favorite_court"
+          )
+          .eq("id", appProfile.id)
+          .single();
+
+        if (generation !== loadGeneration.current) return;
+
+        if (profileError || !data) {
+          if (!silent) setProfile(null);
+          return;
+        }
+
+        setProfile({
+          ...data,
+          id: data.id ?? appProfile.id,
+          gender: data.gender as GenderType,
+          bio: data.bio ?? "",
+          player_level: (data.player_level as PlayerLevelType) ?? "iniciante",
+          display_name: data.display_name ?? null,
+          plan: (data.plan as EditableProfile["plan"]) ?? "free",
+          show_plan_badge: data.show_plan_badge ?? true,
+          address: addressFromRow(data),
+          dominant_hand: (data.dominant_hand as DominantHand | null) ?? null,
+          experience_band: (data.experience_band as ExperienceBand | null) ?? null,
+          play_frequency: (data.play_frequency as PlayFrequency | null) ?? null,
+          play_style: (data.play_style as PlayStyle | null) ?? null,
+          favorite_court: (data.favorite_court as FavoriteCourt | null) ?? null,
+        });
+
+        if (data.username && data.username !== appProfile.username) {
+          updateAppProfile({ username: data.username });
+        }
+
+        const [{ data: stats }, profilePhotos, { data: friendRows }, { data: clubRows }] =
       await Promise.all([
         supabase.rpc("get_profile_public_stats", { p_profile_id: appProfile.id }),
         fetchProfilePhotos(supabase, appProfile.id).catch(() => [] as ProfilePhoto[]),
@@ -170,9 +187,16 @@ function PerfilPageContent() {
     } else {
       setPosts([]);
     }
-
-    setLoading(false);
-  }, [appProfile.id, supabase]);
+      } catch {
+        if (!silent) setProfile(null);
+      } finally {
+        if (generation === loadGeneration.current && !silent) {
+          setLoading(false);
+        }
+      }
+    },
+    [appProfile.id, appProfile.username, supabase, updateAppProfile]
+  );
 
   useEffect(() => {
     load();
@@ -188,13 +212,13 @@ function PerfilPageContent() {
         .eq("post_id", postId)
         .eq("user_id", appProfile.id);
     }
-    await load();
+    await load({ silent: true });
   }
 
   return (
     <>
       <main className={profileContentClass}>
-        {loading ? (
+        {loading && !profile ? (
           <p className="text-sm text-[var(--toq-text-muted)]">Carregando perfil…</p>
         ) : profile ? (
           <PlayerProfileDashboard
@@ -228,7 +252,7 @@ function PerfilPageContent() {
             onLikeToggle={handleLikeToggle}
             friendsPanel={<FriendsPanel userId={appProfile.id} embedded />}
             supportForm={<ProfileSupportForm userId={appProfile.id} />}
-            onResumoSaved={load}
+            onResumoSaved={() => load({ silent: true })}
             onAvatarUpdated={(url) => {
               setProfile((current) => (current ? { ...current, avatar_url: url } : current));
               updateAppProfile({ avatar_url: url });

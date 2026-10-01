@@ -50,12 +50,13 @@ export function ClubCourtDetailPage({ court: initial }: { court: BrowsableClubCo
   const supabase = createClient();
   const profile = useAppProfile();
   const [court, setCourt] = useState(initial);
-  const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingCourt, setBookingCourt] = useState<BrowsableClubCourt | null>(null);
 
   const refreshCourt = useCallback(async () => {
+    if (bookingCourt) return;
     const row = await fetchClubCourtDetail(supabase, court.id, profile.id);
     if (row) setCourt(row);
-  }, [court.id, profile.id, supabase]);
+  }, [bookingCourt, court.id, profile.id, supabase]);
 
   useEffect(() => {
     void recordClubCourtListingView(supabase, court.id);
@@ -150,7 +151,7 @@ export function ClubCourtDetailPage({ court: initial }: { court: BrowsableClubCo
           ) : (
             <button
               type="button"
-              onClick={() => setBookingOpen(true)}
+              onClick={() => setBookingCourt(court)}
               className="mt-5 rounded-lg toq-btn-primary px-5 py-2.5 text-sm font-bold text-white"
             >
               Agendar
@@ -159,12 +160,19 @@ export function ClubCourtDetailPage({ court: initial }: { court: BrowsableClubCo
         </div>
       </article>
 
-      <CourtBookingDialog
-        open={bookingOpen}
-        court={court}
-        clubName={court.community?.name ?? "Clube"}
-        onClose={() => setBookingOpen(false)}
-      />
+      {bookingCourt && (
+        <CourtBookingDialog
+          open
+          court={bookingCourt}
+          clubName={bookingCourt.community?.name ?? "Clube"}
+          onClose={() => {
+            setBookingCourt(null);
+            void fetchClubCourtDetail(supabase, court.id, profile.id).then((row) => {
+              if (row) setCourt(row);
+            });
+          }}
+        />
+      )}
     </>
   );
 }

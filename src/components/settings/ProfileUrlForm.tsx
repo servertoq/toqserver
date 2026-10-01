@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useAppProfile } from "@/components/app/AppShell";
+import { useAppProfile, useUpdateAppProfile } from "@/components/app/AppShell";
 import { normalizeUsername, validateUsername } from "@/lib/profile";
 import { profilePath } from "@/lib/publicProfile";
 import { useSingleSubmit } from "@/lib/useSingleSubmit";
@@ -10,6 +10,7 @@ import { useSingleSubmit } from "@/lib/useSingleSubmit";
 export function ProfileUrlForm() {
   const supabase = createClient();
   const profile = useAppProfile();
+  const updateAppProfile = useUpdateAppProfile();
   const { isSubmitting, guard } = useSingleSubmit();
   const [username, setUsername] = useState(profile.username);
   const [error, setError] = useState<string | null>(null);
@@ -65,8 +66,8 @@ export function ProfileUrlForm() {
         return;
       }
 
-      setSuccess("URL do perfil atualizada. A página será recarregada.");
-      window.setTimeout(() => window.location.reload(), 800);
+      updateAppProfile({ username: normalized });
+      setSuccess("URL do perfil atualizada.");
     });
   }
 

@@ -105,8 +105,13 @@ const TABS: TabItem[] = [
 export function MobileBottomNav() {
   const pathname = usePathname();
   const profile = useAppProfile();
+  const jogadorSlug = pathname.startsWith("/inicio/jogador/")
+    ? decodeURIComponent(pathname.slice("/inicio/jogador/".length).split("/")[0] ?? "")
+    : "";
   const profileActive =
-    pathname.startsWith("/inicio/perfil") && !pathname.startsWith("/inicio/jogador");
+    pathname.startsWith("/inicio/perfil") ||
+    (jogadorSlug.length > 0 &&
+      jogadorSlug.toLowerCase() === profile.username.toLowerCase());
 
   return (
     <nav className="app-mobile-bottom-nav md:hidden" aria-label="Navegação principal">

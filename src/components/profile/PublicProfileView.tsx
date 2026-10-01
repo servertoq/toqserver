@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { fetchCoachListingsForPosts, fetchMatchResultsForPosts, mapPostRow } from "@/lib/feed";
 import { enrichPostsWithStaffRoles } from "@/lib/staff";
@@ -31,6 +32,7 @@ type Props = { username: string };
 
 export function PublicProfileView({ username }: Props) {
   const supabase = createClient();
+  const router = useRouter();
   const viewer = useAppProfile();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
@@ -40,24 +42,67 @@ export function PublicProfileView({ username }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFriend, setIsFriend] = useState(false);
+  const loadGeneration = useRef(0);
   const isOwnProfile = profile?.id === viewer.id;
 
-  const load = useCallback(async () => {
-    setError(null);
-    setLoading(true);
+  const normalizedUsername = username.trim();
 
-    const { data: rows, error: profileErr } = await supabase.rpc("get_profile_by_username", {
-      p_username: username,
-    });
-
-    const row = Array.isArray(rows) ? rows[0] : rows;
-    if (profileErr || !row) {
-      setError("Jogador não encontrado.");
-      setProfile(null);
-      setPosts([]);
-      setLoading(false);
-      return;
+  useEffect(() => {
+    if (
+      normalizedUsername &&
+      normalizedUsername.toLowerCase() === viewer.username.toLowerCase()
+    ) {
+      router.replace("/inicio/perfil");
     }
+  }, [normalizedUsername, router, viewer.username]);
+
+  const load = useCallback(
+    async (options?: { silent?: boolean }) => {
+      const silent = options?.silent ?? false;
+      const generation = ++loadGeneration.current;
+
+      if (!silent) {
+        setError(null);
+        setLoading(true);
+      }
+
+      try {
+        const fetchProfileRow = async () => {
+          const { data: rows, error: profileErr } = await supabase.rpc("get_profile_by_username", {
+            p_username: normalizedUsername,
+          });
+          const row = Array.isArray(rows) ? rows[0] : rows;
+          return { row, profileErr };
+        };
+
+        let { row, profileErr } = await fetchProfileRow();
+        if (profileErr || !row) {
+          ({ row, profileErr } = await fetchProfileRow());
+        }
+
+        if (generation !== loadGeneration.current) return;
+
+        if (profileErr) {
+          if (!silent) {
+            setError(
+              profileErr.message?.includes("get_profile_by_username")
+                ? "Não foi possível carregar o perfil. Tente atualizar a página."
+                : "Não foi possível carregar o perfil agora. Tente de novo."
+            );
+            setProfile(null);
+            setPosts([]);
+          }
+          return;
+        }
+
+        if (!row) {
+          if (!silent) {
+            setError("Jogador não encontrado.");
+            setProfile(null);
+            setPosts([]);
+          }
+          return;
+        }
 
     const { data: friendshipRows } = await supabase
       .from("friendships")
@@ -198,13 +243,34 @@ export function PublicProfileView({ username }: Props) {
     }
     }
 
-    setLoading(false);
-  }, [supabase, username, viewer.id]);
+        if (generation !== loadGeneration.current) return;
+        setError(null);
+      } catch {
+        if (generation !== loadGeneration.current) return;
+        if (!silent) {
+          setError("Não foi possível carregar o perfil agora. Tente de novo.");
+        }
+      } finally {
+        if (generation === loadGeneration.current && !silent) {
+          setLoading(false);
+        }
+      }
+    },
+    [normalizedUsername, supabase, viewer.id]
+  );
 
   useEffect(() => {
-    load();
-    const interval = setInterval(load, 30_000);
-    return () => clearInterval(interval);
+    void load();
+  }, [load]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void load({ silent: true });
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [load]);
 
   async function handleLikeToggle(postId: string, liked: boolean) {
@@ -217,7 +283,18 @@ export function PublicProfileView({ username }: Props) {
         .eq("post_id", postId)
         .eq("user_id", viewer.id);
     }
-    await load();
+    await load({ silent: true });
+  }
+
+  if (
+    normalizedUsername &&
+    normalizedUsername.toLowerCase() === viewer.username.toLowerCase()
+  ) {
+    return (
+      <main className={profileContentClass}>
+        <p className="text-sm text-[var(--toq-text-muted)]">Carregando perfil…</p>
+      </main>
+    );
   }
 
   return (
@@ -226,14 +303,23 @@ export function PublicProfileView({ username }: Props) {
         <FeedTopBar />
       </div>
       <main className={profileContentClass}>
-        {loading ? (
+        {loading && !profile ? (
           <p className="text-sm text-[var(--toq-text-muted)]">Carregando perfil…</p>
         ) : error || !profile ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
             <p className="text-sm font-semibold text-[var(--toq-navy)]">{error ?? "Perfil não encontrado"}</p>
-            <Link href="/inicio" className="mt-3 inline-block text-sm font-semibold text-[var(--toq-sky)]">
-              Voltar ao início
-            </Link>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => void load()}
+                className="text-sm font-semibold text-[var(--toq-sky)]"
+              >
+                Tentar novamente
+              </button>
+              <Link href="/inicio" className="text-sm font-semibold text-[var(--toq-sky)]">
+                Voltar ao início
+              </Link>
+            </div>
           </div>
         ) : (
           <PlayerProfileDashboard

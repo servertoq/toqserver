@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import { formatClubPrice } from "@/lib/clubFeatures";
@@ -65,8 +65,21 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
   const [playerQuery, setPlayerQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [takenRanges, setTakenRanges] = useState<CourtTakenRange[]>([]);
+  const [rangesMeta, setRangesMeta] = useState<{
+    dateISO: string;
+    ranges: CourtTakenRange[];
+    loading: boolean;
+  }>(() => ({
+    dateISO: new Date().toISOString().slice(0, 10),
+    ranges: [],
+    loading: false,
+  }));
+  const rangesRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isSubmitting, guard } = useSingleSubmit();
+
+  const takenRanges =
+    rangesMeta.dateISO === dateISO ? rangesMeta.ranges : [];
+  const slotsLoading = rangesMeta.loading && rangesMeta.dateISO === dateISO;
 
   const excludedPlayerIds = useMemo(
     () => [profile.id, ...players.map((p) => p.id)],
@@ -91,13 +104,32 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
   }, [applicablePlans, planId]);
 
   const refreshTakenRanges = useCallback(async () => {
+    const forDate = dateISO;
+    setRangesMeta((prev) =>
+      prev.dateISO === forDate
+        ? { ...prev, loading: true }
+        : { dateISO: forDate, ranges: [], loading: true }
+    );
     try {
-      const ranges = await fetchClubCourtTakenRanges(supabase, court.id, dateISO);
-      setTakenRanges(ranges);
+      const ranges = await fetchClubCourtTakenRanges(supabase, court.id, forDate);
+      setRangesMeta((prev) => {
+        if (prev.dateISO !== forDate) return prev;
+        return { dateISO: forDate, ranges, loading: false };
+      });
     } catch {
-      /* mantém última lista conhecida */
+      setRangesMeta((prev) => {
+        if (prev.dateISO !== forDate) return prev;
+        return { ...prev, loading: false };
+      });
     }
   }, [court.id, dateISO, supabase]);
+
+  const scheduleRefreshTakenRanges = useCallback(() => {
+    if (rangesRefreshTimer.current) clearTimeout(rangesRefreshTimer.current);
+    rangesRefreshTimer.current = setTimeout(() => {
+      void refreshTakenRanges();
+    }, 400);
+  }, [refreshTakenRanges]);
 
   useEffect(() => {
     if (!open) return;
@@ -118,7 +150,7 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
           filter: `court_id=eq.${court.id}`,
         },
         () => {
-          void refreshTakenRanges();
+          scheduleRefreshTakenRanges();
         }
       )
       .on(
@@ -130,15 +162,22 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
           filter: `club_court_id=eq.${court.id}`,
         },
         () => {
-          void refreshTakenRanges();
+          scheduleRefreshTakenRanges();
         }
       )
       .subscribe();
 
     return () => {
+      if (rangesRefreshTimer.current) clearTimeout(rangesRefreshTimer.current);
       void supabase.removeChannel(channel);
     };
-  }, [court.id, open, refreshTakenRanges, supabase]);
+  }, [court.id, open, scheduleRefreshTakenRanges, supabase]);
+
+  useEffect(() => {
+    if (!open) return;
+    setSuccess(false);
+    setError(null);
+  }, [open, court.id]);
 
   const weekday = useMemo(() => {
     const d = new Date(`${dateISO}T12:00:00`);
@@ -191,11 +230,12 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
   }, [dateISO, quantity, selectedPlan, takenRanges, todaysHours]);
 
   useEffect(() => {
+    if (slotsLoading) return;
     if (availableStartTimes.length === 0) return;
     if (!availableStartTimes.includes(startHHMM)) {
       setStartHHMM(availableStartTimes[0]!);
     }
-  }, [availableStartTimes, startHHMM]);
+  }, [availableStartTimes, slotsLoading, startHHMM]);
 
   const totalPrice = selectedPlan ? Number(selectedPlan.price) * Math.max(1, quantity) : 0;
 
@@ -343,6 +383,8 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
               <span className="text-xs font-semibold text-[var(--toq-navy)]">Horário de início</span>
               {applicablePlans.length === 0 ? (
                 <p className="mt-1 text-xs text-[var(--toq-text-muted)]">Selecione uma data com plano disponível.</p>
+              ) : slotsLoading ? (
+                <p className="mt-1 text-xs text-[var(--toq-text-muted)]">Atualizando horários…</p>
               ) : availableStartTimes.length === 0 ? (
                 <p className="mt-1 text-xs text-red-600">Sem horários livres neste plano/dia.</p>
               ) : (
