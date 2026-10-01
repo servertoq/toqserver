@@ -49,6 +49,17 @@ function normalizePlanTime(raw: string | null | undefined): string | null {
   return /^\d{2}:\d{2}$/.test(t) ? t : null;
 }
 
+function formatBookingDateLabel(dateISO: string) {
+  const d = new Date(`${dateISO}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return dateISO;
+  return d.toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }: Props) {
   const supabase = createClient();
   const profile = useAppProfile();
@@ -297,17 +308,28 @@ export function CourtBookingDialog({ open, court, clubName, onClose, onSuccess }
         </div>
 
         {success ? (
-          <div className="space-y-4 p-5">
-            <p className="text-sm text-[var(--toq-navy)]">
-              Solicitação enviada! O proprietário vai analisar e entrar em contato para confirmar o pagamento antes
-              de liberar o horário.
+          <div className="space-y-4 p-5" role="status" aria-live="polite">
+            <div className="rounded-2xl border border-green-500/25 bg-green-500/10 px-4 py-4 text-center">
+              <p className="text-base font-bold text-green-800 dark:text-green-200">
+                Seu horário foi agendado!
+              </p>
+              <p className="mt-2 text-sm font-semibold text-[var(--toq-navy)]">{court.name}</p>
+              <p className="mt-1 text-sm text-[var(--toq-text-muted)]">
+                {formatBookingDateLabel(dateISO)} · {startHHMM}
+                {selectedPlan ? ` · ${selectedPlan.label}` : ""}
+              </p>
+            </div>
+            <p className="text-sm leading-relaxed text-[var(--toq-text-muted)]">
+              O clube pode entrar em contato para confirmar o pagamento antes de liberar o horário na agenda. Você
+              também acompanha em{" "}
+              <span className="font-semibold text-[var(--toq-navy)]">Perfil → Agenda</span>.
             </p>
             <button
               type="button"
               onClick={onClose}
               className="w-full rounded-xl toq-btn-primary py-2.5 text-sm font-bold text-white"
             >
-              Fechar
+              Ok, entendi
             </button>
           </div>
         ) : !rentalOpen ? (
